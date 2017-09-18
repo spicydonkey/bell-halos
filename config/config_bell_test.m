@@ -50,8 +50,8 @@ configs.bec{1}.pos{2}=[10.1099,-2.9e-3,4.6e-3];
 configs.bec{1}.Rmax{2}=12e-3;
 configs.bec{1}.dR_tail{2}=1;
 
-configs.halo{1}.R{1}=25e-3;     % estimated radius of halo
-configs.halo{1}.dR{1}=0.1;      % broad radial mask fractional width (in/out)
+configs.halo{1}.R{1}=26e-3;     % estimated radius of halo
+configs.halo{1}.dR{1}=0.2;      % broad radial mask fractional width (in/out)
 configs.halo{1}.zcap=0.75;   % z-cutoff (fractional wrt radius)
 configs.halo{1}.string='$m_F=0$';
 

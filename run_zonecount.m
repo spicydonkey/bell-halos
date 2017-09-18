@@ -1,5 +1,6 @@
-% mf=(1,1) collision analysis
-% Exmaple of single-halo capture
+% Preliminary halo analysis on Bell test experiment
+% requires distinguishable-halos repo for halo analysis tools
+% 
 
 clear all; clc; close all;
 
@@ -17,6 +18,7 @@ txy=load_txy(configs.files.path,configs.load.id,...
         
 zxy=txy2zxy(txy);       % zxy
 
+% TODO - archive the TXY for fast loading
 
 %% capture each halo
 % configs
