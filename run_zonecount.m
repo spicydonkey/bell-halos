@@ -86,6 +86,12 @@ for ii=1:2
     this_halo_zxy0_orig=this_halo_zxy0;       % store original
     this_halo_zxy0=this_halo_zxy0_filt;       % alias filtered
     
+    % plot
+    figure(9);
+    hold on;
+    plot_zxy(this_halo_zxy0,1e5,1,col{ii});
+    axis equal;
+    box on;
     
     %% Elipsoid fit
     efit_flag='';
@@ -140,4 +146,52 @@ for ii=1:2
     Nsc{ii}=this_Nsc;
     dk{ii}=this_dk;
     halo_modeocc{ii}=this_halo_modeocc;
+end
+
+%% Simple zonal analysis
+%%% config zones, binning
+nazim=40;
+nelev=40;
+binwidth=2*sqrt(((2*pi)/nazim)*(pi/nelev));   % TODO - this isn't ideal - may miss counts
+
+%%% build meshgrid of zones
+azim=linspace(-pi,pi,nazim);
+
+% scan all elev angle
+elev=linspace(-pi/2,pi/2,nelev);
+
+% % scan within z-cap
+% elev_lim=asin(configs.halo{1}.zcap);
+% elev=linspace(-elev_lim,elev_lim,nelev);
+
+[AZIM,ELEV]=meshgrid(azim,elev);
+
+%%% get counts in zone
+% TODO - currently binning with fixed bin width - try Gaussian convolution
+nn_halo=cell(2,1);
+for ii=1:2
+    nn_halo{ii}=halo_zone_density(halo_k{ii},AZIM,ELEV,binwidth);
+    nn_halo{ii}=cat(3,nn_halo{ii}{:});  % nazim x nelev x nshot array
+end
+
+%%% statistics
+% TODO - once the above "bad shot elimination" is fixed, below shouldn't
+% need uniformoutput to false
+nn_halo_mean=cellfun(@(x)mean(x,3),nn_halo,'UniformOutput',false);
+% nn_halo_std=cellfun(@(x)std(x,0,3)/sqrt(size(x,3)),nn_halo);
+nn_halo_serr=cellfun(@(x)std(x,0,3)/sqrt(size(x,3)),nn_halo,'UniformOutput',false);
+
+%%% plot
+hfig_halo_zone_density=figure(11);
+for ii=1:2
+    subplot(1,2,ii);
+    plot_sph_surf(AZIM,ELEV,nn_halo_mean{ii});
+    axis on;
+    box on;
+    xlabel('$K_X$');
+    ylabel('$K_Y$');
+    zlabel('$K_Z$');
+    title(configs.halo{ii}.string);
+    c=colorbar('SouthOutside');
+    c.Label.String='Avg. counts';
 end
