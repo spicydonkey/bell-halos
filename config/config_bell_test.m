@@ -15,7 +15,8 @@ vz=configs.misc.vel_z;
 
 
 %% FILES
-configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_progress_201709\bell_test_2\d';
+configs.files.path='C:/Users/David/hebec/bell/d';
+% configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_progress_201709\bell_test_2\d';
 
 % WARNING: MODIFYING BELOW DIR SETTINGS ARE NOT RECOMMENDED
 configs.files.dir_data=fileparts(configs.files.path);    % fullpath to data directory
@@ -29,7 +30,7 @@ configs.files.dirout=fullfile(configs.files.dir_data,'output');      % output di
 configs.load.version=2;         % TXY load stage version number
 
 % file ID and simple pass/fail
-configs.load.id=1:1000;         % file id numbers to use for analysis
+configs.load.id=1000:2000;         % file id numbers to use for analysis
 configs.load.mincount=0;         % min counts in window - 0 for no min
 configs.load.maxcount=Inf;          % max counts in window - Inf for no max
 
@@ -51,7 +52,7 @@ configs.bec{1}.Rmax{2}=12e-3;
 configs.bec{1}.dR_tail{2}=1;
 
 configs.halo{1}.R{1}=26e-3;     % estimated radius of halo
-configs.halo{1}.dR{1}=0.2;      % broad radial mask fractional width (in/out)
+configs.halo{1}.dR{1}=0.1;      % broad radial mask fractional width (in/out)
 configs.halo{1}.zcap=0.75;   % z-cutoff (fractional wrt radius)
 configs.halo{1}.string='$m_F=0$';
 

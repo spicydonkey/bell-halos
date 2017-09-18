@@ -12,7 +12,7 @@ verbose=configs.flags.verbose;
 
 
 %% load TXY
-txy=load_txy(configs.files.path,configs.load.id,...
+[txy,fout]=load_txy(configs.files.path,configs.load.id,...
             configs.load.window,configs.load.mincount,configs.load.maxcount,...
             configs.load.rot_angle,configs.flags.build_txy,verbose,configs.flags.graphics);
         
@@ -35,6 +35,8 @@ Nsc=cell(2,1);
 dk=cell(2,1);
 halo_modeocc=cell(2,1);
 
+% fid_ok=cell(2,1);
+bool_empty_halo=cell(2,1);
 for ii=1:2
     %% Halo capture
     % capture BECs at poles
@@ -60,11 +62,12 @@ for ii=1:2
     this_rlim=configs.halo{ii}.R{1}*(1+configs.halo{ii}.dR{1}*[-1,1]);       % radial limits for sph-shell capture
     
     this_bool_halo=cellfun(@(r)(r<this_rlim(2))&(r>this_rlim(1)),this_r0,'UniformOutput',false);    % determine halo points
-    
+        
     % capture halo!
     this_halo_zxy0=cellfun(@(ZXY,BOOL)ZXY(BOOL,:),this_halo_zxy0,this_bool_halo,'UniformOutput',false);
     
     % remove caps
+    % TODO - try removing the caps after ellipsoid fit
     this_dz_poles=cellfun(@(c1,c2)abs(c1(1)-c2(1)),this_bec_cent(:,1),this_bec_cent(:,2),'UniformOutput',false);
     this_dz_poles=mean(vertcat(this_dz_poles{:}));    % pole-pole distance (BEC) in Z
     
@@ -72,23 +75,12 @@ for ii=1:2
     
     this_halo_zxy0=cellfun(@(ZXY,BOOL)ZXY(~BOOL,:),this_halo_zxy0,this_bool_zcap,'UniformOutput',false);
     
-    % remove zero counts
-    % TODO - need to remove these shots from analysis!
-    this_bool_empty_halo=(cellfun(@(x)isequal(size(x,1),0),this_halo_zxy0));
-    this_halo_zxy0=this_halo_zxy0(~this_bool_empty_halo);
+    %% Filter DLD detector ringing
+    dld_deadtime=200e-9;
     
-    %% Cull aliased hits
-    % cull from centred zxy0 halo data
-    alias_deadz=100e-9*configs.misc.vel_z;      % dZ in 100 ns
-    this_bool_alias=cellfun(@(x) findalias(x,alias_deadz),this_halo_zxy0,'UniformOutput',false);
-    this_halo_zxy0_filt=cellfun(@(x,y) x(~y,:),this_halo_zxy0,this_bool_alias,'UniformOutput',false);
-    % TODO - problem when halo_zxy0 empty
+    [this_halo_zxy0,this_bool_ring]=postfilter_dld_ring(this_halo_zxy0,vz*dld_deadtime);
     
-    % TODO - better var management
-    this_halo_zxy0_orig=this_halo_zxy0;       % store original
-    this_halo_zxy0=this_halo_zxy0_filt;       % alias filtered
-    
-    % plot
+    %% plot
     figure(9);
     hold on;
     plot_zxy(this_halo_zxy0,1e5,1,col{ii});
@@ -135,10 +127,17 @@ for ii=1:2
     % boost for best g2 BB centering
     this_halo_k=boost_zxy(this_halo_k,configs.halo{ii}.boost);
     
+    %% remove shots with zero counts in halo
+    % check if any halo is empty
+    % NOTE: no more counts should be culled after this stage!
+    this_bool_empty_halo=(cellfun(@(x)isequal(size(x,1),0),this_halo_zxy0));
+    
     %% store this mF results
     halo_k{ii}=this_halo_k;
     
     % misc
+    bool_empty_halo{ii}=this_bool_empty_halo;
+    
     bec_cent{ii}=this_bec_cent;
     halo_cent{ii}=this_halo_cent;
     ecent{ii}=this_ecent;
@@ -149,6 +148,10 @@ for ii=1:2
     dk{ii}=this_dk;
     halo_modeocc{ii}=this_halo_modeocc;
 end
+% cull shots with empty halos
+bool_empty_halo=or(bool_empty_halo{:});     % combine with OR
+fout.id_ok=fout.id_ok(~bool_empty_halo);    % update id_ok
+halo_k=cellfun(@(x) x(~bool_empty_halo),halo_k,'UniformOutput',false);
 
 %% Simple zonal analysis
 %%% config zones, binning
@@ -177,10 +180,8 @@ for ii=1:2
 end
 
 %%% statistics
-% TODO - once the above "bad shot elimination" is fixed, below shouldn't
-% need uniformoutput to false
 nn_halo_mean=cellfun(@(x)mean(x,3),nn_halo,'UniformOutput',false);
-% nn_halo_std=cellfun(@(x)std(x,0,3)/sqrt(size(x,3)),nn_halo);
+% nn_halo_std=cellfun(@(x)std(x,0,3)/sqrt(size(x,3)),nn_halo,'UniformOutput',false);
 nn_halo_serr=cellfun(@(x)std(x,0,3)/sqrt(size(x,3)),nn_halo,'UniformOutput',false);
 
 %%% plot
