@@ -51,9 +51,9 @@ configs.bec{1}.Rmax{2}=12e-3;
 configs.bec{1}.dR_tail{2}=1;
 
 configs.halo{1}.R{1}=25e-3;     % estimated radius of halo
-configs.halo{1}.dR{1}=0.2;      % broad radial mask fractional width (in/out)
-
+configs.halo{1}.dR{1}=0.1;      % broad radial mask fractional width (in/out)
 configs.halo{1}.zcap=0.75;   % z-cutoff (fractional wrt radius)
+configs.halo{1}.string='$m_F=0$';
 
 configs.bec{2}.pos{1}=[9.9820,-3.7e-3,3.3e-3];   % approx condensate locations (z,x,y)
 configs.bec{2}.Rmax{1}=12e-3;      % max condensate sph radius
@@ -64,32 +64,10 @@ configs.bec{2}.dR_tail{2}=1;
 
 configs.halo{2}.R{1}=20e-3;     % estimated radius of halo
 configs.halo{2}.dR{1}=0.2;      % broad radial mask fractional width (in/out)
-
 configs.halo{2}.zcap=0.75;   % z-cutoff (fractional wrt radius)
+configs.halo{2}.string='$m_F=1$';
 
 % TODO - does boost need to be optimised for different g2 analysis?
 %   currently SINGLE boost applied to halo2 to obtain best g2_01_BB
 configs.halo{1}.boost=zeros(1,3);
 configs.halo{2}.boost=zeros(1,3);
-
-%% CORRELATION ANALYSIS
-% % 1) Single-halo Angular - m_J=0
-% configs.corr{1}.type.comp=1;           
-% configs.corr{1}.type.coord='angular';
-% configs.corr{1}.type.opt=[];
-% configs.corr{1}.lim=[0,0.2;0,pi];
-% configs.corr{1}.nBin=[21,401];
-% 
-% % 2) Single-halo cart CL - m_J=0
-% configs.corr{2}.type.comp=1;
-% configs.corr{2}.type.coord='cart';
-% configs.corr{2}.type.opt='CL';
-% configs.corr{2}.lim=0.2*repmat([0,1],[3,1]);
-% configs.corr{2}.nBin=11*[1,1,1];   % number of bins
-% 
-% % 3) Single-halo cart BB - m_J=0
-% configs.corr{3}.type.comp=1;
-% configs.corr{3}.type.coord='cart';
-% configs.corr{3}.type.opt='BB';
-% configs.corr{3}.lim=0.2*repmat([-1,1],[3,1]);
-% configs.corr{3}.nBin=11*[1,1,1];   % number of bins
