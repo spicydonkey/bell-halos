@@ -2,7 +2,7 @@ function nn=halo_zone_density(halo,azim,elev,binwidth,verbose)
 % zonal analysis on scattered halo
 % halo_zone_density(halo, verbose)
 % 
-% halo: num_shot x 1 cell-array of num_countsx3 double array (XYZ)
+% halo: num_shot x 1 cell-array of num_countsx3 double array (ZXY)
     % halo should be correctly centered
 % azim: def grid points - array of azim angles
 % elev: def grid points - array of elev angles (meas from XY plane)
@@ -13,13 +13,14 @@ function nn=halo_zone_density(halo,azim,elev,binwidth,verbose)
 % TODO
     % meshgrid for azim-elev is ideal for surf plotting on sphere
 
-% XYZ --> spherical angle (2D)
+% ZXY --> spherical angle (2D)
 nshot=size(halo,1);
 halo_sphpol=cell(nshot,1);
 for ii=1:nshot
     this_halo=halo{ii};
     halo_sphpol{ii}=zeros(size(this_halo,1),2);
-    [halo_sphpol{ii}(:,1),halo_sphpol{ii}(:,2)]=cart2sph(this_halo(:,1),this_halo(:,2),this_halo(:,3));
+    % note: halo is defined in ZXY coord system
+    [halo_sphpol{ii}(:,1),halo_sphpol{ii}(:,2)]=cart2sph(this_halo(:,2),this_halo(:,3),this_halo(:,1));
 end
 
 grid_thphi=[azim(:),elev(:)];
