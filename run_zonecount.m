@@ -15,8 +15,10 @@ verbose=configs.flags.verbose;
 [txy,fout]=load_txy(configs.files.path,configs.load.id,...
             configs.load.window,configs.load.mincount,configs.load.maxcount,...
             configs.load.rot_angle,configs.flags.build_txy,verbose,configs.flags.graphics);
-        
+       
 zxy=txy2zxy(txy);       % zxy
+
+clearvars txy;
 
 % TODO - archive the TXY for fast loading
 
@@ -31,6 +33,7 @@ halo_cent=cell(2,1);
 ecent=cell(2,1);
 erad=cell(2,1);
 evecs=cell(2,1);
+M_rot_ell=cell(2,1);
 Nsc=cell(2,1);
 dk=cell(2,1);
 halo_modeocc=cell(2,1);
@@ -100,14 +103,14 @@ for ii=1:2
     this_halo_k(:)=boost_zxy(this_halo_k,-this_ecent');
     
     % Transform to ellipsoid principal axis (Rotation)
-    M_rot=this_evecs;   % rotation matrix: X'Y'Z'(principal ellipsoid) --> XYZ
-    this_halo_k=cellfun(@(x) (M_rot\x')',this_halo_k,'UniformOutput',false);     % inverse transform
+    this_M_rot=this_evecs;   % rotation matrix: X'Y'Z'(principal ellipsoid) --> XYZ
+    this_halo_k=cellfun(@(x) (this_M_rot\x')',this_halo_k,'UniformOutput',false);     % inverse transform
     
     % Stretch to UNIT sphere: unit in collision wave-vector/momenta
     this_halo_k=cellfun(@(x) x./repmat(this_erad',size(x,1),1),this_halo_k,'UniformOutput',false);
     
     % Reverse transform to original/detector axis
-    this_halo_k=cellfun(@(x) (M_rot*x')',this_halo_k,'UniformOutput',false);
+    this_halo_k=cellfun(@(x) (this_M_rot*x')',this_halo_k,'UniformOutput',false);
     
     % transform to ZXY system
     this_halo_k=cellfun(@(x) circshift(x,1,2),this_halo_k,'UniformOutput',false);
@@ -143,52 +146,58 @@ for ii=1:2
     ecent{ii}=this_ecent;
     erad{ii}=this_erad;
     evecs{ii}=this_evecs;
+    M_rot_ell{ii}=this_M_rot;    
     
     Nsc{ii}=this_Nsc;
     dk{ii}=this_dk;
     halo_modeocc{ii}=this_halo_modeocc;
 end
+clearvars zxy;      % clear the huge variable - stores all counts (inc BEC)
+clearvars this_*;   % clear all temporary variables
+
 % cull shots with empty halos
 bool_empty_halo=or(bool_empty_halo{:});     % combine with OR
 fout.id_ok=fout.id_ok(~bool_empty_halo);    % update id_ok
 halo_k=cellfun(@(x) x(~bool_empty_halo),halo_k,'UniformOutput',false);
 
-%% Simple zonal analysis
+%% Zonal analysis
 %%% config zones, binning
-nazim=40;
-nelev=40;
-binwidth=2*sqrt(((2*pi)/nazim)*(pi/nelev));   % TODO - this isn't ideal - may miss counts
+nazim=configs.zone.nazim;
+nelev=configs.zone.nelev;
+
+binmethod=configs.zone.binmethod;
+binwidth=configs.zone.binwidth;
 
 %%% build meshgrid of zones
-azim=linspace(-pi,pi,nazim);
+azim_vec=linspace(-pi,pi,nazim);
 
 % scan all elev angle
-elev=linspace(-pi/2,pi/2,nelev);
+elev_vec=linspace(-pi/2,pi/2,nelev);
 
 % % scan within z-cap
 % elev_lim=asin(configs.halo{1}.zcap);
 % elev=linspace(-elev_lim,elev_lim,nelev);
 
-[AZIM,ELEV]=meshgrid(azim,elev);
+[azim_grid,elev_grid]=meshgrid(azim_vec,elev_vec);
 
 %%% get counts in zone
 % TODO - currently binning with fixed bin width - try Gaussian convolution
 nn_halo=cell(2,1);
 for ii=1:2
-    nn_halo{ii}=halo_zone_density(halo_k{ii},AZIM,ELEV,binwidth);
+    nn_halo{ii}=halo_zone_density(halo_k{ii},azim_grid,elev_grid,binwidth,binmethod);
     nn_halo{ii}=cat(3,nn_halo{ii}{:});  % nazim x nelev x nshot array
 end
 
 %%% statistics
 nn_halo_mean=cellfun(@(x)mean(x,3),nn_halo,'UniformOutput',false);
-% nn_halo_std=cellfun(@(x)std(x,0,3)/sqrt(size(x,3)),nn_halo,'UniformOutput',false);
+nn_halo_std=cellfun(@(x)std(x,0,3),nn_halo,'UniformOutput',false);
 nn_halo_serr=cellfun(@(x)std(x,0,3)/sqrt(size(x,3)),nn_halo,'UniformOutput',false);
 
 %%% plot
 hfig_halo_zone_density=figure(11);
 for ii=1:2
     subplot(1,2,ii);
-    plot_sph_surf(AZIM,ELEV,nn_halo_mean{ii});
+    plot_sph_surf(azim_grid,elev_grid,nn_halo_mean{ii});
     axis on;
     box on;
     xlabel('$K_X$');
@@ -198,3 +207,4 @@ for ii=1:2
     c=colorbar('SouthOutside');
     c.Label.String='Avg. counts';
 end
+
