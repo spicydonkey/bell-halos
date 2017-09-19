@@ -78,7 +78,7 @@ for mm=1:2
     end
 end
 leg=legend('show','Location','eastoutside');
-% set(leg,'Title','hello');
+title(leg,'$m_F$: (elev ii, azim jj)');
 box on;
 hold off;
 xlabel('Raman Amplitude');
