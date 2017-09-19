@@ -1,11 +1,11 @@
-function nn=halo_zone_density(halo,azim,elev,binwidth,binmethod,verbose)
+function nn=halo_zone_density(halo,azim_vec,elev_vec,binwidth,binmethod,verbose)
 % zonal analysis on scattered halo
 % halo_zone_density(halo, verbose)
 % 
 % halo: num_shot x 1 cell-array of num_countsx3 double array (ZXY)
     % halo should be correctly centered
-% azim: def grid points - array of azim angles
-% elev: def grid points - array of elev angles (meas from XY plane)
+% azim_vec: def grid points - array of azim angles
+% elev_vec: def grid points - array of elev angles (meas from XY plane)
 %
 % binwidth: width of bin
 % binmethod:
@@ -34,32 +34,44 @@ for ii=1:nshot
     halo_sphpol{ii}=zeros(size(this_halo,1),2);
     % note: halo is defined in ZXY coord system
     [halo_sphpol{ii}(:,1),halo_sphpol{ii}(:,2)]=cart2sph(this_halo(:,2),this_halo(:,3),this_halo(:,1));
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % azim in range (-pi,pi]
+    % elev in range [-pi/2,pi/2]
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end
 
-grid_thphi=[azim(:),elev(:)];
+% build meshgrid
+[azim_grid,elev_grid]=meshgrid(azim_vec,elev_vec);
+nazim=length(azim_vec);
+nelev=length(elev_vec);
+
+% build edges
+thphi_edge={azim_vec,elev_vec};     % see EDGE argument in "nhist.m"
+
+grid_thphi=[azim_grid(:),elev_grid(:)];
 ngrid=size(grid_thphi,1);       % number of grid points
+
 N_zone=cell(nshot,1);           % counts in zones per shot
 
 % evaluate count/intensity in each shot at each zone
 for ii=1:nshot
     % set up grid of spherical angles + bin style + width
-    % get effective counts at each grid point
-    % per shot
-    this_N_zone=zeros(size(azim));   % preallocate counts in zones
+    % get effective counts at each grid point per shot
     
     this_halo_thphi=halo_sphpol{ii};
     
     % histogramming methods
     switch binmethod
-        % builds this_N_zone - counts/intensity at the defined spherical grid
+        % build this_N_zone - counts/intensity at the defined spherical grid
         case 1
             % Simple spherical Lat-Lon grid 
-            % TODO
-            error('TODO');
+            this_N_zone=nhist(this_halo_thphi,thphi_edge)';     % 2D histogram - transpose
+            
         case 2
             % Difference angle
             % NOTE: this method isn't one-to-one!
             % for each grid-point evaluate angle difference
+            this_N_zone=zeros(nazim,nelev)';   % preallocate counts in zones
             for jj=1:ngrid
                 this_thphi=grid_thphi(jj,:);  % this grid point
                 % evaluate diff angles to the grid point
