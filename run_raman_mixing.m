@@ -64,9 +64,18 @@ for ii=1:2      % loop through mf=0/1
 end
 
 %%% deal with large background for mf=0 case
+% TODO
+
+%%% sort Rabi cycle data wrt Raman amplitude
+for ii=1:2
+    % ascending sort Raman amplitude vector; get sorting index
+    [ampRaman_mf{ii},this_Isort]=sort(ampRaman_mf{ii},'ascend');
+    
+    % sort the Rabi cycle
+    P_rabi{ii}=P_rabi{ii}(:,:,this_Isort);
+end
 
 %%% plot
-%%% sort P_rabi(amp) according to ampRaman_mf
 hfig_rabi_flop=figure(20);
 for mm=1:2
     for ii=1:floor(14/2):14
