@@ -84,3 +84,8 @@ configs.zone.binwidth=2*sqrt(((2*pi)/configs.zone.nazim)*(pi/configs.zone.nelev)
 %   2: angular - requires binwidth (may be one-to-many OR miss counts).
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Bell 
+%%% local operation - mixing
+configs.bell_lo.sourcemf=1;     % source mf
+configs.bell_lo.ampRaman=0.2;     % Raman amplitude (mixing), K_R_mix
