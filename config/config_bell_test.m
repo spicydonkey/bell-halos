@@ -30,9 +30,12 @@ configs.files.dirout=fullfile(configs.files.dir_data,'output');      % output di
 configs.load.version=2;         % TXY load stage version number
 
 % file ID and simple pass/fail
-configs.load.id=1:8500;         % file id numbers to use for analysis
-configs.load.mincount=500;         % min counts in window - 0 for no min
-configs.load.maxcount=1200;          % max counts in window - Inf for no max
+% configs.load.id=1:8500;         % file id numbers to use for analysis
+% configs.load.mincount=500;         % min counts in window - 0 for no min
+% configs.load.maxcount=1200;          % max counts in window - Inf for no max
+configs.load.id=1:1000;         % file id numbers to use for analysis
+configs.load.mincount=0;         % min counts in window - 0 for no min
+configs.load.maxcount=Inf;          % max counts in window - Inf for no max
 
 % Detector/trap alignment
 configs.load.rot_angle=0.61;
@@ -74,10 +77,10 @@ configs.halo{1}.boost=zeros(1,3);
 configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
-configs.zone.nazim=40;
-configs.zone.nelev=40;
+configs.zone.nazim=50;
+configs.zone.nelev=50;
 
-configs.zone.binmethod=2;
+configs.zone.binmethod=1;
 configs.zone.binwidth=2*sqrt(((2*pi)/configs.zone.nazim)*(pi/configs.zone.nelev));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % configs.zone.binmethod

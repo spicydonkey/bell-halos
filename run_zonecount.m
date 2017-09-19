@@ -169,22 +169,54 @@ binmethod=configs.zone.binmethod;
 binwidth=configs.zone.binwidth;
 
 %%% build meshgrid of zones
-azim_vec=linspace(-pi,pi,nazim);
+% TODO - the closed mesh problem
+switch binmethod
+    case 1
+%         azim_vec=linspace(-pi,pi,nazim+1);  % edges
+%         
+%         % scan over all elev angle
+%         elev_vec=linspace(-pi/2,pi/2,nelev+1);
+%         % % scan within z-cap
+%         % elev_lim=asin(configs.halo{1}.zcap);
+%         % elev_vec=linspace(-elev_lim,elev_lim,nelev+1);
+%         
+%         azim_cent=(azim_vec(1:end-1)+0.5*diff(azim_vec));
+%         elev_cent=(elev_vec(1:end-1)+0.5*diff(elev_vec));
 
-% scan all elev angle
-elev_vec=linspace(-pi/2,pi/2,nelev);
+        azim_vec=linspace(-pi,pi,nazim);  % edges
 
-% % scan within z-cap
-% elev_lim=asin(configs.halo{1}.zcap);
-% elev=linspace(-elev_lim,elev_lim,nelev);
+        % scan over all elev angle
+        elev_vec=linspace(-pi/2,pi/2,nelev);
+%         % scan within z-cap
+%         elev_lim=asin(configs.halo{1}.zcap);
+%         elev_vec=linspace(-elev_lim,elev_lim,nelev);
 
-[azim_grid,elev_grid]=meshgrid(azim_vec,elev_vec);
+        azim_cent=azim_vec;
+        elev_cent=elev_vec;
+
+    case 2
+%         azim_vec=linspace(-pi,pi,nazim+1);
+%         azim_vec=azim_vec(2:end);     % center: elminate -pi,pi wrapping
+        
+        azim_vec=linspace(-pi,pi,nazim);
+        
+%         % scan over all elev angle
+%         elev_cent=linspace(-pi/2,pi/2,nelev);
+        % scan within z-cap
+        elev_lim=asin(configs.halo{1}.zcap);
+        elev_vec=linspace(-elev_lim,elev_lim,nelev);
+        
+        azim_cent=azim_vec;
+        elev_cent=elev_vec;
+end
+[azim_grid,elev_grid]=meshgrid(azim_cent,elev_cent);
 
 %%% get counts in zone
 % TODO - currently binning with fixed bin width - try Gaussian convolution
 nn_halo=cell(2,1);
 for ii=1:2
-    nn_halo{ii}=halo_zone_density(halo_k{ii},azim_grid,elev_grid,binwidth,binmethod);
+    %     nn_halo{ii}=halo_zone_density(halo_k{ii},azim_grid,elev_grid,binwidth,binmethod);
+    nn_halo{ii}=halo_zone_density(halo_k{ii},azim_vec,elev_vec,binwidth,binmethod);
     nn_halo{ii}=cat(3,nn_halo{ii}{:});  % nazim x nelev x nshot array
 end
 
@@ -207,4 +239,3 @@ for ii=1:2
     c=colorbar('SouthOutside');
     c.Label.String='Avg. counts';
 end
-
