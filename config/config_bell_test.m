@@ -75,7 +75,7 @@ configs.halo{1}.boost=zeros(1,3);
 configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
-configs.zone.nazim=20;
+configs.zone.nazim=40;
 configs.zone.nelev=15;
 
 configs.zone.binmethod=1;

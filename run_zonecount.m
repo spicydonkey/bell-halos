@@ -292,6 +292,11 @@ NN=nn_sum.*nn_sum_bb;
 
 E=mean(JJ,3)./mean(NN,3);
 
+% TODO
+% each grid point has an associated (theta,phi) rotation angle
+% Bell inequality in CHSH form is a linear combination of 4 correlation
+% coefficients at a precisely related rotation angle configuration.
+
 % plot
 hfig_corr=figure(13);
 plot_sph_surf(azim_grid,elev_grid,E);
