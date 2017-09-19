@@ -4,11 +4,23 @@
 
 clear all; clc; close all;
 
-%% set config
-% USER SET CONFIG!
+%% load config file
+%%% BELL with mix3
 % config_bell_test;
+
+%%% mix mf=1
+% config_bell_mf_1_mix_0;
 % config_bell_mf_1_mix_1;
-config_bell_mf_1_mix_3;
+% config_bell_mf_1_mix_2;
+% config_bell_mf_1_mix_3;
+% config_bell_mf_1_mix_4;
+% config_bell_mf_1_mix_5;
+% config_bell_mf_1_mix_6;
+% config_bell_mf_1_mix_7;
+
+%%% mix mf=0
+
+
 
 verbose=configs.flags.verbose;
 
@@ -248,7 +260,7 @@ P_rabi=nn_halo_mean{2}./(nn_halo_mean{1}+nn_halo_mean{2});
 % 1 when all state in mf=1; 0 when all states in mf=0
 
 % plot
-hfig_rabi_coeff=figure();
+hfig_rabi_coeff=figure(12);
 plot_sph_surf(azim_grid,elev_grid,P_rabi);
 
 axis on;
