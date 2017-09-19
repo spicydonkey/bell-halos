@@ -1,4 +1,7 @@
-% Configuration file for distinguishable_halos.m
+% Configuration file for Bell test - momentum-spin entanglement
+%   Characterising single-beam Raman local operation for mF=1 
+%
+%
 
 %%% FLAGS
 configs.flags.do_corr_analysis=0;
@@ -24,9 +27,7 @@ configs.files.dirout=fullfile(configs.files.dir_data,'output');      % output di
 
 
 %% LOAD
-% version 1 - 10ns txy dead time
-% version 2 - 100ns txy dead time
-configs.load.version=2;         % TXY load stage version number
+configs.load.version=1;         % TXY load stage version number
 
 % file ID and simple pass/fail
 configs.load.id=1:25;         % file id numbers to use for analysis
@@ -67,8 +68,6 @@ configs.halo{2}.dR{1}=0.2;      % broad radial mask fractional width (in/out)
 configs.halo{2}.zcap=0.75;   % z-cutoff (fractional wrt radius)
 configs.halo{2}.string='$m_F=1$';
 
-% TODO - does boost need to be optimised for different g2 analysis?
-%   currently SINGLE boost applied to halo2 to obtain best g2_01_BB
 configs.halo{1}.boost=zeros(1,3);
 configs.halo{2}.boost=zeros(1,3);
 

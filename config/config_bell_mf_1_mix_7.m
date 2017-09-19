@@ -1,4 +1,7 @@
-% Configuration file for distinguishable_halos.m
+% Configuration file for Bell test - momentum-spin entanglement
+%   Characterising single-beam Raman local operation for mF=1 
+%
+%
 
 %%% FLAGS
 configs.flags.do_corr_analysis=0;
@@ -65,14 +68,12 @@ configs.halo{2}.dR{1}=0.2;      % broad radial mask fractional width (in/out)
 configs.halo{2}.zcap=0.75;   % z-cutoff (fractional wrt radius)
 configs.halo{2}.string='$m_F=1$';
 
-% TODO - does boost need to be optimised for different g2 analysis?
-%   currently SINGLE boost applied to halo2 to obtain best g2_01_BB
 configs.halo{1}.boost=zeros(1,3);
 configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
-configs.zone.nazim=60;
-configs.zone.nelev=45;
+configs.zone.nazim=20;
+configs.zone.nelev=15;
 
 configs.zone.binmethod=1;
 configs.zone.binwidth=2*sqrt(((2*pi)/configs.zone.nazim)*(pi/configs.zone.nelev));

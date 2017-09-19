@@ -1,4 +1,5 @@
 % Configuration file for Bell test - momentum-spin entanglement
+%   Characterising single-beam Raman local operation for mF=0 
 %
 %
 
@@ -17,8 +18,7 @@ vz=configs.misc.vel_z;
 
 
 %% FILES
-% configs.files.path='C:/Users/David/hebec/bell/d';
-configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_progress_201709\bell_test_2\d';
+configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_progress_201709\mix_mf_0\method_B\mix_2\d';
 
 % WARNING: MODIFYING BELOW DIR SETTINGS ARE NOT RECOMMENDED
 configs.files.dir_data=fileparts(configs.files.path);    % fullpath to data directory
@@ -30,10 +30,7 @@ configs.files.dirout=fullfile(configs.files.dir_data,'output');      % output di
 configs.load.version=1;         % TXY load stage version number
 
 % file ID and simple pass/fail
-% configs.load.id=1:8500;         % file id numbers to use for analysis
-% configs.load.mincount=500;         % min counts in window - 0 for no min
-% configs.load.maxcount=1200;          % max counts in window - Inf for no max
-configs.load.id=1:1000;         % file id numbers to use for analysis
+configs.load.id=1:78;         % file id numbers to use for analysis
 configs.load.mincount=0;         % min counts in window - 0 for no min
 configs.load.maxcount=Inf;          % max counts in window - Inf for no max
 
@@ -75,8 +72,8 @@ configs.halo{1}.boost=zeros(1,3);
 configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
-configs.zone.nazim=60;
-configs.zone.nelev=45;
+configs.zone.nazim=20;
+configs.zone.nelev=15;
 
 configs.zone.binmethod=1;
 configs.zone.binwidth=2*sqrt(((2*pi)/configs.zone.nazim)*(pi/configs.zone.nelev));
