@@ -277,3 +277,32 @@ c.TickLabelInterpreter='latex';
 c.Label.Interpreter='latex';
 % c.Label.String='$P(m_F=1)$';
 c.Label.String='$P(\uparrow)$';
+
+%% Bell correlations
+nn_sum=nn_halo{1}+nn_halo{2};   % total number of atoms with same momentum
+Jz=nn_halo{2}-nn_halo{1};       % total spin of atoms with same momentum
+
+% simple transform to match back-to-back momentum modes
+nn_sum_bb=flip_bb(nn_sum);
+Jz_bb=flip_bb(Jz);
+
+% evaluate correlation coefficient
+JJ=Jz.*Jz_bb;
+NN=nn_sum.*nn_sum_bb;
+
+E=mean(JJ,3)./mean(NN,3);
+
+% plot
+hfig_corr=figure(13);
+plot_sph_surf(azim_grid,elev_grid,E);
+
+axis on;
+box on;
+xlabel('$K_X$');
+ylabel('$K_Y$');
+zlabel('$K_Z$');
+% title(configs.halo{ii}.string);
+c=colorbar('SouthOutside');
+c.TickLabelInterpreter='latex';
+c.Label.Interpreter='latex';
+c.Label.String='$E(\theta,\phi)$';
