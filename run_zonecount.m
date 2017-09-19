@@ -6,9 +6,9 @@ clear all; clc; close all;
 
 %% load config file
 %%% BELL with mix3
-% config_bell_test;
+config_bell_test;
 
-%%% mix mf=1
+% %%% mix mf=1
 % config_bell_mf_1_mix_0;
 % config_bell_mf_1_mix_1;
 % config_bell_mf_1_mix_2;
@@ -17,10 +17,13 @@ clear all; clc; close all;
 % config_bell_mf_1_mix_5;
 % config_bell_mf_1_mix_6;
 % config_bell_mf_1_mix_7;
-
-%%% mix mf=0
-
-
+% 
+% %%% mix mf=0
+% config_bell_mf_0_mix_0;
+% config_bell_mf_0_mix_1;
+% config_bell_mf_0_mix_2;
+% config_bell_mf_0_mix_3;
+% config_bell_mf_0_mix_6;
 
 verbose=configs.flags.verbose;
 
