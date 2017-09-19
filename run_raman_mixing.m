@@ -75,14 +75,34 @@ for ii=1:2
     P_rabi{ii}=P_rabi{ii}(:,:,this_Isort);
 end
 
-%%% plot
+%% plot Rabi cycle
 hfig_rabi_flop=figure(20);
-for mm=1:2
-    for ii=1:floor(14/2):14
-        for jj=1:floor(19/2):19
-            plot(ampRaman_mf{mm},squeeze(P_rabi{mm}(ii,jj,:)),'o',...
+
+% same spherical grid for each experiment!
+nazim=size(azim{1},2)-1;    % subtract 1: bin centers from edge
+nelev=size(azim{1},1)-1;
+
+% grid locations to show Rabi flopping
+nazim_div=5;
+nelev_div=5;
+% nazim_div=floor(nazim/3);
+% nelev_div=floor(nelev/3);
+
+% misc
+pcolors=distinguishable_colors(nazim_div*nazim_div);
+pmarkers={'o','^'};
+plinestyles={'-','--'};
+
+for mm=2
+    counter=1;
+    for ii=1:ceil(nelev/nelev_div):nelev
+        for jj=1:ceil(nazim/nazim_div):nazim
+            plot(ampRaman_mf{mm},squeeze(P_rabi{mm}(ii,jj,:)),...
+                'LineStyle',plinestyles{mm},'Color',pcolors(counter,:),...
+                'Marker',pmarkers{mm},...   %'MarkerFaceColor',pcolors(counter,:),
                 'DisplayName',sprintf('%d: (%.2g,%.2g)',mm-1,ii,jj));
             hold on;
+            counter=counter+1;
         end
     end
 end
