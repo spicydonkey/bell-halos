@@ -6,7 +6,9 @@ clear all; clc; close all;
 
 %% set config
 % USER SET CONFIG!
-config_bell_test;
+% config_bell_test;
+% config_bell_mf_1_mix_1;
+config_bell_mf_1_mix_3;
 
 verbose=configs.flags.verbose;
 
@@ -186,10 +188,10 @@ switch binmethod
         azim_vec=linspace(-pi,pi,nazim);  % edges
 
         % scan over all elev angle
-        elev_vec=linspace(-pi/2,pi/2,nelev);
-%         % scan within z-cap
-%         elev_lim=asin(configs.halo{1}.zcap);
-%         elev_vec=linspace(-elev_lim,elev_lim,nelev);
+%         elev_vec=linspace(-pi/2,pi/2,nelev);
+        % scan within z-cap
+        elev_lim=asin(configs.halo{1}.zcap);
+        elev_vec=linspace(-elev_lim,elev_lim,nelev);
 
         azim_cent=azim_vec;
         elev_cent=elev_vec;
@@ -239,3 +241,24 @@ for ii=1:2
     c=colorbar('SouthOutside');
     c.Label.String='Avg. counts';
 end
+
+%% Mixing characterisation
+% Rabi cycle coefficient
+P_rabi=nn_halo_mean{2}./(nn_halo_mean{1}+nn_halo_mean{2});
+% 1 when all state in mf=1; 0 when all states in mf=0
+
+% plot
+hfig_rabi_coeff=figure();
+plot_sph_surf(azim_grid,elev_grid,P_rabi);
+
+axis on;
+box on;
+xlabel('$K_X$');
+ylabel('$K_Y$');
+zlabel('$K_Z$');
+% title(configs.halo{ii}.string);
+c=colorbar('SouthOutside');
+c.TickLabelInterpreter='latex';
+c.Label.Interpreter='latex';
+% c.Label.String='$P(m_F=1)$';
+c.Label.String='$P(\uparrow)$';
