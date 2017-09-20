@@ -7,7 +7,7 @@ function mat_flipped=flip_bb(mat_thphi)
 % mat_flipped: angle inverted (back-to-back on sphere)
 
 nazim=size(mat_thphi,2);
-n_rot_azim=floor(nazim/2);
+n_rot_azim=floor(nazim/2);      % isn't perfect for matrices with ODD length in AZIM
 
 mat_flipped=circshift(mat_thphi,n_rot_azim,2);  % rotate azimuthal angle by approx pi
 mat_flipped=flipud(mat_flipped);        % flip elevation

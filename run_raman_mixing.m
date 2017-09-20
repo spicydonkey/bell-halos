@@ -102,7 +102,7 @@ pcolors=distinguishable_colors(nazim_div*nazim_div);
 pmarkers={'o','^'};
 plinestyles={'-','--'};
 
-for mm=2
+for mm=1:2
     counter=1;
     for ii=1:ceil(nelev/nelev_div):nelev
         for jj=1:ceil(nazim/nazim_div):nazim
@@ -131,7 +131,7 @@ nelev_div=5;
 % nazim_div=floor(nazim/1);
 % nelev_div=floor(nelev/1);
 
-for mm=2
+for mm=1:2
     counter=1;
     for ii=1:ceil(nelev/nelev_div):nelev
         for jj=1:ceil(nazim/nazim_div):nazim
