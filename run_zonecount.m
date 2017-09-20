@@ -4,9 +4,15 @@
 
 clear all; clc; close all;
 
+%% CONFIG
+override_config=0;
+do_g2_corr=1;
+
+
 %% load config file
-%%% BELL with mix3
-config_bell_test;
+%%% BELL
+config_bell_run_1;
+% config_bell_test;   % run2 - mix3
 
 %%% mF=0
 % config_bell_mf_0_mix_0;
@@ -15,7 +21,6 @@ config_bell_test;
 % config_bell_mf_1_mix_0;
 % config_bell_mf_1_mix_7;
 
-override_config=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OVERRIDE CONFIG DEFINED FROM FILE
 if override_config
@@ -317,3 +322,19 @@ c=colorbar('SouthOutside');
 c.TickLabelInterpreter='latex';
 c.Label.Interpreter='latex';
 c.Label.String='$E(\theta,\phi)$';
+
+%% calculate g2 correlation
+% build halo for g2 corr analysis
+nshot=size(halo_k{1},1);
+halo_k0=cell(nshot,2);
+for ii=1:2
+    halo_k0(:,ii)=halo_k{ii};
+end
+% halo centre correction
+for ii=1:2
+    halo_k0(:,ii)=boost_zxy(halo_k0(:,ii),configs.halo{ii}.boost);
+end
+
+if do_g2_corr
+    corr=halo_g2_manager(halo_k0,configs,verbose);
+end
