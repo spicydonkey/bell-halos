@@ -26,7 +26,16 @@ clearvars config_list;
 for ii=1:nconfigs
     % load the config "configs"
     run(config_files{ii});
-    config_list(ii)=configs;    % store config
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % OVERRIDE CONFIG DEFINED FROM FILE
+    
+    configs.zone.nazim=9;
+    configs.zone.nelev=6;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    % store config
+    config_list(ii)=configs;    
     
     % run analysis
     [nn_halo{ii},azim{ii},elev{ii}]=sph_zone_analysis(configs,verbose);

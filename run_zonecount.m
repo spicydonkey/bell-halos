@@ -8,22 +8,21 @@ clear all; clc; close all;
 %%% BELL with mix3
 config_bell_test;
 
-% %%% mix mf=1
-% config_bell_mf_1_mix_0;
-% config_bell_mf_1_mix_1;
-% config_bell_mf_1_mix_2;
-% config_bell_mf_1_mix_3;
-% config_bell_mf_1_mix_4;
-% config_bell_mf_1_mix_5;
-% config_bell_mf_1_mix_6;
-% config_bell_mf_1_mix_7;
-% 
-% %%% mix mf=0
+%%% mF=0
 % config_bell_mf_0_mix_0;
-% config_bell_mf_0_mix_1;
-% config_bell_mf_0_mix_2;
-% config_bell_mf_0_mix_3;
-% config_bell_mf_0_mix_6;
+
+%%% mF=1
+% config_bell_mf_1_mix_0;
+% config_bell_mf_1_mix_7;
+
+override_config=0;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% OVERRIDE CONFIG DEFINED FROM FILE
+if override_config 
+    configs.zone.nazim=9;
+    configs.zone.nelev=6;
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 verbose=configs.flags.verbose;
 
@@ -45,6 +44,7 @@ col={'b','r'};
 
 % preallocate
 halo_k=cell(2,1);
+halo_zxy0=cell(2,1);
 bec_cent=cell(2,1);
 halo_cent=cell(2,1);
 ecent=cell(2,1);
@@ -99,6 +99,11 @@ for ii=1:2
     dld_deadtime=200e-9;
     
     [this_halo_zxy0,this_bool_ring]=postfilter_dld_ring(this_halo_zxy0,vz*dld_deadtime);
+    % ringing summary
+    if true     % verbose
+        idx_shots_ring=find(cellfun(@(x) sum(x),this_bool_ring));
+        warning('Ringing detected in halo: %d/%d shots',numel(idx_shots_ring),numel(this_bool_ring));
+    end
     
     %% plot
     figure(9);
@@ -154,6 +159,7 @@ for ii=1:2
     
     %% store this mF results
     halo_k{ii}=this_halo_k;
+    halo_zxy0{ii}=this_halo_zxy0;
     
     % misc
     bool_empty_halo{ii}=this_bool_empty_halo;
@@ -242,7 +248,7 @@ nn_halo_mean=cellfun(@(x)mean(x,3),nn_halo,'UniformOutput',false);
 nn_halo_std=cellfun(@(x)std(x,0,3),nn_halo,'UniformOutput',false);
 nn_halo_serr=cellfun(@(x)std(x,0,3)/sqrt(size(x,3)),nn_halo,'UniformOutput',false);
 
-%%% plot
+%% plot - zone count distribution
 hfig_halo_zone_density=figure(11);
 for ii=1:2
     subplot(1,2,ii);
