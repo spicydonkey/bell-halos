@@ -7,6 +7,8 @@ clear all; clc; close all;
 %% configs
 verbose=0;
 
+override_config=1;
+
 % config files for characterising mixing
 path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_bell_mf_*';
 config_files=dir(path_config);
@@ -29,9 +31,10 @@ for ii=1:nconfigs
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % OVERRIDE CONFIG DEFINED FROM FILE
-    
-    configs.zone.nazim=9;
-    configs.zone.nelev=6;
+    if override_config
+        configs.zone.nazim=20;
+        configs.zone.nelev=10;
+    end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % store config

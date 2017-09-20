@@ -15,12 +15,12 @@ config_bell_test;
 % config_bell_mf_1_mix_0;
 % config_bell_mf_1_mix_7;
 
-override_config=0;
+override_config=1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OVERRIDE CONFIG DEFINED FROM FILE
-if override_config 
-    configs.zone.nazim=9;
-    configs.zone.nelev=6;
+if override_config
+    configs.zone.nazim=90;
+    configs.zone.nelev=45;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -209,10 +209,10 @@ switch binmethod
         azim_vec=linspace(-pi,pi,nazim);  % edges
 
         % scan over all elev angle
-%         elev_vec=linspace(-pi/2,pi/2,nelev);
-        % scan within z-cap
-        elev_lim=asin(configs.halo{1}.zcap);
-        elev_vec=linspace(-elev_lim,elev_lim,nelev);
+        elev_vec=linspace(-pi/2,pi/2,nelev);    % easier to set nelev
+%         % scan within z-cap
+%         elev_lim=asin(configs.halo{1}.zcap);
+%         elev_vec=linspace(-elev_lim,elev_lim,nelev);
 
         azim_cent=azim_vec;
         elev_cent=elev_vec;
@@ -303,7 +303,7 @@ E=mean(JJ,3)./mean(NN,3);
 % Bell inequality in CHSH form is a linear combination of 4 correlation
 % coefficients at a precisely related rotation angle configuration.
 
-% plot
+%% plot correlations
 hfig_corr=figure(13);
 plot_sph_surf(azim_grid,elev_grid,E);
 
