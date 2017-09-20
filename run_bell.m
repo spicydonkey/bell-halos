@@ -4,8 +4,8 @@
 
 %% config
 path_data_dir='C:\Users\HE BEC\bell';           % path to data directory
-path_data_bell='bell_v1_2_20170920_coarse';        % bell test
-path_data_loop='loop_v1_20170920.mat';          % local operations
+path_data_bell='bell_v1_3_20170920_20_15_tight';        % bell test
+path_data_loop='loop_v1_20170920_20_15';          % local operations
 
 raman_amp=0.37;     % this run's LO config (raman amplitude)
 
@@ -45,4 +45,13 @@ dTh_bb=Theta(:,:,2)-flip_bb(Theta(:,:,1));
 %% 
 %%% plot correlation vs theta
 hfig_corr_v_theta=figure(1);
-plot(dTh_bb(:),E(:),'o')
+plot(dTh_bb(:),E(:),'o');
+
+xlim([0,pi]);
+ylim([-1,1]);
+xlabel('$\Delta \theta$');
+ylabel('$E$');
+
+% hidden variable prediction
+hold on;
+line([0,pi],[-1,1],'Color','r');
