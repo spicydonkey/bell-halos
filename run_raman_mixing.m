@@ -75,6 +75,15 @@ for ii=1:2
     P_rabi{ii}=P_rabi{ii}(:,:,this_Isort);
 end
 
+
+%% Evaluate rotation angle from the two-level population ratio
+% formula: Pr(ORIGIGNAL_STATE)=cos(ROT_ANGLE/2)^2
+%   ROT_ANGLE >= 0 by convention
+% TODO - can only tell rotation angle modulo pi
+
+Theta=cellfun(@(Pr) 2*acos(sqrt(Pr)),P_rabi,'UniformOutput',false);
+Theta{1}=pi-Theta{1};   % mf=0
+
 %% plot Rabi cycle
 hfig_rabi_flop=figure(20);
 
@@ -85,8 +94,8 @@ nelev=size(azim{1},1)-1;
 % grid locations to show Rabi flopping
 nazim_div=5;
 nelev_div=5;
-% nazim_div=floor(nazim/3);
-% nelev_div=floor(nelev/3);
+% nazim_div=floor(nazim/1);
+% nelev_div=floor(nelev/1);
 
 % misc
 pcolors=distinguishable_colors(nazim_div*nazim_div);
@@ -112,3 +121,32 @@ box on;
 hold off;
 xlabel('Raman Amplitude');
 ylabel('$P(\uparrow)$');
+
+%% plot rotation angle
+hfig_theta_lo=figure(21);
+
+% grid locations to show Rabi flopping
+nazim_div=5;
+nelev_div=5;
+% nazim_div=floor(nazim/1);
+% nelev_div=floor(nelev/1);
+
+for mm=2
+    counter=1;
+    for ii=1:ceil(nelev/nelev_div):nelev
+        for jj=1:ceil(nazim/nazim_div):nazim
+            plot(ampRaman_mf{mm},squeeze(Theta{mm}(ii,jj,:)),...
+                'LineStyle',plinestyles{mm},'Color',pcolors(counter,:),...
+                'Marker',pmarkers{mm},...   %'MarkerFaceColor',pcolors(counter,:),
+                'DisplayName',sprintf('%d: (%.2g,%.2g)',mm-1,ii,jj));
+            hold on;
+            counter=counter+1;
+        end
+    end
+end
+leg=legend('show','Location','eastoutside');
+title(leg,'$m_F$: (elev ii, azim jj)');
+box on;
+hold off;
+xlabel('Raman Amplitude');
+ylabel('$\Theta$');
