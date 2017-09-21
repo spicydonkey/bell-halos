@@ -5,14 +5,18 @@
 clear all; clc; close all;
 
 %% CONFIG
-override_config=0;
-do_g2_corr=1;
+override_config=1;
+    load_config_default=1;
+        config_default_id=1;
+    VERBOSE=0;
+do_g2_corr=0;
 
 
 %% load config file
 %%% BELL
-config_bell_run_1;
-% config_bell_test;   % run2 - mix3
+% config_bell_run_1;
+% config_bell_run_2;
+config_bell_run_3;
 
 %%% mF=0
 % config_bell_mf_0_mix_0;
@@ -21,15 +25,21 @@ config_bell_run_1;
 % config_bell_mf_1_mix_0;
 % config_bell_mf_1_mix_7;
 
+verbose=configs.flags.verbose;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OVERRIDE CONFIG DEFINED FROM FILE
 if override_config
+    verbose=VERBOSE;
+    
     configs.zone.nazim=90;
     configs.zone.nelev=45;
+    
+    if load_config_default
+        run(sprintf('config_default_%d',config_default_id));
+    end
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-verbose=configs.flags.verbose;
 
 
 %% load TXY

@@ -183,11 +183,11 @@ switch binmethod
 
         azim_vec=linspace(-pi,pi,nazim);  % edges
 
-        % scan over all elev angle
-        elev_vec=linspace(-pi/2,pi/2,nelev);    % easier to set nelev
-%         % scan within z-cap
-%         elev_lim=asin(configs.halo{1}.zcap);
-%         elev_vec=linspace(-elev_lim,elev_lim,nelev);
+%         % scan over all elev angle
+%         elev_vec=linspace(-pi/2,pi/2,nelev);    % easier to set nelev
+        % scan within z-cap
+        elev_lim=asin(configs.halo{1}.zcap);
+        elev_vec=linspace(-elev_lim,elev_lim,nelev);
 
         azim_cent=azim_vec;
         elev_cent=elev_vec;
