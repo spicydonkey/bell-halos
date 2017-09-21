@@ -17,8 +17,7 @@ vz=configs.misc.vel_z;
 
 
 %% FILES
-% configs.files.path='C:/Users/David/hebec/bell/run_1/d';
-configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_progress_201709\bell_test_1_long\d';
+configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\d';
 
 % WARNING: MODIFYING BELOW DIR SETTINGS ARE NOT RECOMMENDED
 configs.files.dir_data=fileparts(configs.files.path);    % fullpath to data directory
@@ -30,7 +29,7 @@ configs.files.dirout=fullfile(configs.files.dir_data,'output');      % output di
 configs.load.version=1;         % TXY load stage version number
 
 % file ID and simple pass/fail
-configs.load.id=1:3021;             % file id numbers to use for analysis
+configs.load.id=1:4000;             % file id numbers to use for analysis
 configs.load.mincount=0;            % min counts in window - 0 for no min
 configs.load.maxcount=Inf;          % max counts in window - Inf for no max
 
@@ -68,15 +67,12 @@ configs.halo{2}.dR{1}=0.2;      % broad radial mask fractional width (in/out)
 configs.halo{2}.zcap=0.75;   % z-cutoff (fractional wrt radius)
 configs.halo{2}.string='$m_F=1$';
 
-boost_com=[0,0,0];          %[0,1e-3,0];
-boost_diff=[0,0,-7e-3];
-
-configs.halo{1}.boost=boost_com-boost_diff/2;
-configs.halo{2}.boost=boost_com+boost_diff/2;
+configs.halo{1}.boost=zeros(1,3);
+configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
-configs.zone.nazim=40;
-configs.zone.nelev=20;
+configs.zone.nazim=90;
+configs.zone.nelev=45;
 
 configs.zone.binmethod=1;
 configs.zone.binwidth=2*sqrt(((2*pi)/configs.zone.nazim)*(pi/configs.zone.nelev));
