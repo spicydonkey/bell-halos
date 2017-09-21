@@ -4,7 +4,7 @@
 
 %% config
 path_data_dir='C:\Users\HE BEC\bell';           % path to data directory
-path_data_bell='bell_v1_3_20170920_wbb';        % bell test
+path_data_bell='bell_v1_3_20170921_9000';        % bell test
 path_data_loop='loop_v1_20170920_20_15';          % local operations
 
 raman_amp=0.37;     % this run's LO config (raman amplitude)
@@ -57,7 +57,11 @@ axis on;
 xlabel('$K_x$');
 ylabel('$K_y$');
 zlabel('$K_z$');
-colorbar('SouthOutside');
+cbar=colorbar('SouthOutside');
+cbar.Label.String='$\Delta \theta$';
+
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
 
 %% process data
 % sort data
@@ -93,7 +97,7 @@ box on;
 %% smooth correlations
 % Dth is "averaged" angular difference (vs. DTh)
 
-n_Dth_bin=21;
+n_Dth_bin=31;
 Dth_edge=linspace(-pi,pi,n_Dth_bin+1);
 Dth_cent=Dth_edge(1:end-1)+0.5*diff(Dth_edge);
 

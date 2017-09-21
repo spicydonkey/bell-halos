@@ -8,15 +8,15 @@ clear all; clc; close all;
 override_config=1;
     load_config_default=1;
         config_default_id=1;
-    VERBOSE=0;
+    VERBOSE=1;
 do_g2_corr=0;
 
 
 %% load config file
 %%% BELL
 % config_bell_run_1;
-% config_bell_run_2;
-config_bell_run_3;
+config_bell_run_2;
+% config_bell_run_3;
 
 %%% mF=0
 % config_bell_mf_0_mix_0;
@@ -25,7 +25,7 @@ config_bell_run_3;
 % config_bell_mf_1_mix_0;
 % config_bell_mf_1_mix_7;
 
-verbose=configs.flags.verbose;
+verbose=configs.flags.verbose;      % verbose - used in script
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OVERRIDE CONFIG DEFINED FROM FILE
@@ -276,6 +276,43 @@ for ii=1:2
     title(configs.halo{ii}.string);
     c=colorbar('SouthOutside');
     c.Label.String='Avg. counts';
+    c.TickLabelInterpreter='latex';
+    c.Label.Interpreter='latex';
+end
+
+%% cull background streak
+% mf=1 halo looks fine
+max_nn=max(max(nn_halo_mean{2}));   % max counts in zone from mf=1
+
+% background from spontaneous scattering leaves a bright streak in mf=0
+nn_thresh=max_nn*2/3;     % TODO - seems to work
+bool_thresh=(nn_halo_mean{1}>nn_thresh);    % boolean on meshgrid to treat as noisy
+
+%%% cull mf=0
+% set over threshold to NaN
+nn_halo{1}(repmat(bool_thresh,[1,1,size(nn_halo{1},3)]))=NaN;
+
+% redo statistics - shouldn't change!
+%%% statistics
+nn_halo_mean=cellfun(@(x)mean(x,3),nn_halo,'UniformOutput',false);
+nn_halo_std=cellfun(@(x)std(x,0,3),nn_halo,'UniformOutput',false);
+nn_halo_serr=cellfun(@(x)std(x,0,3)/sqrt(size(x,3)),nn_halo,'UniformOutput',false);
+
+%% plot - background filtered distribution
+hfig_halo_zone_density=figure(14);
+for ii=1:2
+    subplot(1,2,ii);
+    plot_sph_surf(azim_grid,elev_grid,nn_halo_mean{ii});
+    axis on;
+    box on;
+    xlabel('$K_X$');
+    ylabel('$K_Y$');
+    zlabel('$K_Z$');
+    title(configs.halo{ii}.string);
+    c=colorbar('SouthOutside');
+    c.Label.String='Avg. counts';
+    c.TickLabelInterpreter='latex';
+    c.Label.Interpreter='latex';
 end
 
 %% Mixing characterisation
