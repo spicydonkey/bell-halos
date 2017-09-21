@@ -13,10 +13,13 @@ do_g2_corr=0;
 
 
 %% load config file
+%%% NO MIXING
+
+
 %%% BELL
 % config_bell_run_1;
-config_bell_run_2;
-% config_bell_run_3;
+% config_bell_run_2;
+config_bell_run_3;
 
 %%% mF=0
 % config_bell_mf_0_mix_0;
@@ -337,6 +340,8 @@ c.Label.Interpreter='latex';
 c.Label.String='$P(\uparrow)$';
 
 %% Bell correlations
+% TODO - fix all uncertainties in this!
+
 nn_sum=nn_halo{1}+nn_halo{2};   % total number of atoms with same momentum
 Jz=nn_halo{2}-nn_halo{1};       % total spin of atoms with same momentum
 
