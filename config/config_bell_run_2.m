@@ -29,7 +29,7 @@ configs.files.dirout=fullfile(configs.files.dir_data,'output');      % output di
 configs.load.version=1;         % TXY load stage version number
 
 % file ID and simple pass/fail
-configs.load.id=1:4000; %9000             % file id numbers to use for analysis
+configs.load.id=1:9000; %9000             % file id numbers to use for analysis
 configs.load.mincount=0;            % min counts in window - 0 for no min
 configs.load.maxcount=Inf;          % max counts in window - Inf for no max
 

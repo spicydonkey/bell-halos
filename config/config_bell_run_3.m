@@ -5,7 +5,7 @@
 %%% FLAGS
 configs.flags.do_corr_analysis=0;
 configs.flags.force_all_stages=0;    % force all the stages to run (useful for debug)
-configs.flags.verbose=2;
+configs.flags.verbose=1;
 configs.flags.savedata=0;       % TODO - req'd currently since each stage passes data by save/load to disk
 configs.flags.archive_txy=0;        % archives loaded TXY as .mat file for future reuse
 configs.flags.graphics=1;       % toggle to control graphics/plotting options
@@ -17,7 +17,7 @@ vz=configs.misc.vel_z;
 
 
 %% FILES
-configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\d';
+configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_progress_201709\bell_test_3\d';
 
 % WARNING: MODIFYING BELOW DIR SETTINGS ARE NOT RECOMMENDED
 configs.files.dir_data=fileparts(configs.files.path);    % fullpath to data directory
@@ -29,7 +29,7 @@ configs.files.dirout=fullfile(configs.files.dir_data,'output');      % output di
 configs.load.version=1;         % TXY load stage version number
 
 % file ID and simple pass/fail
-configs.load.id=1:4000;             % file id numbers to use for analysis
+configs.load.id=1:500;             % file id numbers to use for analysis
 configs.load.mincount=0;            % min counts in window - 0 for no min
 configs.load.maxcount=Inf;          % max counts in window - Inf for no max
 
@@ -72,7 +72,8 @@ configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
 configs.zone.nazim=90;
-configs.zone.nelev=45;
+zcap=0.5*(configs.halo{1}.zcap+configs.halo{2}.zcap);   % avg zcap
+configs.zone.nelev=round((asin(zcap)/(pi/2))*configs.zone.nazim/2);
 
 configs.zone.binmethod=1;
 configs.zone.binwidth=2*sqrt(((2*pi)/configs.zone.nazim)*(pi/configs.zone.nelev));
@@ -100,11 +101,11 @@ configs.corr{2}.type.comp=1;
 configs.corr{2}.type.coord='cart';
 configs.corr{2}.type.opt='BB';
 configs.corr{2}.lim=0.2*repmat([-1,1],[3,1]);
-configs.corr{2}.nBin=11*[1,1,1];   % number of bins
+configs.corr{2}.nBin=15*[1,1,1];   % number of bins
 
 % 3) Single-halo cart BB - m_J=1
 configs.corr{3}.type.comp=2;
 configs.corr{3}.type.coord='cart';
 configs.corr{3}.type.opt='BB';
 configs.corr{3}.lim=0.2*repmat([-1,1],[3,1]);
-configs.corr{3}.nBin=11*[1,1,1];   % number of bins
+configs.corr{3}.nBin=15*[1,1,1];   % number of bins

@@ -92,6 +92,9 @@ configs.zone.binwidth=2*sqrt(((2*pi)/configs.zone.nazim)*(pi/configs.zone.nelev)
 
 
 %% g2 corr
+% clear already predefined confgs
+configs.corr={};
+
 % 1) X-halo Cart BB
 configs.corr{1}.type.comp=[1,2];           % components to analysis: cross halo 1,2
 configs.corr{1}.type.coord='cart';         % Cartesian (ZXY)

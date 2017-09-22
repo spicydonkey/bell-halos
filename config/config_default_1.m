@@ -4,8 +4,8 @@
 
 
 %% Spherical zones
-configs.zone.nazim=90;
-configs.zone.nelev=45;
+configs.zone.nazim=3;
+configs.zone.nelev=16;
 
 configs.zone.binmethod=1;
 
