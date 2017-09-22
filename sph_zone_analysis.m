@@ -123,9 +123,7 @@ for ii=1:2
     [this_Nsc,this_dk]=halo_characterise(this_halo_k,configs.halo{ii}.zcap,verbose);
     this_halo_modeocc=halo_mocc(1,0.033,this_Nsc,0.03);
     
-    %% Halo centering
-    % boost for best g2 BB centering
-    this_halo_k=boost_zxy(this_halo_k,configs.halo{ii}.boost);
+
     
     %% remove shots with zero counts in halo
     % check if any halo is empty
@@ -157,6 +155,20 @@ bool_empty_halo=or(bool_empty_halo{:});     % combine with OR
 fout.id_ok=fout.id_ok(~bool_empty_halo);    % update id_ok
 halo_k=cellfun(@(x) x(~bool_empty_halo),halo_k,'UniformOutput',false);
 
+%% reshape data structure
+temp_halo_k=cell(size(halo_k{1},1),2);
+for ii=1:2
+    temp_halo_k(:,ii)=halo_k{ii};
+end
+halo_k=temp_halo_k;
+clearvars temp_halo_k;
+
+% NOTE: improving halo centering most likely unnecessary for
+    % characterising rotation angle
+    % so we stick to just unit-sphere fitted halo_k
+%     %% Halo centering
+%     % boost for best g2 BB centering
+%     this_halo_k=boost_zxy(this_halo_k,configs.halo{ii}.boost);
 
 %% Zonal analysis
 %%% config zones, binning
@@ -213,8 +225,7 @@ end
 % TODO - currently binning with fixed bin width - try Gaussian convolution
 nn_halo=cell(2,1);
 for ii=1:2
-    %     nn_halo{ii}=halo_zone_density(halo_k{ii},azim_grid,elev_grid,binwidth,binmethod);
-    nn_halo{ii}=halo_zone_density(halo_k{ii},azim_vec,elev_vec,binwidth,binmethod);
+    nn_halo{ii}=halo_zone_density(halo_k(:,ii),azim_vec,elev_vec,binwidth,binmethod);
     nn_halo{ii}=cat(3,nn_halo{ii}{:});  % nazim x nelev x nshot array
 end
 

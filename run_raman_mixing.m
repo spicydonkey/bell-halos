@@ -37,8 +37,8 @@ for ii=1:nconfigs
     if override_config
         verbose=VERBOSE;
         
-        configs.zone.nazim=40;
-        configs.zone.nelev=20;
+        configs.zone.nazim=30;
+        configs.zone.nelev=10;
         
         if load_config_default
             run(sprintf('config_default_%d',config_default_id));
@@ -104,6 +104,7 @@ end
 
 Theta=cellfun(@(Pr) 2*acos(sqrt(Pr)),P_rabi,'UniformOutput',false);
 Theta{1}=pi-Theta{1};   % mf=0
+% TODO - why not Theta{1}=pi+Theta{1} ??
 
 %% plot Rabi cycle
 hfig_rabi_flop=figure(20);
