@@ -43,24 +43,26 @@ configs.load.window{2}=[-35e-3,35e-3];    % X [m]
 configs.load.window{3}=[-35e-3,35e-3];    % Y [m]
 
 %% HALO
-% configs.bec.pos{1}=[1.00542e+01,-3.6e-3,4.3e-3];   % approx condensate locations (z,x,y)
+% configs.bec.pos{1}=[1.6528,-3.3e-3,4.1e-3];   % approx condensate locations (z,x,y)
 % configs.bec.Rmax{1}=6e-3;      % max condensate sph radius
-% configs.bec.dR_tail{1}=1.5;     % BEC tail radial frac diff
-% configs.bec.pos{2}=[1.00231e+01,-2.2e-3,0.8e-3];
+% configs.bec.dR_tail{1}=2;     % BEC tail radial frac diff
+% configs.bec.pos{2}=[1.6445,-3.3e-3,0.0e-3];
 % configs.bec.Rmax{2}=6e-3;
-% configs.bec.dR_tail{2}=1.5;
+% configs.bec.dR_tail{2}=2;
 % 
 % configs.halo.R{1}=26e-3;     % estimated radius of halo
 % configs.halo.dR{1}=0.25;      % broad radial mask fractional width (in/out)
 % configs.halo.R{2}=24e-3;
-% configs.halo.dR{2}=0.27;
+% configs.halo.dR{2}=0.25;
 % 
 % configs.halo.zcap=0.8;   % z-cutoff (fractional wrt radius)
 % 
+% % TODO - does boost need to be optimised for different g2 analysis?
+% %   currently SINGLE boost applied to halo2 to obtain best g2_01_BB
 % configs.halo.boost{1}=zeros(1,3);
-% configs.halo.boost{2}=[0.04,0.0,-0.02];
+% configs.halo.boost{2}=[0.025,0.0,0.0];   %[0.02,0.0,0.0];
 
-configs.bec{1}.pos{1}=[1.00542e+01,-3.6e-3,4.3e-3];   % approx condensate locations (z,x,y)
+configs.bec{1}.pos{1}=[1.00560e+01,-3.3e-3,4.2e-3];   % approx condensate locations (z,x,y)
 configs.bec{1}.Rmax{1}=6e-3;      % max condensate sph radius
 configs.bec{1}.dR_tail{1}=1.5;     % BEC tail radial frac diff
 
@@ -69,17 +71,17 @@ configs.halo{1}.dR{1}=0.25;      % broad radial mask fractional width (in/out)
 configs.halo{1}.zcap=0.8;   % z-cutoff (fractional wrt radius)
 configs.halo{1}.string='$m_F=0$';
 
-configs.bec{2}.pos{1}=[1.00231e+01,-2.2e-3,0.8e-3];   % approx condensate locations (z,x,y)
+configs.bec{2}.pos{1}=[1.00250e+01,-2.3e-3,0.6e-3];   % approx condensate locations (z,x,y)
 configs.bec{2}.Rmax{1}=6e-3;      % max condensate sph radius
 configs.bec{2}.dR_tail{1}=1;     % BEC tail radial frac diff
 
 configs.halo{2}.R{1}=24e-3;     % estimated radius of halo
-configs.halo{2}.dR{1}=0.27;      % broad radial mask fractional width (in/out)
+configs.halo{2}.dR{1}=0.3;      % broad radial mask fractional width (in/out)
 configs.halo{2}.zcap=0.8;   % z-cutoff (fractional wrt radius)
 configs.halo{2}.string='$m_F=1$';
 
 configs.halo{1}.boost=zeros(1,3);
-configs.halo{2}.boost=[0.04,0.0,-0.02];
+configs.halo{2}.boost=[0.025,0.0,0.0];
 
 
 %% Spherical zones
@@ -111,16 +113,16 @@ configs.corr{1}.type.opt='BB';             % BB / CL
 configs.corr{1}.lim=0.2*repmat([-1,1],[3,1]);
 configs.corr{1}.nBin=15*[1,1,1];   % number of bins
 
-% 2) Single-halo cart BB - m_J=0
-configs.corr{2}.type.comp=1;
-configs.corr{2}.type.coord='cart';
-configs.corr{2}.type.opt='BB';
-configs.corr{2}.lim=0.2*repmat([-1,1],[3,1]);
-configs.corr{2}.nBin=11*[1,1,1];   % number of bins
-
-% 3) Single-halo cart BB - m_J=1
-configs.corr{3}.type.comp=2;
-configs.corr{3}.type.coord='cart';
-configs.corr{3}.type.opt='BB';
-configs.corr{3}.lim=0.2*repmat([-1,1],[3,1]);
-configs.corr{3}.nBin=11*[1,1,1];   % number of bins
+% % 2) Single-halo cart BB - m_J=0
+% configs.corr{2}.type.comp=1;
+% configs.corr{2}.type.coord='cart';
+% configs.corr{2}.type.opt='BB';
+% configs.corr{2}.lim=0.2*repmat([-1,1],[3,1]);
+% configs.corr{2}.nBin=11*[1,1,1];   % number of bins
+% 
+% % 3) Single-halo cart BB - m_J=1
+% configs.corr{3}.type.comp=2;
+% configs.corr{3}.type.coord='cart';
+% configs.corr{3}.type.opt='BB';
+% configs.corr{3}.lim=0.2*repmat([-1,1],[3,1]);
+% configs.corr{3}.nBin=11*[1,1,1];   % number of bins

@@ -29,7 +29,7 @@ configs.files.dirout=fullfile(configs.files.dir_data,'output');      % output di
 configs.load.version=1;         % TXY load stage version number
 
 % file ID and simple pass/fail
-configs.load.id=1:500;             % file id numbers to use for analysis
+configs.load.id=1:10355;             % file id numbers to use for analysis
 configs.load.mincount=0;            % min counts in window - 0 for no min
 configs.load.maxcount=Inf;          % max counts in window - Inf for no max
 
@@ -68,12 +68,13 @@ configs.halo{2}.zcap=0.75;   % z-cutoff (fractional wrt radius)
 configs.halo{2}.string='$m_F=1$';
 
 configs.halo{1}.boost=zeros(1,3);
-configs.halo{2}.boost=zeros(1,3);
+configs.halo{2}.boost=[0.002,0,-0.05];
 
 %% Spherical zones
 configs.zone.nazim=90;
-zcap=0.5*(configs.halo{1}.zcap+configs.halo{2}.zcap);   % avg zcap
-configs.zone.nelev=round((asin(zcap)/(pi/2))*configs.zone.nazim/2);
+configs.zone.nelev=45;
+% zcap=0.5*(configs.halo{1}.zcap+configs.halo{2}.zcap);   % avg zcap
+% configs.zone.nelev=round((asin(zcap)/(pi/2))*configs.zone.nazim/2);
 
 configs.zone.binmethod=1;
 configs.zone.binwidth=2*sqrt(((2*pi)/configs.zone.nazim)*(pi/configs.zone.nelev));
