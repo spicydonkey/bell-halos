@@ -6,11 +6,10 @@ clear all; clc; close all;
 
 %% CONFIG
 override_config=0;
-    load_config_default=1;
+    load_config_default=0;
         config_default_id=1;
     VERBOSE=1;
 do_g2_corr=0;
-
 
 %% load config file
 %%% NO MIXING
@@ -114,7 +113,7 @@ for ii=1:2
     this_halo_zxy0=cellfun(@(ZXY,BOOL)ZXY(~BOOL,:),this_halo_zxy0,this_bool_zcap,'UniformOutput',false);
     
     %% Filter DLD detector ringing
-    dld_deadtime=500e-9;    % culling liberally
+    dld_deadtime=300e-9;
     
     [this_halo_zxy0,this_bool_ring]=postfilter_dld_ring(this_halo_zxy0,vz*dld_deadtime);
     % ringing summary
@@ -209,20 +208,13 @@ clearvars temp_halo_k;
 
 %% Improve HALO CENTRES by g2 analysis
 % build halo for g2 corr analysis
-% nshot=size(halo_k{1},1);
-% nshot=size(halo_k,1);
-% halo_k0=cell(nshot,2);
 halo_k0=cell(size(halo_k));     % boosted halo in k-space
-% for ii=1:2
-%     halo_k0(:,ii)=halo_k{ii};
-% end
 
 % halo centre correction
 for ii=1:2
-%     halo_k0(:,ii)=boost_zxy(halo_k0(:,ii),configs.halo{ii}.boost);
     halo_k0(:,ii)=boost_zxy(halo_k(:,ii),configs.halo{ii}.boost);
 end
-clearvars halo_k;   % work with centered halo
+% clearvars halo_k;   % work with centered halo
 
 % tight radial bin
 dk_mask=0.06;       % half width of radial mask
@@ -230,7 +222,7 @@ temp_K=cellfun(@(x)zxy2rdist(x,[0,0,0]),halo_k0,'UniformOutput',false);      % g
 bool_K_mask=cellfun(@(x)abs(x-1)<dk_mask,temp_K,'UniformOutput',false);       % boolean to IN-halo
 halo_k0=cellfun(@(x,b)x(b,:),halo_k0,bool_K_mask,'UniformOutput',false);   % crop!
 n_in_K_mask=cellfun(@(x)sum(x)./numel(x),bool_K_mask);
-n_in_K_mask=[mean(n_in_K_mask,1);std(n_in_K_mask,1)];   % statistics (mean;std)
+n_in_K_mask=[mean(n_in_K_mask,1,'omitnan');std(n_in_K_mask,1,'omitnan')];   % statistics (mean;std)
 
 if verbose>0
     % summary
@@ -267,11 +259,11 @@ switch binmethod
 
         azim_vec=linspace(-pi,pi,nazim);  % edges
 
-%         % scan over all elev angle
-%         elev_vec=linspace(-pi/2,pi/2,nelev);    % easier to set nelev
-        % scan within z-cap
-        elev_lim=asin(configs.halo{1}.zcap);
-        elev_vec=linspace(-elev_lim,elev_lim,nelev);
+        % scan over all elev angle
+        elev_vec=linspace(-pi/2,pi/2,nelev);    % easier to set nelev
+%         % scan within z-cap
+%         elev_lim=asin(configs.halo{1}.zcap);
+%         elev_vec=linspace(-elev_lim,elev_lim,nelev);
 
         azim_cent=azim_vec;
         elev_cent=elev_vec;
@@ -282,11 +274,11 @@ switch binmethod
         
         azim_vec=linspace(-pi,pi,nazim);
         
-%         % scan over all elev angle
-%         elev_cent=linspace(-pi/2,pi/2,nelev);
-        % scan within z-cap
-        elev_lim=asin(configs.halo{1}.zcap);
-        elev_vec=linspace(-elev_lim,elev_lim,nelev);
+        % scan over all elev angle
+        elev_cent=linspace(-pi/2,pi/2,nelev);
+%         % scan within z-cap
+%         elev_lim=asin(configs.halo{1}.zcap);
+%         elev_vec=linspace(-elev_lim,elev_lim,nelev);
         
         azim_cent=azim_vec;
         elev_cent=elev_vec;
@@ -297,8 +289,6 @@ end
 % TODO - currently binning with fixed bin width - try Gaussian convolution
 nn_halo=cell(2,1);
 for ii=1:2
-    %     nn_halo{ii}=halo_zone_density(halo_k0{ii},azim_grid,elev_grid,binwidth,binmethod);
-    %     nn_halo{ii}=halo_zone_density(halo_k0{ii},azim_vec,elev_vec,binwidth,binmethod);
     nn_halo{ii}=halo_zone_density(halo_k0(:,ii),azim_vec,elev_vec,binwidth,binmethod);
     nn_halo{ii}=cat(3,nn_halo{ii}{:});  % nazim x nelev x nshot array
 end
@@ -330,7 +320,7 @@ end
 max_nn=max(max(nn_halo_mean{2}));   % max counts in zone from mf=1
 
 % background from spontaneous scattering leaves a bright streak in mf=0
-nn_thresh=max_nn*10;     % TODO - seems to work
+nn_thresh=max_nn*2;     % TODO - seems to work
 bool_thresh=(nn_halo_mean{1}>nn_thresh);    % boolean on meshgrid to treat as noisy
 
 %%% cull mf=0
