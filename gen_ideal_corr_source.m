@@ -7,7 +7,7 @@
 % configs
 n_shot=1e3;             % number of shots
 n_corr_pairs=4*ones(n_shot,1);        % number of correlated pairs generated from source
-det_qe=[0.1,0.1];       % detection efficiency
+% det_qe=[0.1,0.1];       % detection efficiency
 
 % construct ideal distinguishable halo experiment
 halo_k0=cell(n_shot,2);
