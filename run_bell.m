@@ -4,11 +4,13 @@
 
 %% config
 path_data_dir='C:\Users\HE BEC\bell';           % path to data directory
-path_data_bell='xhalo_6_1_2';        % bell test
-path_data_loop='loop_v1_20170922_30_10';          % local operations
+path_data_bell='idealsource_20171003_loop_test3';        % bell test
+path_data_loop='idealloop_20171003_test3';          % local operations
 
 % raman_amp=0.37;     % this run's LO config (raman amplitude)
-raman_amp=0;
+% raman_amp=0;
+raman_amp=NaN;      % for simulated local mixing
+
 
 %% load data
 % load Bell test results (incl. experimental correlations)
@@ -27,7 +29,11 @@ E=S_bell.E;
 
 %% rotation angles
 % get index to Raman mixing amp
-idx_Theta=cellfun(@(x) find(x==raman_amp),S_loop.ampRaman_mf);
+if isnan(raman_amp)
+    idx_Theta=[1,1];
+else
+    idx_Theta=cellfun(@(x) find(x==raman_amp),S_loop.ampRaman_mf);
+end
 
 % get raw rotation angles at different momenta (local operation)
 azim_raw=S_loop.azim{1};    % TODO - we know azim{ii} are the same
@@ -52,7 +58,11 @@ dTh_bb_raw=Theta_raw(:,:,2)-flip_bb(Theta_raw(:,:,1));
 
 % interpolate to build diff rotation angle at Bell data
 % TODO - it's only approximate now - pretty messy!
-dTh_bb=interp2(azim_raw(1:end-1,1:end-1),elev_raw(1:end-1,1:end-1),dTh_bb_raw,azim_g(1:end-1,1:end-1),elev_g(1:end-1,1:end-1));
+if isnan(raman_amp)
+    dTh_bb=interp2(azim_raw,elev_raw,dTh_bb_raw,azim_g(1:end-1,1:end-1),elev_g(1:end-1,1:end-1));
+else
+    dTh_bb=interp2(azim_raw(1:end-1,1:end-1),elev_raw(1:end-1,1:end-1),dTh_bb_raw,azim_g(1:end-1,1:end-1),elev_g(1:end-1,1:end-1));
+end
 
 % plot interpolated rotation angle
 hfig_dTh_interp=figure();
@@ -71,7 +81,7 @@ cbar.Label.Interpreter='latex';
 %% Process data
 %%% cull elev edges
 % NOTE: culling is as simple as setting those pixel values by NaN
-n_elev_edge_cull=5;     % cull top and bottom by this many pixels
+n_elev_edge_cull=1;     % cull top and bottom by this many pixels
 E(1:n_elev_edge_cull,:)=NaN;
 E(end-n_elev_edge_cull+1:end,:)=NaN;
 
@@ -109,7 +119,7 @@ box on;
 %% smooth correlations
 % Dth is "averaged" angular difference (vs. DTh)
 
-n_Dth_bin=1;
+n_Dth_bin=21;
 Dth_edge=linspace(-pi,pi,n_Dth_bin+1);
 Dth_cent=Dth_edge(1:end-1)+0.5*diff(Dth_edge);
 
@@ -165,6 +175,8 @@ hQM=plot(dth_qm,E_qm,'LineStyle','-','Color','k','LineWidth',linewidth,'DisplayN
 hold off;
 
 % annotate
+ax=gca;
+
 uistack(hQM,'bottom');
 uistack(hLHV,'bottom');
 oleg=legend([hcorr(1),hQM,hLHV],'Location','southeast');
@@ -172,3 +184,6 @@ xlabel('$\Delta \theta = \theta_1 - \theta_0$');
 ylabel('$E$');
 xlim([-pi,pi]);
 ylim([-1,1]);
+
+oleg.FontSize=11;
+ax.FontSize=13;
