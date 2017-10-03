@@ -12,7 +12,8 @@ n_corr_pairs=100*ones(n_shot,1);        % number of correlated pairs generated f
 det_qe=0.1*ones(1,2);       % detection efficiency
 
 % define local operation
-fun_localoper=@(th,phi) sin(phi);
+% TODO - we can even load the phase map from experiment!
+fun_localoper=@(th,phi) phi;
 % fun_localoper=@(th,phi) 0;              % no local operation
 
 % construct ideal distinguishable halo experiment
@@ -34,7 +35,8 @@ for ii=1:n_shot
         theta_this{jj}=fun_localoper(th_phi_this(:,1),th_phi_this(:,2));
     end
     dtheta_this=theta_this{2}-theta_this{1};    % evaluate relative rot angle for this shot
-    Pr_flip=sin(dtheta_this).^2;        % probability to spin-flip
+    Pr_flip=sin(dtheta_this/2).^2;          % probability to spin-flip
+    % <DTHETA,FLIPPROB> = <0,0>, <pi,1>, <pi/2,1/2>
     
     % state rotation - quantum entanglement-like
     %   do a 50/50 coin toss on which state to apply DTHETA rotation
@@ -74,4 +76,3 @@ run('config_idealsource.m');
 
 %% evaluate correlations
 run('eval_bell_corr.m');
-
