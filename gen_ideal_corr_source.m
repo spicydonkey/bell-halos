@@ -83,14 +83,15 @@ for ii=1:n_shot
     
     %% random sampling for non-ideal detector efficiency
     for jj=1:2
-%         is_detected=(rand(n_corr_pairs(ii),1)<det_qe(jj));
         is_detected=(rand(size(halo_k0{ii,jj},1),1)<det_qe(jj));
         halo_k0{ii,jj}=halo_k0{ii,jj}(is_detected,:);
     end
     
     %% misalign halo centers
-    
-    
+    for jj=1:2
+        n=size(halo_k0{ii,jj},1);       % num of counts in this shot-halo
+        halo_k0{ii,jj}=halo_k0{ii,jj}+repmat(configs.halo{jj}.boost,n,1);
+    end
 end
 % leave empty halos as is
 
