@@ -1,16 +1,17 @@
 % Generate mixing angle map for ideal local operation
 %
 %
-clear all; clc; close all;
 
-% configs
-fun_localoper=@(th,phi) phi;
-% fun_localoper=@(th,phi) sin(phi);
-
-verbose=1;
-
-nazim=100;
-nelev=50;
+% Set configs
+if ~exist('OVERRIDE_CONFIG_FLAG','var')    
+    % fun_localoper=@(th,phi) 0*phi;
+    fun_localoper=@(th,phi) pi*sin(20*th).*sin(20*phi);
+    
+    verbose=1;
+    
+    nazim=100;
+    nelev=50;
+end
 
 %%  
 if ~exist('fun_localoper','var')

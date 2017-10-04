@@ -4,36 +4,35 @@
 % generates halo_k0 ideal source of momentum-spin correlated atoms
 %
 
-clear all; clc; close all;
-
-%% CONFIGS
-%%% experiment
-n_shot=1e4;             % number of shots
-n_corr_pairs=100*ones(n_shot,1);        % number of correlated pairs generated from source
-det_qe=0.1*ones(1,2);       % detection efficiency
-
-% local operation
-% TODO - we can even load the phase map from experiment!
-% fun_localoper=@(th,phi) pi*sin(sqrt(76)*th/(2*pi)).*sin(sqrt(7)*phi*(2*pi)/(pi/2));
-% fun_localoper=@(th,phi) pi*sin(20*th).*sin(20*phi);
-fun_localoper=@(th,phi) 2*phi;
-% fun_localoper=@(th,phi) 0*phi;              % no local operation
-
-%%% HALO
-configs.halo{1}.string='$m_F=0$';
-configs.halo{2}.string='$m_F=1$';
-
-% boosts in this case misalign momentum correlator
-configs.halo{1}.boost=zeros(1,3);
-configs.halo{2}.boost=zeros(1,3);
-
-%%% Spherical zones
-configs.zone.nazim=100;
-configs.zone.nelev=50;
-
-configs.zone.binmethod=1;
-configs.zone.binwidth=0.05;
-
+% Set configs
+if ~exist('OVERRIDE_CONFIG_FLAG','var')
+    %%% experiment
+    n_shot=1e4;             % number of shots
+    n_corr_pairs=100*ones(n_shot,1);        % number of correlated pairs generated from source
+    det_qe=0.1*ones(1,2);       % detection efficiency
+    
+    % local operation
+    % TODO - we can even load the phase map from experiment!
+    % fun_localoper=@(th,phi) pi*sin(sqrt(76)*th/(2*pi)).*sin(sqrt(7)*phi*(2*pi)/(pi/2));
+    % fun_localoper=@(th,phi) pi*sin(20*th).*sin(20*phi);
+    fun_localoper=@(th,phi) 2*phi;
+    % fun_localoper=@(th,phi) 0*phi;              % no local operation
+    
+    %%% HALO
+    configs.halo{1}.string='$m_F=0$';
+    configs.halo{2}.string='$m_F=1$';
+    
+    % boosts in this case misalign momentum correlator
+    configs.halo{1}.boost=zeros(1,3);
+    configs.halo{2}.boost=zeros(1,3);
+    
+    %%% Spherical zones
+    configs.zone.nazim=100;
+    configs.zone.nelev=50;
+    
+    configs.zone.binmethod=1;
+    configs.zone.binwidth=0.05;
+end
 
 %% construct ideal distinguishable halo experiment
 halo_k0=cell(n_shot,2);

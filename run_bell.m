@@ -3,18 +3,19 @@
 %
 
 %% config
-path_data_dir='C:\Users\HE BEC\bell';           % path to data directory
-
-% path_data_bell='bell_v1_3_20170926_2';
-% path_data_loop='loop_v1_20170922_30_10';
-
-path_data_bell='idealsource_20171004_loop_test';        % bell test
-path_data_loop='idealloop_20171004_2';          % local operations
-
-% raman_amp=0.37;     % Run 3 run's LO config (raman amplitude)
-% raman_amp=0;
-raman_amp=NaN;      % for simulated local mixing
-
+if ~exist('OVERRIDE_CONFIG_FLAG','var')
+    path_data_dir='C:\Users\HE BEC\bell';           % path to data directory
+    
+    % path_data_bell='bell_v1_3_20170926_2';
+    % path_data_loop='loop_v1_20170922_30_10';
+    
+    path_data_bell='idealsource_20171004_loop_test';        % bell test
+    path_data_loop='idealloop_20171004_2';          % local operations
+    
+    % raman_amp=0.37;     % Run 3 run's LO config (raman amplitude)
+    % raman_amp=0;
+    raman_amp=NaN;      % for simulated local mixing
+end
 
 %% load data
 % load Bell test results (incl. experimental correlations)
