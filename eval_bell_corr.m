@@ -115,15 +115,24 @@ P_rabi=nn_halo_mean{2}./(nn_halo_mean{1}+nn_halo_mean{2});
 nn_sum=nn_halo{1}+nn_halo{2};   % total number of atoms with same momentum
 Jz=nn_halo{2}-nn_halo{1};       % total spin of atoms with same momentum
 
+clearvars nn_halo;
+
 % simple transform to match back-to-back momentum modes
 nn_sum_bb=flip_bb(nn_sum);
 Jz_bb=flip_bb(Jz);
 
 % evaluate correlation coefficient
 JJ=Jz.*Jz_bb;
+
+clearvars Jz Jz_bb;
+
 NN=nn_sum.*nn_sum_bb;
 
+clearvars nn_sum nn_sum_bb;
+
 E=mean(JJ,3)./mean(NN,3);
+
+clearvars JJ NN;
 
 % TODO
 % each grid point has an associated (theta,phi) rotation angle
