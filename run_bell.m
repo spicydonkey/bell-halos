@@ -4,10 +4,14 @@
 
 %% config
 path_data_dir='C:\Users\HE BEC\bell';           % path to data directory
-path_data_bell='idealsource_20171003_loop_test3';        % bell test
-path_data_loop='idealloop_20171003_test3';          % local operations
 
-% raman_amp=0.37;     % this run's LO config (raman amplitude)
+% path_data_bell='bell_v1_3_20170926_2';
+% path_data_loop='loop_v1_20170922_30_10';
+
+path_data_bell='idealsource_20171004_loop_test';        % bell test
+path_data_loop='idealloop_20171004_2';          % local operations
+
+% raman_amp=0.37;     % Run 3 run's LO config (raman amplitude)
 % raman_amp=0;
 raman_amp=NaN;      % for simulated local mixing
 
@@ -81,7 +85,7 @@ cbar.Label.Interpreter='latex';
 %% Process data
 %%% cull elev edges
 % NOTE: culling is as simple as setting those pixel values by NaN
-n_elev_edge_cull=1;     % cull top and bottom by this many pixels
+n_elev_edge_cull=5;     % cull top and bottom by this many pixels
 E(1:n_elev_edge_cull,:)=NaN;
 E(end-n_elev_edge_cull+1:end,:)=NaN;
 
@@ -96,16 +100,23 @@ EE=EE(~isnan(EE));
 EE=EE(~isnan(DTh));
 DTh=DTh(~isnan(DTh));
 
+%%% Single-sided angular difference
+DTh_abs=abs(DTh);
+EE_abs=EE;
+
+% sort arrays
 [DTh,Isort]=sort(DTh,'ascend');
 EE=EE(Isort);
+
+[DTh_abs,Isort_abs]=sort(DTh_abs,'ascend');
+EE_abs=EE_abs(Isort_abs);
 
 %%% RAW plot: correlation vs theta
 hfig_corr_v_theta_raw=figure();
 plot(DTh,EE,'bo','MarkerSize',3);
 
-% xlim([0,pi]);
 xlim([-pi,pi]);
-% ylim([-1,1]);
+ylim([-1,1]);
 xlabel('$\Delta \theta$');
 ylabel('$E$');
 
@@ -116,10 +127,25 @@ line([0,pi],[-1,1],'Color','r','LineWidth',1.5);
 hold off;
 box on;
 
+%%% RAW plot: correlation vs theta (single-sided)
+hfig_corr_v_theta_raw_abs=figure();
+plot(DTh_abs,EE_abs,'bo','MarkerSize',3);
+
+xlim([0,pi]);
+ylim([-1,1]);
+xlabel('$|\Delta \theta|$');
+ylabel('$E$');
+
+% hidden variable prediction
+hold on;
+% line([-pi,0],[1,-1],'Color','r','LineWidth',1.5);
+line([0,pi],[-1,1],'Color','r','LineWidth',1.5);
+hold off;
+box on;
+
 %% smooth correlations
 % Dth is "averaged" angular difference (vs. DTh)
-
-n_Dth_bin=21;
+n_Dth_bin=50;
 Dth_edge=linspace(-pi,pi,n_Dth_bin+1);
 Dth_cent=Dth_edge(1:end-1)+0.5*diff(Dth_edge);
 
@@ -143,7 +169,7 @@ for ii=1:n_Dth_bin
 end
 
 % DEBUG
-disp(Eth(~isnan(Eth)));
+% disp(Eth(~isnan(Eth)));
 
 %%% SMOOTH plot: correlation vs theta
 % misc
@@ -183,6 +209,77 @@ oleg=legend([hcorr(1),hQM,hLHV],'Location','southeast');
 xlabel('$\Delta \theta = \theta_1 - \theta_0$');
 ylabel('$E$');
 xlim([-pi,pi]);
+ylim([-1,1]);
+
+oleg.FontSize=11;
+ax.FontSize=13;
+
+%% Single-sided correlation
+% binning for single-sided rel angle correlations - with improved binning
+% wrapping angles over pi (wrapToPi)
+Dth_abs_cent=linspace(0,pi,ceil(n_Dth_bin/2));
+d_Dth_bin=Dth_abs_cent(2)-Dth_abs_cent(1);  % bin width
+
+Dth_abs=zeros(2,length(Dth_abs_cent));   % mean and serr
+Eth_abs=zeros(2,length(Dth_abs_cent));
+
+for ii=1:length(Dth_abs_cent)
+%     bool_bin=(DTh>Dth_edge(ii)&DTh<Dth_edge(ii+1));     % boolean for items in bin
+    bool_bin=abs(wrapToPi(DTh_abs-Dth_abs_cent(ii)))<(d_Dth_bin/2);
+    % histogram by 2*pi wrapped angular difference to bin center
+    
+    n_items=sum(bool_bin);      % number of items in this bin
+    
+    % get values
+    DTh_abs_bin=DTh_abs(bool_bin);
+    EE_abs_bin=EE_abs(bool_bin);
+    
+    % statistics
+    Dth_abs(1,ii)=mean(DTh_abs_bin);
+    Dth_abs(2,ii)=std(DTh_abs_bin)/sqrt(n_items);
+    
+    Eth_abs(1,ii)=mean(EE_abs_bin);
+    Eth_abs(2,ii)=std(EE_abs_bin)/sqrt(n_items);
+end
+
+%%% plot: correlation vs theta - single sided
+% misc
+markersize=5;
+linewidth=1.5;
+gray_col=0.5*ones(1,3);         % gray data points
+namearray={'LineWidth','MarkerFaceColor','Color'};      % error bar graphics properties
+valarray={linewidth,'w','b'};                 % 90 deg (normal) data
+
+hfig_corr_v_theta_smooth_abs=figure();
+
+%%% DATA
+hcorr=ploterr(Dth_abs(1,:),Eth_abs(1,:),Dth_abs(2,:),Eth_abs(2,:),'o','hhxy',0);
+set(hcorr(1),namearray,valarray,'MarkerSize',markersize,'DisplayName','Experiment');	% DATAPOINT
+set(hcorr(2),namearray,valarray,'DisplayName','');                  % Y-err
+set(hcorr(3),namearray,valarray,'DisplayName','');                  % X-err
+
+%%% THEORIES
+% LHV
+hold on;
+hLHV=line([0,pi],[-1,1],'LineStyle','--','Color',gray_col,'LineWidth',linewidth,'DisplayName','LHV');
+hold off;
+
+% QM
+hold on;
+dth_qm=linspace(0,pi,100);
+E_qm=-cos(dth_qm);
+hQM=plot(dth_qm,E_qm,'LineStyle','-','Color','k','LineWidth',linewidth,'DisplayName','QM');
+hold off;
+
+% annotate
+ax=gca;
+
+uistack(hQM,'bottom');
+uistack(hLHV,'bottom');
+oleg=legend([hcorr(1),hQM,hLHV],'Location','southeast');
+xlabel('$|\Delta \theta|$');
+ylabel('$E$');
+xlim([0,pi]);
 ylim([-1,1]);
 
 oleg.FontSize=11;
