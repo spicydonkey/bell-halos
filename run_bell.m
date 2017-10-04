@@ -6,15 +6,15 @@
 if ~exist('OVERRIDE_CONFIG_FLAG','var')
     path_data_dir='C:\Users\HE BEC\bell';           % path to data directory
     
-    % path_data_bell='bell_v1_3_20170926_2';
-    % path_data_loop='loop_v1_20170922_30_10';
+    path_data_bell='bell_v1_3_20170926_2';
+    path_data_loop='loop_v1_20170922_30_10';
     
-    path_data_bell='idealsource_20171004_loop_test';        % bell test
-    path_data_loop='idealloop_20171004_2';          % local operations
+%     path_data_bell='idealsource_20171004_loop_test';        % bell test
+%     path_data_loop='idealloop_20171004_2';          % local operations
     
-    % raman_amp=0.37;     % Run 3 run's LO config (raman amplitude)
+    raman_amp=0.37;     % Run 3 run's LO config (raman amplitude)
     % raman_amp=0;
-    raman_amp=NaN;      % for simulated local mixing
+%     raman_amp=NaN;      % for simulated local mixing
 end
 
 %% load data
@@ -86,7 +86,7 @@ cbar.Label.Interpreter='latex';
 %% Process data
 %%% cull elev edges
 % NOTE: culling is as simple as setting those pixel values by NaN
-n_elev_edge_cull=5;     % cull top and bottom by this many pixels
+n_elev_edge_cull=11;     % cull top and bottom by this many pixels
 E(1:n_elev_edge_cull,:)=NaN;
 E(end-n_elev_edge_cull+1:end,:)=NaN;
 
@@ -94,6 +94,7 @@ E(end-n_elev_edge_cull+1:end,:)=NaN;
 % sort data
 EE=E(:);
 DTh=dTh_bb(:);
+DTh=wrapToPi(DTh);      % DTh can be out of [-pi,pi] which we will ignore right now - in practice decoherence may be seen
 
 % remove NaNs
 DTh=DTh(~isnan(EE));
@@ -146,7 +147,7 @@ box on;
 
 %% smooth correlations
 % Dth is "averaged" angular difference (vs. DTh)
-n_Dth_bin=50;
+n_Dth_bin=51;
 Dth_edge=linspace(-pi,pi,n_Dth_bin+1);
 Dth_cent=Dth_edge(1:end-1)+0.5*diff(Dth_edge);
 
@@ -186,9 +187,9 @@ hfig_corr_v_theta_smooth=figure();
 % TODO - find bug of why there is this shift!
 % DDTH_DEBUG=2*(2*pi/size(azim_grid,2));      
 % DDTH_DEBUG=2*(2*pi/size(azim_raw,2));      
-DDTH_DEBUG=(2*pi/size(elev_grid,1));        % THIS IS THE SOURCE OF PROBLEM!
+% DDTH_DEBUG=(2*pi/size(elev_grid,1));        % THIS IS THE SOURCE OF PROBLEM!
 % DDTH_DEBUG=(2*pi/size(elev_raw,1));
-% DDTH_DEBUG=0;
+DDTH_DEBUG=0;
 
 hcorr=ploterr(Dth(1,:)+DDTH_DEBUG,Eth(1,:),Dth(2,:),Eth(2,:),'o','hhxy',0);
 set(hcorr(1),namearray,valarray,'MarkerSize',markersize,'DisplayName','Experiment');	% DATAPOINT
