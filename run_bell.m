@@ -183,7 +183,14 @@ valarray={linewidth,'w','b'};                 % 90 deg (normal) data
 hfig_corr_v_theta_smooth=figure();
 
 %%% DATA
-hcorr=ploterr(Dth(1,:),Eth(1,:),Dth(2,:),Eth(2,:),'o','hhxy',0);
+% TODO - find bug of why there is this shift!
+% DDTH_DEBUG=2*(2*pi/size(azim_grid,2));      
+% DDTH_DEBUG=2*(2*pi/size(azim_raw,2));      
+DDTH_DEBUG=(2*pi/size(elev_grid,1));        % THIS IS THE SOURCE OF PROBLEM!
+% DDTH_DEBUG=(2*pi/size(elev_raw,1));
+% DDTH_DEBUG=0;
+
+hcorr=ploterr(Dth(1,:)+DDTH_DEBUG,Eth(1,:),Dth(2,:),Eth(2,:),'o','hhxy',0);
 set(hcorr(1),namearray,valarray,'MarkerSize',markersize,'DisplayName','Experiment');	% DATAPOINT
 set(hcorr(2),namearray,valarray,'DisplayName','');                  % Y-err
 set(hcorr(3),namearray,valarray,'DisplayName','');                  % X-err
