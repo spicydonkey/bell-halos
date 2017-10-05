@@ -6,7 +6,7 @@ OVERRIDE_CONFIG_FLAG=true;
 
 %% general config
 % datetimestr=datestr(datetime,'yyyymmdd_HHMMSS');    % timestamp when function called
-datetimestr='test';
+datetimestr='temp';
 path_data_dir='C:\Users\HE BEC\bell\temp';
 path_data_bell=sprintf('bell_sim_%s',datetimestr);
 path_data_loop=sprintf('loop_sim_%s',datetimestr);
@@ -19,8 +19,8 @@ n_corr_pairs=50*ones(n_shot,1);        % number of correlated pairs generated fr
 det_qe=1*ones(1,2);       % detection efficiency
 
 % momentum width (implemented on scattered)
-dk_dither_sd=zeros(1,3);
-% dk_dither_sd=3e-2*[1,1,1];
+% dk_dither_sd=zeros(1,3);
+dk_dither_sd=3e-2*[1,1,1];
 
 % local operation
 % TODO - we can even load the phase map from experiment!
@@ -58,7 +58,7 @@ save(fullfile(path_data_dir,path_data_bell),varstosave{:});
 %% MIXING PULSE
 % configure:
 %   
-verbose=1;
+verbose=0;
 nazim=100;
 nelev=50;
 
@@ -77,6 +77,13 @@ raman_amp=NaN;      % for simulated local mixing
 run('run_bell.m');
 
 
+%% Outputs
+% source mode occupancy
+wbb=prod(dk_dither_sd)^(1/length(dk_dither_sd));
+M_calc=2*(1.1^3)*(wbb^-2);
+n_calc=mean(n_corr_pairs)/M_calc;
+
+fprintf('Mode occupancy = %0.3g\n',n_calc);
 
 %% clear override
 clearvars OVERRIDE_CONFIG_FLAG;     % REMOVE OVERRIDE FLAG WHEN DONE
