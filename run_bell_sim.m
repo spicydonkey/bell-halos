@@ -17,7 +17,7 @@ path_data_out=sprintf('out_%s',datetimestr);
 %% BELL TEST
 %%% experiment
 n_shot=1e3;             % number of shots
-n_corr_pairs=13*ones(n_shot,1);        % number of correlated pairs generated from source
+n_corr_pairs=50*ones(n_shot,1);        % number of correlated pairs generated from source
 det_qe=1*ones(1,2);       % detection efficiency
 
 % momentum width (implemented on scattered)
@@ -43,8 +43,8 @@ configs.halo{1}.boost=[0,0,0];
 configs.halo{2}.boost=[0,0,0];
 
 %%% Spherical zones
-configs.zone.nazim=200;
-configs.zone.nelev=100;
+configs.zone.nazim=50;
+configs.zone.nelev=50;
 
 configs.zone.binmethod=1;
 configs.zone.binwidth=0.05;
@@ -86,6 +86,13 @@ M_calc=2*(1.1^3)*(wbb_calc^-2);
 n_calc=mean(n_corr_pairs)/M_calc;
 
 fprintf('Mode occupancy = %0.3g\n',n_calc);
+
+%%% bin size characteristic
+avg_latlon_bin_size_sr=4*pi/(configs.zone.nazim*configs.zone.nelev);
+mode_size_sr=pi*(sqrt(2)*wbb_calc)^2;
+modes_per_bin=mode_size_sr/avg_latlon_bin_size_sr;
+
+fprintf('Bin = %0.3g [modes/bin]\n',modes_per_bin);
 
 %%% max correlation (averaged)
 [E_plus,I_plus]=max(Eth(1,:));
