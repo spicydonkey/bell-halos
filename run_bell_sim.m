@@ -1,12 +1,13 @@
 % Bell test numerical simulation
 
-% clear all; close all; clc;
+% clear all;
+close all; clc;
 
 OVERRIDE_CONFIG_FLAG=true;
 
 %% general config
-datetimestr=datestr(datetime,'yyyymmdd_HHMMSS');    % timestamp when function called
-% datetimestr='temp';
+% datetimestr=datestr(datetime,'yyyymmdd_HHMMSS');    % timestamp when function called
+datetimestr='temp';
 path_data_dir='C:\Users\HE BEC\bell\temp';
 path_data_bell=sprintf('bell_sim_%s',datetimestr);
 path_data_loop=sprintf('loop_sim_%s',datetimestr);
@@ -15,9 +16,9 @@ path_data_out=sprintf('out_%s',datetimestr);
 
 %% BELL TEST
 %%% experiment
-n_shot=1e4;             % number of shots
-n_corr_pairs=30*ones(n_shot,1);        % number of correlated pairs generated from source
-det_qe=0.1*ones(1,2);       % detection efficiency
+n_shot=1e3;             % number of shots
+n_corr_pairs=13*ones(n_shot,1);        % number of correlated pairs generated from source
+det_qe=1*ones(1,2);       % detection efficiency
 
 % momentum width (implemented on scattered)
 % dk_dither_sd=zeros(1,3);
@@ -36,14 +37,14 @@ configs.halo{1}.string='$m_F=0$';
 configs.halo{2}.string='$m_F=1$';
 
 % boosts in this case misalign momentum correlator
-configs.halo{1}.boost=-2.5e-2/sqrt(3)*[1,1,1];
-configs.halo{2}.boost=2.5e-2/sqrt(3)*[1,1,1];
-% configs.halo{1}.boost=[0,0,0];
-% configs.halo{2}.boost=[0,0,0];
+% configs.halo{1}.boost=-2.5e-2/sqrt(3)*[1,1,1];
+% configs.halo{2}.boost=2.5e-2/sqrt(3)*[1,1,1];
+configs.halo{1}.boost=[0,0,0];
+configs.halo{2}.boost=[0,0,0];
 
 %%% Spherical zones
-configs.zone.nazim=141;
-configs.zone.nelev=71;
+configs.zone.nazim=200;
+configs.zone.nelev=100;
 
 configs.zone.binmethod=1;
 configs.zone.binwidth=0.05;
@@ -79,14 +80,22 @@ run('run_bell.m');
 
 
 %% Outputs
-% source mode occupancy
+%%% source mode occupancy
 wbb_calc=prod(dk_dither_sd)^(1/length(dk_dither_sd));
 M_calc=2*(1.1^3)*(wbb_calc^-2);
 n_calc=mean(n_corr_pairs)/M_calc;
 
 fprintf('Mode occupancy = %0.3g\n',n_calc);
 
-% save outputs + configs
+%%% max correlation (averaged)
+[E_plus,I_plus]=max(Eth(1,:));
+[E_minus,I_minus]=min(Eth(1,:));
+E_max=mean(abs([E_plus,E_minus]));
+E_err=mean([Eth(2,I_plus),Eth(2,I_minus)]);
+
+fprintf('max |E| = %0.2g ± %0.1g\n',E_max,E_err);
+
+%%% save outputs + configs
 varstosave={'EE','DTh','EE_abs','DTh_abs',...
     'n_shot','n_corr_pairs','det_qe','dk_dither_sd','fun_localoper','configs','nazim','nelev',...
     'n_calc'};
