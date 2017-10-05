@@ -1,14 +1,19 @@
-*.zip*
-*.png*
-*.fig*
-*.swp*
-*.mat*
+# Data
 *.dat*
+*.zip*
+*.swp*
+
+# Log
+*.log
+
+# Output
 *.avi*
 *.jpg*
 *.pdf*
 *.eps*
-*.doc*
-*.html*
+*.png*
+
+# Matlab
 *.asv
-*.log
+*.mat*
+*.fig*
