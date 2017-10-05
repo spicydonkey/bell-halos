@@ -43,7 +43,7 @@ configs.halo{1}.boost=[0,0,0];
 configs.halo{2}.boost=[0,0,0];
 
 %%% Spherical zones
-configs.zone.nazim=50;
+configs.zone.nazim=200;
 configs.zone.nelev=50;
 
 configs.zone.binmethod=1;
@@ -90,17 +90,19 @@ fprintf('Mode occupancy = %0.3g\n',n_calc);
 %%% bin size characteristic
 avg_latlon_bin_size_sr=4*pi/(configs.zone.nazim*configs.zone.nelev);
 mode_size_sr=pi*(sqrt(2)*wbb_calc)^2;
-modes_per_bin=mode_size_sr/avg_latlon_bin_size_sr;
+n_modes_per_bin=avg_latlon_bin_size_sr/mode_size_sr;
 
-fprintf('Bin = %0.3g [modes/bin]\n',modes_per_bin);
+fprintf('Bin = %0.3g [modes/bin]\n',n_modes_per_bin);
 
 %%% max correlation (averaged)
 [E_plus,I_plus]=max(Eth(1,:));
 [E_minus,I_minus]=min(Eth(1,:));
 E_max=mean(abs([E_plus,E_minus]));
-E_err=mean([Eth(2,I_plus),Eth(2,I_minus)]);
+E_err_max=mean([Eth(2,I_plus),Eth(2,I_minus)],'omitnan');
+E_err_avg=mean(Eth(2,:),'omitnan');
+E_err_eff=sqrt(E_err_max^2+E_err_avg^2);
 
-fprintf('max |E| = %0.2g ± %0.1g\n',E_max,E_err);
+fprintf('max |E| = %0.2g ± %0.1g\n',E_max,E_err_eff);
 
 %%% save outputs + configs
 varstosave={'EE','DTh','EE_abs','DTh_abs',...
