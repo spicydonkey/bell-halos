@@ -11,6 +11,9 @@ if ~exist('OVERRIDE_CONFIG_FLAG','var')
     n_corr_pairs=100*ones(n_shot,1);        % number of correlated pairs generated from source
     det_qe=0.1*ones(1,2);       % detection efficiency
     
+    % momentum width (implemented on scattered)
+    dk_dither_sd=[0,0,0];
+    
     % local operation
     % TODO - we can even load the phase map from experiment!
     % fun_localoper=@(th,phi) pi*sin(sqrt(76)*th/(2*pi)).*sin(sqrt(7)*phi*(2*pi)/(pi/2));
@@ -43,7 +46,25 @@ for ii=1:n_shot
     halo_k0{ii,1}=halo_temp;        % mF=0 atoms
     halo_k0{ii,2}=-halo_temp;       % mF=1 atoms are just BB-pairs (INDEX BB MATCHED!)
     
+    %% dither k-vector
+    % momentum broadened source emulated by each count being dithered with
+    % zero-mean Gaussian noise
+    
+    for jj=1:2
+        ncounts_temp=size(halo_k0{ii,jj},1);
+        dk_dither_temp=zeros(ncounts_temp,3);
+        
+        % build dithering k-vector
+        for kk=1:3
+            dk_dither_temp(:,kk)=random('Normal',0,dk_dither_sd(kk),[ncounts_temp,1]);
+        end
+        
+        % apply dither on scattered atoms
+        halo_k0{ii,jj}=halo_k0{ii,jj}+dk_dither_temp;
+    end
+    
     %% local operation
+    % spatially dependent spin rotation
     theta_this=cell(2,1);
     for jj=1:2
         th_phi_this=zxy2pol_mat(halo_k0{ii,jj});
@@ -85,6 +106,7 @@ for ii=1:n_shot
         is_detected=(rand(size(halo_k0{ii,jj},1),1)<det_qe(jj));
         halo_k0{ii,jj}=halo_k0{ii,jj}(is_detected,:);
     end
+    % array is at its minimum size
     
     %% misalign halo centers
     for jj=1:2
