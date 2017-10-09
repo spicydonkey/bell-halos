@@ -37,8 +37,8 @@ for ii=1:nconfigs
     if override_config
         verbose=VERBOSE;
         
-        configs.zone.nazim=30;
-        configs.zone.nelev=10;
+        configs.zone.nazim=100;
+        configs.zone.nelev=50;
         
         if load_config_default
             run(sprintf('config_default_%d',config_default_id));
@@ -73,7 +73,6 @@ for ii=1:2      % loop through mf=0/1
         
         % evaluate mean
         this_nn_halo_mean=cellfun(@(x)mean(x,3),nn_halo{idx_this},'UniformOutput',false);
-        
         
         this_P_rabi=this_nn_halo_mean{2}./(this_nn_halo_mean{1}+this_nn_halo_mean{2});
         % 1 when all state in mf=1; 0 when all states in mf=0
@@ -172,3 +171,81 @@ box on;
 hold off;
 xlabel('Raman Amplitude');
 ylabel('$\Theta$');
+
+%% Plot rotation map
+lon=rad2deg(azim{1});
+lat=rad2deg(elev{2});
+
+numElevEdgesNaN=11;
+
+hFiltGauss=fspecial('gaussian');
+
+%%% ECKERT4 projection
+for ii=1:size(Theta{2},3)
+    figure;
+    
+    Th=Theta{2}(:,:,ii);
+    
+    % remove data near caps
+    Th([1:numElevEdgesNaN,end-numElevEdgesNaN:end],:)=NaN;
+    
+    % apply gaussian filter
+    Th=imfilter(Th,hFiltGauss);
+    
+    plotFlatMap(lat,lon,Th,'eckert4');
+
+    % misc
+    ax=gca;
+    
+    tstr=sprintf('$m_F=+1$, Raman Amp = %0.2g',ampRaman_mf{2}(ii));
+    title(tstr);
+    colormap('magma');
+    hcb=colorbar('Southoutside');
+    hcb.Label.String='$\psi(\theta,\phi)$';
+    hcb.TickLabelInterpreter='latex';
+    hcb.Label.Interpreter='latex';
+    ax.FontSize=12;
+    
+    drawnow;
+    
+    % save
+    fnamethis=sprintf('theta_eck_mf1_%d.png',ii);
+    saveas(gcf,fnamethis);
+end
+
+%%% rectangle
+for ii=1:size(Theta{2},3)
+    figure;
+    
+    Th=Theta{2}(:,:,ii);
+    
+    % remove data near caps
+    Th([1:numElevEdgesNaN,end-numElevEdgesNaN:end],:)=NaN;
+    
+    % apply gaussian filter
+    Th=imfilter(Th,hFiltGauss);
+    
+    plotFlatMap(lat,lon,Th,'rect');    
+
+    % misc
+    ax=gca;
+    
+    tstr=sprintf('$m_F=+1$, Raman Amp = %0.2g',ampRaman_mf{2}(ii));
+    title(tstr);
+        
+    xlim([-180,180]);
+    ylim([-90,90]);
+    
+    colormap('magma');
+    hcb=colorbar('Southoutside');
+    hcb.Label.String='$\psi(\theta,\phi)$';
+    hcb.TickLabelInterpreter='latex';
+    hcb.Label.Interpreter='latex';
+    ax.FontSize=12;
+    
+    drawnow;
+    
+    % save
+    fnamethis=sprintf('theta_rect_mf1_%d.png',ii);
+    saveas(gcf,fnamethis);
+end
