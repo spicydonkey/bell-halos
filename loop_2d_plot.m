@@ -11,21 +11,23 @@
 do_graphics=1;
     save_graphics=0;
 
-% filtering
+% signal filtering and preprocessing
 numElevEdgesNaN=11;
-% gaussian filter (see '>> help fspecial')
-gFilt_hsize=[5,5];
-gFilt_sigma=0.5;
+% 2D gaussian filter (see '>> help fspecial')
+g2d_hsize=[5,5];
+g2d_sigma=0.5;
 
-nbin_dth=100;
-
+% 1D zonal histogram
+nbin_dth=300;
+g1d_hsize=15;
+g1d_sigma=3;
 
 %% main
 lon=rad2deg(azim{1});
 lat=rad2deg(elev{2});
 nlatlonzones=numel(lon);
 
-hFiltGauss=fspecial('gaussian',gFilt_hsize,gFilt_sigma);
+hFiltGauss=fspecial('gaussian',g2d_hsize,g2d_sigma);
 
 % Process rotation angle signal
 % NOTE - all signals used to arrive at the LOOP rotation angle was RAW and
@@ -62,11 +64,13 @@ sterPerZone=(4*pi)/nlatlonzones;
 ed_dth=linspace(-pi,pi,nbin_dth);
 ct_dth=ed_dth(1:end-1)+0.5*diff(ed_dth);
 ster_dth=zeros(nLoopConfig,length(ct_dth));
+g1d_filt=gaussFilter(g1d_hsize,g1d_sigma);
 for ii=1:nLoopConfig
     tdth=dThetaFilt(:,:,ii);
     tdth=tdth(:);
     nn=histcounts(tdth,ed_dth);
     tster=nn*sterPerZone;
+    tster=conv(tster,g1d_filt,'same');
     ster_dth(ii,:)=tster;
 end
 
@@ -201,32 +205,49 @@ if do_graphics>0
     cc=distinguishable_colors(nLoopConfig);
     
     h_ss=figure(); hold on;
-    h_ss_norm=figure(); hold on;
 
+    pp=[];
     for ii=1:nLoopConfig
         ss=ster_dth(ii,:);
-        ss_norm=ss/max(ss);
         
         figure(h_ss);
-        plot(ct_dth,ss,'Color',cc(ii,:));
-        
-        figure(h_ss_norm);
-        plot(ct_dth,ss_norm,'Color',cc(ii,:));
+        tstr=sprintf('%0.2g',ampRaman_mf{2}(ii));
+        pp(ii)=plot(ct_dth,ss,...
+            'Color',cc(ii,:),'LineWidth',1.5,...
+            'DisplayName',tstr);
     end
     figure(h_ss); hold off;
-    figure(h_ss_norm); hold off;
+    
+    
+    % test angles - lines
+    testAngles=[-pi/4,pi/4,3/4*pi];
+    
+    hold on;
+    yylim=ylim;
+    ylim(yylim);        % fix ylim
+    plines=[];
+    gray_col=0.8*ones(1,3);         % gray data points
+    for ii=1:numel(testAngles)
+        plines(ii)=line(testAngles(ii)*[1,1],yylim,...
+            'Color',gray_col,'LineStyle','--','LineWidth',2);
+        uistack(plines(ii),'bottom');
+    end
+
     
     % annotation
     figure(h_ss);
+    ax=gca;
     xlabel('$\Delta\psi$');
     ylabel('Solid angle in halo [sr]');
     box on;
     xlim([-pi,pi]);
+    leg=legend(pp);
+    leg.Title.String='Raman amp.';
+    ax.FontSize=12;
+    leg.FontSize=10;
     
-    % annotation
-    figure(h_ss_norm);
-    xlabel('$\Delta\psi$');
-    ylabel('Normalised solid angle in halo');
-    box on;
-    xlim([-pi,pi]);
+    % save
+    if save_graphics
+        saveas(gcf,'dth_dist.png');
+    end
 end
