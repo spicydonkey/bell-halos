@@ -9,7 +9,7 @@ override_config=1;
     load_config_default=0;
         config_default_id=1;
     VERBOSE=0;
-
+    
 % config files for characterising mixing
 path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_bell_mf_*';
 config_files=dir(path_config);
@@ -171,81 +171,3 @@ box on;
 hold off;
 xlabel('Raman Amplitude');
 ylabel('$\Theta$');
-
-%% Plot rotation map
-lon=rad2deg(azim{1});
-lat=rad2deg(elev{2});
-
-numElevEdgesNaN=11;
-
-hFiltGauss=fspecial('gaussian');
-
-%%% ECKERT4 projection
-for ii=1:size(Theta{2},3)
-    figure;
-    
-    Th=Theta{2}(:,:,ii);
-    
-    % remove data near caps
-    Th([1:numElevEdgesNaN,end-numElevEdgesNaN:end],:)=NaN;
-    
-    % apply gaussian filter
-    Th=imfilter(Th,hFiltGauss);
-    
-    plotFlatMap(lat,lon,Th,'eckert4');
-
-    % misc
-    ax=gca;
-    
-    tstr=sprintf('$m_F=+1$, Raman Amp = %0.2g',ampRaman_mf{2}(ii));
-    title(tstr);
-    colormap('magma');
-    hcb=colorbar('Southoutside');
-    hcb.Label.String='$\psi(\theta,\phi)$';
-    hcb.TickLabelInterpreter='latex';
-    hcb.Label.Interpreter='latex';
-    ax.FontSize=12;
-    
-    drawnow;
-    
-    % save
-    fnamethis=sprintf('theta_eck_mf1_%d.png',ii);
-    saveas(gcf,fnamethis);
-end
-
-%%% rectangle
-for ii=1:size(Theta{2},3)
-    figure;
-    
-    Th=Theta{2}(:,:,ii);
-    
-    % remove data near caps
-    Th([1:numElevEdgesNaN,end-numElevEdgesNaN:end],:)=NaN;
-    
-    % apply gaussian filter
-    Th=imfilter(Th,hFiltGauss);
-    
-    plotFlatMap(lat,lon,Th,'rect');    
-
-    % misc
-    ax=gca;
-    
-    tstr=sprintf('$m_F=+1$, Raman Amp = %0.2g',ampRaman_mf{2}(ii));
-    title(tstr);
-        
-    xlim([-180,180]);
-    ylim([-90,90]);
-    
-    colormap('magma');
-    hcb=colorbar('Southoutside');
-    hcb.Label.String='$\psi(\theta,\phi)$';
-    hcb.TickLabelInterpreter='latex';
-    hcb.Label.Interpreter='latex';
-    ax.FontSize=12;
-    
-    drawnow;
-    
-    % save
-    fnamethis=sprintf('theta_rect_mf1_%d.png',ii);
-    saveas(gcf,fnamethis);
-end
