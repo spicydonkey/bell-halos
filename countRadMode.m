@@ -14,6 +14,7 @@ function ww_rad = countRadMode(vs,rr,mode_thphi,sig,lim)
 
 ww_rad=zeros(size(rr));
 for ii=1:numel(rr)
+% parfor ii=1:numel(rr)
     ww_rad(ii)=weightedCountSph(vs,[mode_thphi,rr(ii)],sig,lim);
 end
 
