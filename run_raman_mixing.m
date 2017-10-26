@@ -5,16 +5,20 @@
 clear all; clc; close all;
 
 %% CONFIG
-override_config=1;
+override_config=0;
     load_config_default=0;
         config_default_id=1;
     VERBOSE=0;
     
 % config files for characterising mixing
-path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_bell_mf_*';
+% path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_bell_mf_*';
+path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_bell2_mf_1_*';
 config_files=dir(path_config);
 config_files={config_files.name};   % name of config files
 
+% plotting
+nazim_div=6;
+nelev_div=6;
 
 %% Analyse count distribution
 nconfigs=numel(config_files);
@@ -113,8 +117,8 @@ nazim=size(azim{1},2)-1;    % subtract 1: bin centers from edge
 nelev=size(azim{1},1)-1;
 
 % grid locations to show Rabi flopping
-nazim_div=5;
-nelev_div=5;
+% nazim_div=3;
+% nelev_div=3;
 % nazim_div=floor(nazim/1);
 % nelev_div=floor(nelev/1);
 
@@ -124,15 +128,19 @@ pmarkers={'o','^'};
 plinestyles={'-','--'};
 
 for mm=1:2
-    counter=1;
+    counter=0;
+    if isempty(ampRaman_mf{mm})
+        continue;
+    end
     for ii=1:ceil(nelev/nelev_div):nelev
         for jj=1:ceil(nazim/nazim_div):nazim
+            counter=counter+1;
             plot(ampRaman_mf{mm},squeeze(P_rabi{mm}(ii,jj,:)),...
                 'LineStyle',plinestyles{mm},'Color',pcolors(counter,:),...
                 'Marker',pmarkers{mm},...   %'MarkerFaceColor',pcolors(counter,:),
                 'DisplayName',sprintf('%d: (%.2g,%.2g)',mm-1,ii,jj));
             hold on;
-            counter=counter+1;
+            
         end
     end
 end
@@ -146,22 +154,26 @@ ylabel('$P(\uparrow)$');
 %% plot rotation angle
 hfig_theta_lo=figure(21);
 
-% grid locations to show Rabi flopping
-nazim_div=5;
-nelev_div=5;
-% nazim_div=floor(nazim/1);
-% nelev_div=floor(nelev/1);
+% same grid locations as prev plot
+% % grid locations to show Rabi flopping
+% nazim_div=5;
+% nelev_div=5;
+% % nazim_div=floor(nazim/1);
+% % nelev_div=floor(nelev/1);
 
 for mm=1:2
-    counter=1;
+    counter=0;
+    if isempty(ampRaman_mf{mm})
+        continue;
+    end
     for ii=1:ceil(nelev/nelev_div):nelev
         for jj=1:ceil(nazim/nazim_div):nazim
+            counter=counter+1;
             plot(ampRaman_mf{mm},squeeze(Theta{mm}(ii,jj,:)),...
                 'LineStyle',plinestyles{mm},'Color',pcolors(counter,:),...
                 'Marker',pmarkers{mm},...   %'MarkerFaceColor',pcolors(counter,:),
                 'DisplayName',sprintf('%d: (%.2g,%.2g)',mm-1,ii,jj));
             hold on;
-            counter=counter+1;
         end
     end
 end
