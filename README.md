@@ -16,7 +16,7 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
 [x] organise data directory according to shots with same R-amp
 [] analysis codebase
     [x] categorise data by mf
-    [] sort data by raman amplitude (easier to plot, fit, etc.)
+    [x] sort data by raman amplitude (easier to plot, fit, etc.)
     [] smooth halo sph density before further processing incl population, theta,...
     [] pad halo poles with NaN (at density eval)
     [] scat mode histogram of theta

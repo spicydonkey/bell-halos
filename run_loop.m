@@ -10,6 +10,8 @@ vars_save={'configs','path_config',...
     'mf','amp','ver','mbool',...
     'Az','El',...
     'P_rabi','th_rabi',...
+    'amp_m','ver_m',...
+    'P_rabi_m','th_rabi_m',...
     };
 
 %% Main
@@ -142,22 +144,46 @@ end
 
 %% plot
 if configs.flags.graphics
-    % Spherical distribution
+    %% Spherical distribution
+    % Population
     figure(1);
-    for ii=1:nloop
-        subplot(1,nloop,ii);
-        plot_sph_surf(Az,El,P_rabi(:,:,ii));
+    tmf=1;
+    tnplot=sum(mbool{tmf});
+    for ii=1:tnplot
+        subplot(1,tnplot,ii);
+        plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
         colorbar('southoutside');
     end
     
     figure(2);
-    for ii=1:nloop
-        subplot(1,nloop,ii);
-        plot_sph_surf(Az,El,th_rabi(:,:,ii));
+    tmf=2;
+    tnplot=sum(mbool{tmf});
+    for ii=1:tnplot
+        subplot(1,tnplot,ii);
+        plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
         colorbar('southoutside');
     end
     
-    % Modes
+    % Theta
+    figure(3);
+    tmf=1;
+    tnplot=sum(mbool{tmf});
+    for ii=1:tnplot
+        subplot(1,tnplot,ii);
+        plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
+        colorbar('southoutside');
+    end
+
+    figure(4);
+    tmf=2;
+    tnplot=sum(mbool{tmf});
+    for ii=1:tnplot
+        subplot(1,tnplot,ii);
+        plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
+        colorbar('southoutside');
+    end
+    
+    %% Modes
     % define modes to plot Rabi process
     ndiv_az=configs.zone.ndiv_az;
     ndiv_el=configs.zone.ndiv_el;
@@ -171,12 +197,11 @@ if configs.flags.graphics
     plinestyles={'-','--'};
     
     % Population
-    figure(3); clf;
+    figure(11); clf;
     for ii=1:numel(Az_idx)
         for jj=1:2
             hold on;
-            %         plot(amp(mbool{jj}),squeeze(P_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),'o--');
-            plot(amp(mbool{jj}),squeeze(P_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),...
+            plot(amp_m{jj},squeeze(P_rabi_m{jj}(Az_idx(ii),El_idx(ii),:)),...
                 'LineStyle',plinestyles{jj},...
                 'Marker',pmarkers{jj},...
                 'Color',pcolors(ii,:));
@@ -187,13 +212,12 @@ if configs.flags.graphics
     xlabel('Raman Amplitude');
     ylabel('$P(\uparrow)$');
     
-    % mF rotation angle
-    figure(4); clf;
+    % theta
+    figure(12); clf;
     for ii=1:numel(Az_idx)
         for jj=1:2
             hold on;
-            %         plot(amp(mbool{jj}),squeeze(th_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),'o--');
-            plot(amp(mbool{jj}),squeeze(th_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),...
+            plot(amp_m{jj},squeeze(th_rabi_m{jj}(Az_idx(ii),El_idx(ii),:)),...
                 'LineStyle',plinestyles{jj},...
                 'Marker',pmarkers{jj},...
                 'Color',pcolors(ii,:));
