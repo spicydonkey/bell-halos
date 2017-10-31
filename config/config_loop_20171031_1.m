@@ -60,3 +60,9 @@ configs.zone.lim=[3,3];
 % zone divisions to sample for display
 configs.zone.ndiv_az=6;
 configs.zone.ndiv_el=6;
+
+% 1D zonal histogram
+configs.zone.nbin_dth_1d=300;
+configs.zone.g1d_hsize=15;
+configs.zone.g1d_sigma=3;
+
