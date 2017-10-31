@@ -7,9 +7,8 @@ path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_loop_2017
 vars_save={'configs','path_config',...
     'nloop',...
     'nazim','nelev',...
-    'mf','amp','ver','mbool',...
     'Az','El',...
-    'P_rabi','th_rabi',...
+    'mf','mbool','nloop_m',...
     'amp_m','ver_m',...
     'P_rabi_m','th_rabi_m',...
     };
@@ -73,9 +72,6 @@ for ii=1:nloop
     clearvars txy;
     nshots=size(zxy,1);
     
-%     figure(1);
-%     plot_zxy(zxy);
-    
     % get halos for mf=0,1
     halo_k=cell(nshots,2);
     tbec_cent=cell(1,2);
@@ -87,10 +83,6 @@ for ii=1:nloop
             configs.flags.verbose);
     end
     clearvars zxy;
-    
-%     figure();
-%     plot_zxy(halo_k);
-%     axis equal;
     
     % analyse the Rabi state flopping for this parameter set (pop is for
     % mf=1)
@@ -118,9 +110,9 @@ for ii=1:nloop
 end
 mbool{1}=(mf==0);
 mbool{2}=(mf==1);
+nloop_m=cellfun(@sum,mbool);
 
-
-%% process loop results
+%% clean loop results
 % categorise to mf
 amp_m=cell(1,2);
 ver_m=cell(1,2);
@@ -142,13 +134,103 @@ for ii=1:2
     th_rabi_m{ii}=th_rabi_m{ii}(:,:,Is);
 end
 
+%% 1D zonal histogram
+nzones=numel(Az);
+sterPerZone=(4*pi)/nzones;
+
+% create histogram bin for 1D relative angles
+nbin_dth=configs.zone.nbin_dth_1d;
+ed_dth=linspace(-pi,pi,nbin_dth);
+ct_dth=ed_dth(1:end-1)+0.5*diff(ed_dth);
+
+% create gaussian filter
+g1d_hsize=configs.zone.g1d_hsize;
+g1d_sigma=configs.zone.g1d_sigma;
+g1d_filt=gaussFilter(g1d_hsize,g1d_sigma);
+
+ster_dth=cell(1,2);
+DTHETA=cell(1,2);
+
+for ii=1:2
+    this_nloop=nloop_m(ii);
+    % preallocate 
+    ster_dth{ii}=zeros(this_nloop,length(ct_dth));
+    
+    % TODO 
+    % this is a trial dth - assuming mf=0 rotates like mf=1
+    DTHETA{ii}=th_rabi_m{ii}-flip_bb(th_rabi_m{ii});
+%     DTHETA{ii}=NaN(size(th_rabi_m{ii}));
+%     for jj=1:this_nloop
+%         DTHETA{ii}(:,:,jj)=th_rabi_m{ii}(:,:,jj)-flip_bb(th_rabi_m{ii}(:,:,jj));
+%     end
+    
+    for jj=1:this_nloop        
+        this_dth=DTHETA{ii}(:,:,jj);
+        this_dth=this_dth(:);
+        
+        tnn=histcounts(this_dth,ed_dth);
+        tster=tnn*sterPerZone;
+        tster=conv(tster,g1d_filt,'same');
+        ster_dth{ii}(jj,:)=tster;
+    end
+end
+
+% PLOT
+if configs.flags.graphics
+    for mm=1:2
+        cc=distinguishable_colors(nloop_m(mm));
+        
+        h_ss(mm)=figure(); hold on;
+        
+        pp=[];
+        for ii=1:nloop_m(mm)
+            ss=ster_dth{mm}(ii,:);
+            
+            figure(h_ss(mm));
+            tstr=sprintf('%0.2g',amp_m{mm}(ii));
+            pp(ii)=plot(ct_dth,ss,...
+                'Color',cc(ii,:),'LineWidth',1.5,...
+                'DisplayName',tstr);
+        end
+        figure(h_ss(mm)); hold off;
+        
+        % test angles - lines
+        testAngles=[-pi/4,pi/4,3/4*pi];
+        
+        hold on;
+        yylim=ylim;
+        ylim(yylim);        % fix ylim
+        plines=[];
+        gray_col=0.8*ones(1,3);         % gray data points
+        for ii=1:numel(testAngles)
+            plines(ii)=line(testAngles(ii)*[1,1],yylim,...
+                'Color',gray_col,'LineStyle','--','LineWidth',2);
+            uistack(plines(ii),'bottom');
+        end
+        
+        % annotation
+        figure(h_ss(mm));
+        ax=gca;
+        xlabel('$\Delta\psi$');
+        ylabel('Solid angle in halo [sr]');
+        box on;
+        xlim([-pi,pi]);
+        leg=legend(pp);
+        leg.Title.String='Raman amp.';
+        ax.FontSize=12;
+        leg.FontSize=10;
+        
+    end
+end
+
+
 %% plot
 if configs.flags.graphics
     %% Spherical distribution
     % Population
     figure(1);
     tmf=1;
-    tnplot=sum(mbool{tmf});
+    tnplot=nloop_m(tmf);
     for ii=1:tnplot
         subplot(1,tnplot,ii);
         plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
@@ -157,7 +239,7 @@ if configs.flags.graphics
     
     figure(2);
     tmf=2;
-    tnplot=sum(mbool{tmf});
+    tnplot=nloop_m(tmf);
     for ii=1:tnplot
         subplot(1,tnplot,ii);
         plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
@@ -167,7 +249,7 @@ if configs.flags.graphics
     % Theta
     figure(3);
     tmf=1;
-    tnplot=sum(mbool{tmf});
+    tnplot=nloop_m(tmf);
     for ii=1:tnplot
         subplot(1,tnplot,ii);
         plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
@@ -176,7 +258,7 @@ if configs.flags.graphics
 
     figure(4);
     tmf=2;
-    tnplot=sum(mbool{tmf});
+    tnplot=nloop_m(tmf);
     for ii=1:tnplot
         subplot(1,tnplot,ii);
         plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
