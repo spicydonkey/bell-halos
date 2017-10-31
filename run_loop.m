@@ -5,6 +5,8 @@ path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_loop_2017
 
 % vars to save to output
 vars_save={'configs','path_config',...
+    'nloop',...
+    'nazim','nelev',...
     'mf','amp','ver','mbool',...
     'Az','El',...
     'P_rabi','th_rabi',...
@@ -118,10 +120,25 @@ mbool{2}=(mf==1);
 
 %% process loop results
 % categorise to mf
+amp_m=cell(1,2);
+ver_m=cell(1,2);
+P_rabi_m=cell(1,2);
+th_rabi_m=cell(1,2);
 
-% sort by amp
+for ii=1:2
+    amp_m{ii}=amp(mbool{ii});
+    ver_m{ii}=ver(mbool{ii});
+    P_rabi_m{ii}=P_rabi(:,:,mbool{ii});
+    th_rabi_m{ii}=th_rabi(:,:,mbool{ii});
+end
 
-
+% sort by Raman amp
+for ii=1:2
+    [amp_m{ii},Is]=sort(amp_m{ii});
+    ver_m{ii}=ver_m{ii}(Is);
+    P_rabi_m{ii}=P_rabi_m{ii}(:,:,Is);
+    th_rabi_m{ii}=th_rabi_m{ii}(:,:,Is);
+end
 
 %% plot
 if configs.flags.graphics
