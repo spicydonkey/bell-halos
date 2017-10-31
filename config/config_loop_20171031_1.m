@@ -3,7 +3,7 @@
 %% FLAGS
 configs.flags.savedata=1;
 configs.flags.verbose=0;
-configs.flags.graphics=1;
+configs.flags.graphics=0;
 
 %% MISCELLANEOUS
 configs.misc.vel_z=9.8*0.416;    % atom free-fall vert v at detector hit for T-to-Z conversion;

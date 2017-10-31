@@ -124,67 +124,70 @@ mbool{2}=(mf==1);
 
 
 %% plot
-% Spherical distribution
-figure(1);
-for ii=1:nloop
-    subplot(1,nloop,ii);
-    plot_sph_surf(Az,El,P_rabi(:,:,ii));
-    colorbar('southoutside');
-end
-
-figure(2);
-for ii=1:nloop
-    subplot(1,nloop,ii);
-    plot_sph_surf(Az,El,th_rabi(:,:,ii));
-    colorbar('southoutside');
-end
-
-% Modes
-% define modes to plot Rabi process
-ndiv_az=configs.zone.ndiv_az;
-ndiv_el=configs.zone.ndiv_el;
-az_idx=1:ceil(nazim/ndiv_az):nazim;
-el_idx=1:ceil(nelev/ndiv_el):nelev;
-[Az_idx,El_idx]=ndgrid(az_idx,el_idx);
-
-% annotation config
-pcolors=distinguishable_colors(ndiv_az*ndiv_el);
-pmarkers={'o','^'};
-plinestyles={'-','--'};
-
-% Population
-figure(3); clf;
-for ii=1:numel(Az_idx)
-    for jj=1:2
-        hold on;
-        %         plot(amp(mbool{jj}),squeeze(P_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),'o--');
-        plot(amp(mbool{jj}),squeeze(P_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),...
-            'LineStyle',plinestyles{jj},...
-            'Marker',pmarkers{jj},...
-            'Color',pcolors(ii,:));
+if configs.flags.graphics
+    % Spherical distribution
+    figure(1);
+    for ii=1:nloop
+        subplot(1,nloop,ii);
+        plot_sph_surf(Az,El,P_rabi(:,:,ii));
+        colorbar('southoutside');
     end
-end
-box on;
-hold off;
-xlabel('Raman Amplitude');
-ylabel('$P(\uparrow)$');
-
-% mF rotation angle
-figure(4); clf;
-for ii=1:numel(Az_idx)
-    for jj=1:2
-        hold on;
-%         plot(amp(mbool{jj}),squeeze(th_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),'o--');
-        plot(amp(mbool{jj}),squeeze(th_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),...
-            'LineStyle',plinestyles{jj},...
-            'Marker',pmarkers{jj},...
-            'Color',pcolors(ii,:));
+    
+    figure(2);
+    for ii=1:nloop
+        subplot(1,nloop,ii);
+        plot_sph_surf(Az,El,th_rabi(:,:,ii));
+        colorbar('southoutside');
     end
+    
+    % Modes
+    % define modes to plot Rabi process
+    ndiv_az=configs.zone.ndiv_az;
+    ndiv_el=configs.zone.ndiv_el;
+    az_idx=1:ceil(nazim/ndiv_az):nazim;
+    el_idx=1:ceil(nelev/ndiv_el):nelev;
+    [Az_idx,El_idx]=ndgrid(az_idx,el_idx);
+    
+    % annotation config
+    pcolors=distinguishable_colors(ndiv_az*ndiv_el);
+    pmarkers={'o','^'};
+    plinestyles={'-','--'};
+    
+    % Population
+    figure(3); clf;
+    for ii=1:numel(Az_idx)
+        for jj=1:2
+            hold on;
+            %         plot(amp(mbool{jj}),squeeze(P_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),'o--');
+            plot(amp(mbool{jj}),squeeze(P_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),...
+                'LineStyle',plinestyles{jj},...
+                'Marker',pmarkers{jj},...
+                'Color',pcolors(ii,:));
+        end
+    end
+    box on;
+    hold off;
+    xlabel('Raman Amplitude');
+    ylabel('$P(\uparrow)$');
+    
+    % mF rotation angle
+    figure(4); clf;
+    for ii=1:numel(Az_idx)
+        for jj=1:2
+            hold on;
+            %         plot(amp(mbool{jj}),squeeze(th_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),'o--');
+            plot(amp(mbool{jj}),squeeze(th_rabi(Az_idx(ii),El_idx(ii),mbool{jj})),...
+                'LineStyle',plinestyles{jj},...
+                'Marker',pmarkers{jj},...
+                'Color',pcolors(ii,:));
+        end
+    end
+    box on;
+    hold off;
+    xlabel('Raman Amplitude');
+    ylabel('$\Theta$');
+    
 end
-box on;
-hold off;
-xlabel('Raman Amplitude');
-ylabel('$\Theta$');
 
 %% Save results
 if configs.flags.savedata
