@@ -3,7 +3,7 @@
 %% FLAGS
 configs.flags.savedata=1;
 configs.flags.verbose=0;
-configs.flags.graphics=0;
+configs.flags.graphics=1;
 
 %% MISCELLANEOUS
 configs.misc.vel_z=9.8*0.416;    % atom free-fall vert v at detector hit for T-to-Z conversion;
@@ -50,13 +50,22 @@ configs.halo{1}.boost=zeros(1,3);
 configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
-% TODO - gaussian type
+configs.zone.histtype='gauss';      % {'gauss','latlon'}
 configs.zone.nazim=100;
 configs.zone.nelev=50;
 
-configs.zone.sig=[0.5,Inf];     % NORM completely integrated
+% configs.zone.histtype='latlon';      % {'gauss','latlon'}
+% configs.zone.nazim=100;
+% configs.zone.nelev=50;
+
+configs.zone.sig=[0.1,Inf];     % NORM completely integrated
 configs.zone.lim=[3,3];
 
 % zone divisions to sample for display
-configs.zone.ndiv_az=6;
-configs.zone.ndiv_el=6;
+configs.zone.ndiv_az=8;
+configs.zone.ndiv_el=8;
+
+% 1D zonal histogram
+configs.zone.nbin_dth_1d=300;
+configs.zone.g1d_hsize=15;
+configs.zone.g1d_sigma=3;
