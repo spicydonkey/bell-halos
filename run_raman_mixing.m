@@ -5,14 +5,14 @@
 clear all; clc; close all;
 
 %% CONFIG
-override_config=0;
+override_config=1;
     load_config_default=0;
         config_default_id=1;
     VERBOSE=0;
     
 % config files for characterising mixing
-% path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_bell_mf_*';
-path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_bell2_mf_1_*';
+path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_bell_mf_*';
+% path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_bell2_mf_1_*';
 config_files=dir(path_config);
 config_files={config_files.name};   % name of config files
 

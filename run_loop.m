@@ -1,7 +1,9 @@
 % Load Raman data
 
 % User config
-path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_loop_20171031_1.m';
+% path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_loop2_20171031_1.m';
+path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_loop1_20171101_1.m';
+
 
 % vars to save to output
 vars_save={'configs','path_config',...
