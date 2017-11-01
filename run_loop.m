@@ -1,8 +1,8 @@
 % Load Raman data
 
 % User config
-% path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_loop2_20171031_1.m';
-path_config='C:\Users\HE BEC\Documents\MATLAB\bell-halos\config\config_loop1_20171101_1.m';
+% path_config='config_loop2_20171031_1.m';
+path_config='config_loop1_20171101_1.m';
 
 
 % vars to save to output
@@ -20,7 +20,9 @@ vars_save={'configs','path_config',...
 t_main_start=tic;
 
 % configure
-run(path_config);
+dirsource=fileparts(mfilename('fullpath'));     % device independent source directory
+fullpath_config=fullfile(dirsource,'config',path_config);   % full path to configs dir
+run(fullpath_config);
 
 % set up this run's ID and misc paths
 run_id=getdatetimestr;
