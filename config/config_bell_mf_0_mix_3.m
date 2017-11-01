@@ -18,7 +18,8 @@ vz=configs.misc.vel_z;
 
 
 %% FILES
-configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_progress_201709\mix_mf_0\method_B\mix_3\d';
+% configs.files.path='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_progress_201709\mix_mf_0\method_B\mix_3\d';
+configs.files.path='\\AMPLPC29\He BEC Archive\EXPERIMENT-DATA\spinmom_bell\bell_v1\mix_mf_0\method_B\mix_3\d';
 
 % WARNING: MODIFYING BELOW DIR SETTINGS ARE NOT RECOMMENDED
 configs.files.dir_data=fileparts(configs.files.path);    % fullpath to data directory
