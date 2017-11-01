@@ -181,55 +181,6 @@ for ii=1:2
     end
 end
 
-%% PLOT
-if configs.flags.graphics
-    for mm=1:2
-        cc=distinguishable_colors(nloop_m(mm));
-        
-        h_ss(mm)=figure(); hold on;
-        
-        pp=[];
-        for ii=1:nloop_m(mm)
-            ss=ster_dth{mm}(ii,:);
-            
-            figure(h_ss(mm));
-            tstr=sprintf('%0.2g',amp_m{mm}(ii));
-            pp(ii)=plot(ct_dth,ss,...
-                'Color',cc(ii,:),'LineWidth',1.5,...
-                'DisplayName',tstr);
-        end
-        figure(h_ss(mm)); hold off;
-        
-        % test angles - lines
-        testAngles=[-pi/4,pi/4,3/4*pi];
-        
-        hold on;
-        yylim=ylim;
-        ylim(yylim);        % fix ylim
-        plines=[];
-        gray_col=0.8*ones(1,3);         % gray data points
-        for ii=1:numel(testAngles)
-            plines(ii)=line(testAngles(ii)*[1,1],yylim,...
-                'Color',gray_col,'LineStyle','--','LineWidth',2);
-            uistack(plines(ii),'bottom');
-        end
-        
-        % annotation
-        figure(h_ss(mm));
-        ax=gca;
-        xlabel('$\Delta\psi$');
-        ylabel('Solid angle in halo [sr]');
-        box on;
-        xlim([-pi,pi]);
-        leg=legend(pp);
-        leg.Title.String='Raman amp.';
-        ax.FontSize=12;
-        leg.FontSize=10;
-        
-    end
-end
-
-
 %% plot
 if configs.flags.graphics
     %% Spherical distribution
@@ -322,6 +273,51 @@ if configs.flags.graphics
     xlabel('Raman Amplitude');
     ylabel('$\Theta$');
     
+    %% Relative angle histogram
+    for mm=1:2
+        cc=distinguishable_colors(nloop_m(mm));
+        
+        h_ss(mm)=figure(); hold on;
+        
+        pp=[];
+        for ii=1:nloop_m(mm)
+            ss=ster_dth{mm}(ii,:);
+            
+            figure(h_ss(mm));
+            tstr=sprintf('%0.2g',amp_m{mm}(ii));
+            pp(ii)=plot(ct_dth,ss,...
+                'Color',cc(ii,:),'LineWidth',1.5,...
+                'DisplayName',tstr);
+        end
+        figure(h_ss(mm)); hold off;
+        
+        % test angles - lines
+        testAngles=[-pi/4,pi/4,3/4*pi];
+        
+        hold on;
+        yylim=ylim;
+        ylim(yylim);        % fix ylim
+        plines=[];
+        gray_col=0.8*ones(1,3);         % gray data points
+        for ii=1:numel(testAngles)
+            plines(ii)=line(testAngles(ii)*[1,1],yylim,...
+                'Color',gray_col,'LineStyle','--','LineWidth',2);
+            uistack(plines(ii),'bottom');
+        end
+        
+        % annotation
+        figure(h_ss(mm));
+        ax=gca;
+        xlabel('$\Delta\psi$');
+        ylabel('Solid angle in halo [sr]');
+        box on;
+        xlim([-pi,pi]);
+        leg=legend(pp);
+        leg.Title.String='Raman amp.';
+        ax.FontSize=12;
+        leg.FontSize=10;
+    end
+
 end
 
 %% Save results
