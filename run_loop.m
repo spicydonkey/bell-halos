@@ -87,7 +87,8 @@ for ii=1:nloop
     % analyse the Rabi state flopping for this parameter set (pop is for
     % mf=1)
     tP_rabi=rabiAnalyse(halo_k,configs.zone.nazim,configs.zone.nelev,...
-        configs.zone.sig,configs.zone.lim);
+        configs.zone.sig,configs.zone.lim,...
+        configs.zone.histtype);
     clearvars halo_k;
     
     % state rotation angle at each momentum mode
@@ -228,7 +229,7 @@ end
 if configs.flags.graphics
     %% Spherical distribution
     % Population
-    figure(1);
+    figure();
     tmf=1;
     tnplot=nloop_m(tmf);
     for ii=1:tnplot
@@ -237,7 +238,7 @@ if configs.flags.graphics
         colorbar('southoutside');
     end
     
-    figure(2);
+    figure();
     tmf=2;
     tnplot=nloop_m(tmf);
     for ii=1:tnplot
@@ -247,7 +248,7 @@ if configs.flags.graphics
     end
     
     % Theta
-    figure(3);
+    figure();
     tmf=1;
     tnplot=nloop_m(tmf);
     for ii=1:tnplot
@@ -256,7 +257,7 @@ if configs.flags.graphics
         colorbar('southoutside');
     end
 
-    figure(4);
+    figure();
     tmf=2;
     tnplot=nloop_m(tmf);
     for ii=1:tnplot
@@ -269,8 +270,8 @@ if configs.flags.graphics
     % define modes to plot Rabi process
     ndiv_az=configs.zone.ndiv_az;
     ndiv_el=configs.zone.ndiv_el;
-    az_idx=1:ceil(nazim/ndiv_az):nazim;
-    el_idx=1:ceil(nelev/ndiv_el):nelev;
+    az_idx=1:ceil(nazim/ndiv_az):nazim-1;
+    el_idx=1:ceil(nelev/ndiv_el):nelev-1;
     [Az_idx,El_idx]=ndgrid(az_idx,el_idx);
     
     % annotation config
@@ -279,9 +280,12 @@ if configs.flags.graphics
     plinestyles={'-','--'};
     
     % Population
-    figure(11); clf;
+    figure(); clf;
     for ii=1:numel(Az_idx)
         for jj=1:2
+            if isempty(P_rabi_m{jj})
+                continue
+            end
             hold on;
             plot(amp_m{jj},squeeze(P_rabi_m{jj}(Az_idx(ii),El_idx(ii),:)),...
                 'LineStyle',plinestyles{jj},...
@@ -295,9 +299,12 @@ if configs.flags.graphics
     ylabel('$P(\uparrow)$');
     
     % theta
-    figure(12); clf;
+    figure(); clf;
     for ii=1:numel(Az_idx)
         for jj=1:2
+            if isempty(th_rabi_m{jj})
+                continue
+            end
             hold on;
             plot(amp_m{jj},squeeze(th_rabi_m{jj}(Az_idx(ii),El_idx(ii),:)),...
                 'LineStyle',plinestyles{jj},...
