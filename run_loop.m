@@ -11,6 +11,7 @@ vars_save={'configs','path_config',...
     'mf','mbool','nloop_m',...
     'amp_m','ver_m',...
     'P_rabi_m','th_rabi_m',...
+    'ct_dth','ster_dth','DTHETA',...
     };
 
 %% Main
@@ -176,7 +177,7 @@ for ii=1:2
     end
 end
 
-% PLOT
+%% PLOT
 if configs.flags.graphics
     for mm=1:2
         cc=distinguishable_colors(nloop_m(mm));
