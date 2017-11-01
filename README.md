@@ -19,9 +19,9 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
     [x] sort data by raman amplitude (easier to plot, fit, etc.)
     [] smooth halo sph density before further processing incl population, theta,...
     [] bad zones: pad with NaN (at density eval)
-    	[] poles
+    	[x] poles (use inZone.m)
     	[] dark spots
-    	[] spontaneous halo
+    	[x] --spontaneous halo-- general region selector: inZone.m
     [] scat mode histogram of theta
     	[x] assuming mf=0 rotate like 1
     [] processing the 0's?
