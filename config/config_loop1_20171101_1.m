@@ -58,7 +58,7 @@ configs.zone.histtype='latlon';      % {'gauss','latlon'}
 configs.zone.nazim=100;
 configs.zone.nelev=50;
 
-configs.zone.sig=[0.5,Inf];     % NORM completely integrated
+configs.zone.sig=[0.1,Inf];     % NORM completely integrated
 configs.zone.lim=[3,3];
 
 % zone divisions to sample for display
