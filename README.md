@@ -25,9 +25,16 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
     [] scat mode histogram of theta
     	[x] assuming mf=0 rotate like 1
     [] processing the 0's?
-[] data for higher raman amp
+    [] verify each halo capture
+        [] output distribution
+        [] graphical
+    [] data for higher raman amp
 [] general theta (no modulo pi) by fitting Rabi flopping to population ratio
 
 ## 3. Detection
 
 ## 4. Correlation
+
+
+## MISC
+[] plotFlatMap
