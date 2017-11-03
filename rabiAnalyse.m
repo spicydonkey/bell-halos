@@ -1,6 +1,8 @@
-function [P_rabi,z_az,z_el]=rabiAnalyse(halo_k,nAz,nEl,sig,lim,histtype)
-% [P_RABI, Z_AZ, Z_EL] = RABIANALYSE(HALO_K, NAZ, NEL, SIG, LIM, HISTTYPE)
+function [z_az,z_el,P_rabi,nn_halo]=rabiAnalyse(halo_k,nAz,nEl,sig,lim,histtype)
+% [Z_AZ, Z_EL, P_RABI, NN_HALO] = RABIANALYSE(HALO_K, NAZ, NEL, SIG, LIM, HISTTYPE)
 %
+%
+% NN_HALO: 1x2 cell of counts in zone
 %
 
 % Count each zone
@@ -17,6 +19,8 @@ switch histtype
         [z_az,z_el]=ndgrid(az,el);      % grid to preserve dimensional ordering in array indexing
         
         % TODO
+        % do each shot and get error statistics
+        
         % simplify by collating all shots
         halo_k_combined=cell(1,2);
         for ii=1:2

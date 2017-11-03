@@ -7,6 +7,8 @@
 4. Correlation
 
 ## 1. Entangled source
+[] user-friendly and fast monitor of halo mode occupancy
+
 
 ## 2. Local operation: Rotation
 ### Characterisation
@@ -26,7 +28,7 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
     	[x] assuming mf=0 rotate like 1
     [] processing the 0's?
     [] verify each halo capture
-        [] output distribution
+        [] return distribution (nn) - for further processing
         [] graphical
     [] data for higher raman amp
 [] general theta (no modulo pi) by fitting Rabi flopping to population ratio
@@ -34,7 +36,10 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
 ## 3. Detection
 
 ## 4. Correlation
-
+[] halo fit
+    [] to unit sphere
+    [] fast g2 amplitude algorithm for BB-pairs
+    
 
 ## MISC
 [] plotFlatMap
