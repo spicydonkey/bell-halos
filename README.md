@@ -28,8 +28,10 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
     	[x] assuming mf=0 rotate like 1
     [] processing the 0's?
     [] verify each halo capture
-        [] return distribution (nn) - for further processing
-        [] graphical
+        [x] return distribution (nn) - for further processing
+        [x] graphical
+        [] 2D gaussian smoothing
+        [] print out
     [] data for higher raman amp
 [] general theta (no modulo pi) by fitting Rabi flopping to population ratio
 

@@ -198,10 +198,7 @@ end
 
 %% plot
 if configs.flags.graphics
-    %% Flat halo density distribution
-    % TODO
-    % annotate plots 
-    
+    %% Flat halo density distribution    
     for tmf=1:2
         tnplot=nloop_m(tmf);
         
@@ -211,6 +208,10 @@ if configs.flags.graphics
             for jj=1:2
                 subplot(2,1,jj);
                 plotFlatMapWrappedRad(Az,El,nn_halo_m{tmf}{jj}(:,:,ii),'eckert4');
+                
+                strTitle=sprintf('[src $m_F=%d$] $m_F=%d$, $K_R=%0.2g$',tmf-1,jj-1,amp_m{tmf}(ii));
+                title(strTitle);
+                
             end
         end
     end
