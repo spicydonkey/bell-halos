@@ -2,7 +2,7 @@
 
 % User config
 % path_config='config_loop2_20171031_1.m';
-path_config='config_loop1_20171101_1.m';
+path_config='config_loop2_20171103_1.m';
 
 
 % vars to save to output
@@ -57,8 +57,13 @@ el=linspace(-pi/2,pi/2,nelev);
 mf=NaN(nloop,1);
 amp=NaN(nloop,1);
 ver=NaN(nloop,1);
-P_rabi=NaN(size(Az,1),size(Az,2),nloop);
-th_rabi=NaN(size(Az,1),size(Az,2),nloop);
+nan_alloc=NaN(size(Az,1),size(Az,2),nloop);
+nn_halo=cell(1,2);
+for ii=1:2
+    nn_halo{ii}=nan_alloc;
+end
+P_rabi=nan_alloc;
+th_rabi=nan_alloc;
 
 % TODO - need to check if BEC centers vary significantly between exps
 bec_cent=cell(nloop,1);
@@ -91,7 +96,7 @@ for ii=1:nloop
     
     % analyse the Rabi state flopping for this parameter set (pop is for
     % mf=1)
-    tP_rabi=rabiAnalyse(halo_k,configs.zone.nazim,configs.zone.nelev,...
+    [~,~,tP_rabi,tnn_halo]=rabiAnalyse(halo_k,configs.zone.nazim,configs.zone.nelev,...
         configs.zone.sig,configs.zone.lim,...
         configs.zone.histtype);
     clearvars halo_k;
@@ -109,6 +114,9 @@ for ii=1:nloop
     mf(ii)=tmf;
     amp(ii)=tamp;
     ver(ii)=tver;
+    for jj=1:2
+        nn_halo{jj}(:,:,ii)=tnn_halo{jj};
+    end
     P_rabi(:,:,ii)=tP_rabi;
     th_rabi(:,:,ii)=tth_rabi;
     
@@ -122,12 +130,16 @@ nloop_m=cellfun(@sum,mbool);
 % categorise to mf
 amp_m=cell(1,2);
 ver_m=cell(1,2);
+nn_halo_m=cell(1,2);
 P_rabi_m=cell(1,2);
 th_rabi_m=cell(1,2);
 
 for ii=1:2
     amp_m{ii}=amp(mbool{ii});
     ver_m{ii}=ver(mbool{ii});
+    for jj=1:2
+        nn_halo_m{ii}{jj}=nn_halo{jj}(:,:,mbool{ii});
+    end
     P_rabi_m{ii}=P_rabi(:,:,mbool{ii});
     th_rabi_m{ii}=th_rabi(:,:,mbool{ii});
 end
@@ -136,6 +148,9 @@ end
 for ii=1:2
     [amp_m{ii},Is]=sort(amp_m{ii});
     ver_m{ii}=ver_m{ii}(Is);
+    for jj=1:2
+        nn_halo_m{ii}{jj}=nn_halo_m{ii}{jj}(:,:,Is);
+    end
     P_rabi_m{ii}=P_rabi_m{ii}(:,:,Is);
     th_rabi_m{ii}=th_rabi_m{ii}(:,:,Is);
 end
@@ -183,8 +198,25 @@ end
 
 %% plot
 if configs.flags.graphics
+    %% Flat halo density distribution
+    % TODO
+    % annotate plots 
+    
+    for tmf=1:2
+        tnplot=nloop_m(tmf);
+        
+        for ii=1:tnplot
+            % compare count dist between mf for this run
+            figure();
+            for jj=1:2
+                subplot(2,1,jj);
+                plotFlatMap(rad2deg(El),rad2deg(Az),nn_halo_m{tmf}{jj}(:,:,ii),'eckert4');
+            end
+        end
+    end
+    
     %% Spherical distribution
-    % Population
+    % Population ratio
     figure();
     tmf=1;
     tnplot=nloop_m(tmf);
