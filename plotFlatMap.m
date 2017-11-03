@@ -12,6 +12,11 @@ function h = plotFlatMap(lat,lon,Z,axesOpts)
 % [] create a wrapper for current zone convention (azim,elev) in rads
 %
 
+if ~exist('axesOpts','var')
+    warning('axesOpts is undefined. Default to rectangle map.');
+    axesOpts='rect';
+end
+
 % axes type
 switch axesOpts
     case 'eckert4'
@@ -20,11 +25,11 @@ switch axesOpts
         axis off;
         
         h=geoshow(lat,lon,Z,'DisplayType','texturemap');
-    case 'rect'
+    case 'rect'        
+        h=geoshow(lat,lon,Z,'DisplayType','texturemap');
+        
         xlim([-180,180]);
         ylim([-90,90]);
-        
-        h=geoshow(lat,lon,Z,'DisplayType','texturemap');
     otherwise
         warning('axesOpts should be set to either "eckert4" or "rect".');
 end
