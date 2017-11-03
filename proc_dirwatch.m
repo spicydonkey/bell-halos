@@ -32,6 +32,8 @@ for ii=1:nparams_list
     nfiles=length(t_dfiles);
     
     for jj=1:nfiles
-        copyfile(t_dfiles{jj},fullfile(tdir,t_dfiles{jj}));
+        fprintf('%d/%d (%d/%d)\n',ii,nparams_list,jj,nfiles);
+%         copyfile(t_dfiles{jj},fullfile(tdir,t_dfiles{jj}));
+          FileRename(t_dfiles{jj},fullfile(tdir,t_dfiles{jj}),'forced');  
     end
 end
