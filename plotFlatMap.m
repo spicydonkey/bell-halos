@@ -6,12 +6,6 @@ function h = plotFlatMap(lat,lon,Z,axesOpts)
 % LAT, LON should be in degrees
 %
 
-% TODO
-% [] tidy switch cases below
-% [] wrap azimuthal angle (currently chopped)
-% [] create a wrapper for current zone convention (azim,elev) in rads
-%
-
 if ~exist('axesOpts','var')
     warning('axesOpts is undefined. Default to rectangle map.');
     axesOpts='rect';
@@ -25,11 +19,13 @@ switch axesOpts
         axis off;
         
         h=geoshow(lat,lon,Z,'DisplayType','texturemap');
+        
     case 'rect'        
         h=geoshow(lat,lon,Z,'DisplayType','texturemap');
         
         xlim([-180,180]);
         ylim([-90,90]);
+        
     otherwise
         warning('axesOpts should be set to either "eckert4" or "rect".');
 end

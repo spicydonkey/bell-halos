@@ -42,4 +42,7 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
     
 
 ## MISC
-[] plotFlatMap
+[x] plotFlatMap
+    see plotFlatMapWrappedRad
+    [x] rad
+    [x] wrapping

@@ -210,7 +210,7 @@ if configs.flags.graphics
             figure();
             for jj=1:2
                 subplot(2,1,jj);
-                plotFlatMap(rad2deg(El),rad2deg(Az),nn_halo_m{tmf}{jj}(:,:,ii),'eckert4');
+                plotFlatMapWrappedRad(Az,El,nn_halo_m{tmf}{jj}(:,:,ii),'eckert4');
             end
         end
     end
