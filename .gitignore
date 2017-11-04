@@ -2,6 +2,7 @@
 *.dat*
 *.zip*
 *.swp*
+*.swo*
 
 # Log
 *.log
