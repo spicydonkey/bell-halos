@@ -44,7 +44,7 @@ for ii=1:nfiles
 end
 dloop=dloop(1:nloop);
 
-%% process loop
+%% load halos and get counts in zone
 % common spherical momentum zones
 nazim=configs.zone.nazim;
 nelev=configs.zone.nelev;
@@ -62,12 +62,13 @@ nn_halo=cell(1,2);
 for ii=1:2
     nn_halo{ii}=nan_alloc;
 end
-P_rabi=nan_alloc;
-th_rabi=nan_alloc;
+% P_rabi=nan_alloc;
+% th_rabi=nan_alloc;
 
 % TODO - need to check if BEC centers vary significantly between exps
 bec_cent=cell(nloop,1);
 
+% get count distribution in halo
 for ii=1:nloop
     tdir=dloop{ii};
     [tmf,tamp,tver]=getLoopInfo(tdir);
@@ -96,19 +97,22 @@ for ii=1:nloop
     
     % analyse the Rabi state flopping for this parameter set (pop is for
     % mf=1)
-    [~,~,tP_rabi,tnn_halo]=rabiAnalyse(halo_k,configs.zone.nazim,configs.zone.nelev,...
+%     [~,~,tP_rabi,tnn_halo]=rabiAnalyse(halo_k,configs.zone.nazim,configs.zone.nelev,...
+%         configs.zone.sig,configs.zone.lim,...
+%         configs.zone.histtype);
+    tnn_halo=haloZoneCount(halo_k,configs.zone.nazim,configs.zone.nelev,...
         configs.zone.sig,configs.zone.lim,...
         configs.zone.histtype);
     clearvars halo_k;
     
-    % state rotation angle at each momentum mode
-    % formula: Pr(ORIGIGNAL_STATE)=cos(ROT_ANGLE/2)^2
-    % limitation - modulo pi
-    %   ROT_ANGLE >= 0 by convention
-    tth_rabi=2*acos(sqrt(tP_rabi));
-    if tmf==0
-        tth_rabi=pi-tth_rabi;
-    end
+%     % state rotation angle at each momentum mode
+%     % formula: Pr(ORIGIGNAL_STATE)=cos(ROT_ANGLE/2)^2
+%     % limitation - modulo pi
+%     %   ROT_ANGLE >= 0 by convention
+%     tth_rabi=2*acos(sqrt(tP_rabi));
+%     if tmf==0
+%         tth_rabi=pi-tth_rabi;
+%     end
     
     % store results
     mf(ii)=tmf;
@@ -117,8 +121,8 @@ for ii=1:nloop
     for jj=1:2
         nn_halo{jj}(:,:,ii)=tnn_halo{jj};
     end
-    P_rabi(:,:,ii)=tP_rabi;
-    th_rabi(:,:,ii)=tth_rabi;
+%     P_rabi(:,:,ii)=tP_rabi;
+%     th_rabi(:,:,ii)=tth_rabi;
     
     bec_cent{ii}=tbec_cent;
 end
@@ -131,8 +135,8 @@ nloop_m=cellfun(@sum,mbool);
 amp_m=cell(1,2);
 ver_m=cell(1,2);
 nn_halo_m=cell(1,2);
-P_rabi_m=cell(1,2);
-th_rabi_m=cell(1,2);
+% P_rabi_m=cell(1,2);
+% th_rabi_m=cell(1,2);
 
 for ii=1:2
     amp_m{ii}=amp(mbool{ii});
@@ -140,8 +144,8 @@ for ii=1:2
     for jj=1:2
         nn_halo_m{ii}{jj}=nn_halo{jj}(:,:,mbool{ii});
     end
-    P_rabi_m{ii}=P_rabi(:,:,mbool{ii});
-    th_rabi_m{ii}=th_rabi(:,:,mbool{ii});
+%     P_rabi_m{ii}=P_rabi(:,:,mbool{ii});
+%     th_rabi_m{ii}=th_rabi(:,:,mbool{ii});
 end
 
 % sort by Raman amp
@@ -151,9 +155,19 @@ for ii=1:2
     for jj=1:2
         nn_halo_m{ii}{jj}=nn_halo_m{ii}{jj}(:,:,Is);
     end
-    P_rabi_m{ii}=P_rabi_m{ii}(:,:,Is);
-    th_rabi_m{ii}=th_rabi_m{ii}(:,:,Is);
+%     P_rabi_m{ii}=P_rabi_m{ii}(:,:,Is);
+%     th_rabi_m{ii}=th_rabi_m{ii}(:,:,Is);
 end
+
+
+%% evaluate Rabi population
+P_rabi_m=cell(1,2);
+for ii=1:2
+    tnn_tot=nn_halo_m{ii}{1}+nn_halo_m{ii}{2};  % total pop in zone
+    tnn_orig=nn_halo_m{ii}{ii};     % pop of original state
+    P_rabi_m{ii}=tnn_orig./tnn_tot;
+end
+
 
 %% Fit Rabi oscillation
 % TODO - Rabi oscillation fitted theta - amplitude
@@ -163,14 +177,24 @@ for kk=1:2
     for ii=1:size(Az,1)
         for jj=1:size(Az,2)
             this_pp=squeeze(P_rabi_m{kk}(ii,jj,:));
-            if kk==1
-                this_pp=1-this_pp;      % for mf=0 the pop reverses
-            end
+%             if kk==1
+%                 this_pp=1-this_pp;      % for mf=0 the pop reverses
+%             end
             aRabiFreq(ii,jj,kk)=fitRabiOsc(this_amp,this_pp);
         end
     end
 end
-% TODO - evaluate fitted theta map
+
+%% evaluate fitted theta map
+% fitted rotation angle at the data amps
+th_rabi_m=cell(size(P_rabi_m));
+for ii=1:2
+    th_rabi_m{ii}=repmat(aRabiFreq(:,:,ii),[1,1,nloop_m(ii)]);
+    for jj=1:nloop_m(ii)
+        th_rabi_m{ii}(:,:,jj)=th_rabi_m{ii}(:,:,jj)*amp_m{ii}(jj);
+    end
+end
+
 
 %% 1D zonal histogram
 nzones=numel(Az);
