@@ -8,19 +8,19 @@ function [afreq,afreq_se,xfit,yfit]=fitRabiOsc(amp,pp)
 %
 
 % define amp Rabi oscillation model
-aRabiFun=@(aOmega,amp) cos(aOmega*amp).^2;  % simple, ideal amplitude
+aRabiFun=@(aOmega,amp) cos(aOmega*amp/2).^2;  % simple, ideal amplitude
 coefname={'aOmega'};
 param0=1;
 
-% aRabiFun=@(p,amp) cos(p(1)*(sqrt(amp)-p(2))).^2;  % ideal amplitude, scale
+% aRabiFun=@(p,amp) cos(0.5*p(1)*(sqrt(amp)-p(2))).^2;  % ideal amplitude, scale
 % coefname={'aOmega','A'};
 % param0=[1,0.33];
 
-% aRabiFun=@(p,amp) (amp>sqrt(p(2))).*cos(p(1)*(sqrt(amp)-p(2))).^2 + (amp<=sqrt(p(2)))*NaN;  % ideal amplitude, scale
+% aRabiFun=@(p,amp) (amp>sqrt(p(2))).*cos(0.5*p(1)*(sqrt(amp)-p(2))).^2 + (amp<=sqrt(p(2)))*NaN;  % ideal amplitude, scale
 % coefname={'aOmega','A'};
 % param0=[1,0.33];
 
-fopts=statset('TolFun',1e-12,'TolX',1e-12,'MaxIter',1e3);
+fopts=statset('TolFun',1e-6,'TolX',1e-6,'MaxIter',1e2);
 
 fit_rabi=fitnlm(amp,pp,aRabiFun,param0,...
     'CoefficientNames',coefname,...
