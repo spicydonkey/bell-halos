@@ -2,6 +2,7 @@
 
 %% FLAGS
 configs.flags.savedata=0;
+configs.flags.savefigs=0;
 configs.flags.verbose=0;
 configs.flags.graphics=1;
 
