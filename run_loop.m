@@ -2,8 +2,8 @@
 
 % User config
 % path_config='config_loop2_20171031_1.m';
-path_config='config_loop2_20171103_1.m';
-
+% path_config='config_loop2_20171103_1.m';
+path_config='config_loop2_20171103_2.m';
 
 % vars to save to output
 vars_save={'configs','path_config',...
@@ -263,6 +263,10 @@ if configs.flags.graphics
             
             % annotate fig
             t_cb=colorbar('southoutside');
+            t_cb.Label.String='P_0';
+            
+            strTitle=sprintf('[src $m_F=%d$] $K_R=%0.2g$',tmf-1,amp_m{tmf}(ii));
+            title(strTitle);
             
             drawnow
             
@@ -286,6 +290,10 @@ if configs.flags.graphics
               
             % annotate fig
             t_cb=colorbar('southoutside');
+            t_cb.Label.String='\theta';
+            
+            strTitle=sprintf('[src $m_F=%d$] $K_R=%0.2g$',tmf-1,amp_m{tmf}(ii));
+            title(strTitle);
             
             drawnow
             
