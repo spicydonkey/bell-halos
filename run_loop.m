@@ -2,11 +2,13 @@
 
 % User config
 % path_config='config_loop2_20171031_1.m';
-path_config='config_loop2_20171103_1.m';
-
+% path_config='config_loop2_20171103_1.m';
+path_config='config_loop2_20171103_2.m';
 
 % vars to save to output
 vars_save={'configs','path_config',...
+    'fullpath_config',...
+    'fname_save','path_save',...
     'nloop',...
     'nazim','nelev',...
     'Az','El',...
@@ -24,9 +26,14 @@ dirsource=fileparts(mfilename('fullpath'));     % device independent source dire
 fullpath_config=fullfile(dirsource,'config',path_config);   % full path to configs dir
 run(fullpath_config);
 
+% update configuration
+configs=updateConfig(configs);
+
 % set up this run's ID and misc paths
 run_id=getdatetimestr;
-path_save=fullfile(fileparts(configs.files.path_loop),'arch',[mfilename,'__',run_id,'.mat']);
+fname_save=[mfilename,'__',run_id];
+path_save=fullfile(fileparts(configs.files.path_loop),'arch',fname_save);
+mkdir(path_save);   % create dir to output any files to save to disk
 
 % parse main data directory
 cd(configs.files.path_loop);
@@ -174,6 +181,9 @@ end
 aRabiFreq=NaN(size(Az,1),size(Az,2),2);
 for kk=1:2
     this_amp=amp_m{kk};
+    if isempty(this_amp)
+        continue
+    end
     for ii=1:size(Az,1)
         for jj=1:size(Az,2)
             this_pp=squeeze(P_rabi_m{kk}(ii,jj,:));
@@ -221,6 +231,7 @@ for ii=1:2
     % TODO 
     % this is a trial dth - assuming mf=0 rotates like mf=1
     DTHETA{ii}=th_rabi_m{ii}-flip_bb(th_rabi_m{ii});
+    
 %     DTHETA{ii}=NaN(size(th_rabi_m{ii}));
 %     for jj=1:this_nloop
 %         DTHETA{ii}(:,:,jj)=th_rabi_m{ii}(:,:,jj)-flip_bb(th_rabi_m{ii}(:,:,jj));
@@ -240,63 +251,85 @@ end
 %% plot
 if configs.flags.graphics
     %% Flat halo density distribution    
+    t_hfig=figure();
     for tmf=1:2
         tnplot=nloop_m(tmf);
-        
         for ii=1:tnplot
             % compare count dist between mf for this run
-            figure();
+            clf(t_hfig);
             for jj=1:2
-                subplot(2,1,jj);
+                subplot(1,2,jj);
                 plotFlatMapWrappedRad(Az,El,nn_halo_m{tmf}{jj}(:,:,ii),'eckert4');
                 
                 strTitle=sprintf('[src $m_F=%d$] $m_F=%d$, $K_R=%0.2g$',tmf-1,jj-1,amp_m{tmf}(ii));
                 title(strTitle);
                 
             end
+            drawnow
+            
+            % save fig
+            figname=sprintf('fig_ndist_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
+            if configs.flags.savefigs
+                saveas(t_hfig,[fullfile(path_save,figname),'.png']);
+            end
         end
     end
     
-    %% Spherical distribution
-    % Population ratio
-    figure();
-    tmf=1;
-    tnplot=nloop_m(tmf);
-    for ii=1:tnplot
-        subplot(1,tnplot,ii);
-        plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
-        colorbar('southoutside');
+    %% Population ratio - spherical distribution
+    
+    t_hfig=figure();
+    for tmf=1:2
+        tnplot=nloop_m(tmf);
+        for ii=1:tnplot
+            clf(t_hfig);
+            
+            plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
+            
+            % annotate fig
+            t_cb=colorbar('southoutside');
+            t_cb.Label.String='P_0';
+            
+            strTitle=sprintf('[src $m_F=%d$] $K_R=%0.2g$',tmf-1,amp_m{tmf}(ii));
+            title(strTitle);
+            
+            drawnow
+            
+            % save fig
+            figname=sprintf('fig_pop_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
+            if configs.flags.savefigs
+                saveas(t_hfig,[fullfile(path_save,figname),'.png']);
+            end
+        end
     end
     
-    figure();
-    tmf=2;
-    tnplot=nloop_m(tmf);
-    for ii=1:tnplot
-        subplot(1,tnplot,ii);
-        plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
-        colorbar('southoutside');
+    %% Theta - spherical distribution
+    t_hfig=figure();
+    for tmf=1:2
+        tnplot=nloop_m(tmf);
+        
+        for ii=1:tnplot
+            clf(t_hfig);
+            
+            plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
+              
+            % annotate fig
+            t_cb=colorbar('southoutside');
+            t_cb.Label.String='\theta';
+            
+            strTitle=sprintf('[src $m_F=%d$] $K_R=%0.2g$',tmf-1,amp_m{tmf}(ii));
+            title(strTitle);
+            
+            drawnow
+            
+            % save fig
+            figname=sprintf('fig_theta_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
+            if configs.flags.savefigs
+                saveas(t_hfig,[fullfile(path_save,figname),'.png']);
+            end
+        end
     end
     
-    % Theta
-    figure();
-    tmf=1;
-    tnplot=nloop_m(tmf);
-    for ii=1:tnplot
-        subplot(1,tnplot,ii);
-        plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
-        colorbar('southoutside');
-    end
-
-    figure();
-    tmf=2;
-    tnplot=nloop_m(tmf);
-    for ii=1:tnplot
-        subplot(1,tnplot,ii);
-        plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
-        colorbar('southoutside');
-    end
-    
-    %% Modes
+    %% Rabi oscillation at selected momentum modes
     % define modes to plot Rabi process
     ndiv_az=configs.zone.ndiv_az;
     ndiv_el=configs.zone.ndiv_el;
@@ -304,68 +337,99 @@ if configs.flags.graphics
     el_idx=1:ceil(nelev/ndiv_el):nelev-1;
     [Az_idx,El_idx]=ndgrid(az_idx,el_idx);
     
-    % annotation config
+    % config - fig annotations
     pcolors=distinguishable_colors(ndiv_az*ndiv_el);
     pmarkers={'o','^'};
     plinestyles={'-','--'};
     
     % Population
-    figure(); clf;
-    for ii=1:numel(Az_idx)
-        for jj=1:2
-            if isempty(P_rabi_m{jj})
-                continue
-            end
+    for tmf=1:2
+        if isempty(P_rabi_m{tmf})
+            continue
+        end
+        
+        t_hfig=figure();
+        for ii=1:numel(Az_idx)
             hold on;
-            plot(amp_m{jj},squeeze(P_rabi_m{jj}(Az_idx(ii),El_idx(ii),:)),...
-                'LineStyle',plinestyles{jj},...
-                'Marker',pmarkers{jj},...
+            plot(amp_m{tmf},squeeze(P_rabi_m{tmf}(Az_idx(ii),El_idx(ii),:)),...
+                'LineStyle',plinestyles{tmf},...
+                'Marker',pmarkers{tmf},...
                 'Color',pcolors(ii,:));
         end
+        
+        % annotate fig
+        box on;
+        hold off;
+        xlabel('Raman Amplitude');
+        ylabel('$P_{0}$');
+        strTitle=sprintf('[src $m_F=%d$]',tmf-1);
+        title(strTitle);
+        
+        drawnow
+        
+        % save fig
+        figname=sprintf('fig_rabipop_%d',tmf-1);
+        if configs.flags.savefigs
+            saveas(t_hfig,[fullfile(path_save,figname),'.png']);
+        end
     end
-    box on;
-    hold off;
-    xlabel('Raman Amplitude');
-    ylabel('$P(\uparrow)$');
     
     % theta
-    figure(); clf;
-    for ii=1:numel(Az_idx)
-        for jj=1:2
-            if isempty(th_rabi_m{jj})
-                continue
-            end
+    for tmf=1:2
+        if isempty(th_rabi_m{tmf})
+            continue
+        end
+        
+        t_hfig=figure();
+        for ii=1:numel(Az_idx)
             hold on;
-            plot(amp_m{jj},squeeze(th_rabi_m{jj}(Az_idx(ii),El_idx(ii),:)),...
-                'LineStyle',plinestyles{jj},...
-                'Marker',pmarkers{jj},...
+            plot(amp_m{tmf},squeeze(th_rabi_m{tmf}(Az_idx(ii),El_idx(ii),:)),...
+                'LineStyle',plinestyles{tmf},...
+                'Marker',pmarkers{tmf},...
                 'Color',pcolors(ii,:));
         end
+        
+        % annotate fig
+        box on;
+        hold off;
+        xlabel('Raman Amplitude');
+        ylabel('$\Theta$');
+        strTitle=sprintf('[src $m_F=%d$]',tmf-1);
+        title(strTitle);
+        
+        drawnow
+        
+        % save fig
+        figname=sprintf('fig_theta_%d',tmf-1);
+        if configs.flags.savefigs
+            saveas(t_hfig,[fullfile(path_save,figname),'.png']);
+        end
     end
-    box on;
-    hold off;
-    xlabel('Raman Amplitude');
-    ylabel('$\Theta$');
     
     %% Relative angle histogram
-    for mm=1:2
-        cc=distinguishable_colors(nloop_m(mm));
+    for tmf=1:2
+        if nloop_m(tmf)==0
+            continue
+        end
         
-        h_ss(mm)=figure(); hold on;
+        t_hfig=figure();
         
+        cc=distinguishable_colors(nloop_m(tmf));
+        
+        
+
         pp=[];
-        for ii=1:nloop_m(mm)
-            ss=ster_dth{mm}(ii,:);
+        for ii=1:nloop_m(tmf)
+            ss=ster_dth{tmf}(ii,:);
+            tstr=sprintf('%0.2g',amp_m{tmf}(ii));
             
-            figure(h_ss(mm));
-            tstr=sprintf('%0.2g',amp_m{mm}(ii));
+            hold on;
             pp(ii)=plot(ct_dth,ss,...
                 'Color',cc(ii,:),'LineWidth',1.5,...
                 'DisplayName',tstr);
         end
-        figure(h_ss(mm)); hold off;
         
-        % test angles - lines
+        % mark CHSH angles
         testAngles=[-pi/4,pi/4,3/4*pi];
         
         hold on;
@@ -380,7 +444,6 @@ if configs.flags.graphics
         end
         
         % annotation
-        figure(h_ss(mm));
         ax=gca;
         xlabel('$\Delta\psi$');
         ylabel('Solid angle in halo [sr]');
@@ -390,8 +453,15 @@ if configs.flags.graphics
         leg.Title.String='Raman amp.';
         ax.FontSize=12;
         leg.FontSize=10;
+        
+        drawnow
+        
+        % save fig
+        figname=sprintf('fig_histdtheta_%d',tmf-1);
+        if configs.flags.savefigs
+            saveas(t_hfig,[fullfile(path_save,figname),'.png']);
+        end
     end
-
 end
 
 %% Save results
@@ -418,7 +488,7 @@ if configs.flags.savedata
         warning('Directory to save data %s does not exist. Creating directory.',dir_save);
         mkdir(dir_save);
     end
-    save(path_save,varsExist{:});
+    save([path_save,'.mat'],varsExist{:});
 end
 
 %% END

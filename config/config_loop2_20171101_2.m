@@ -2,6 +2,7 @@
 
 %% FLAGS
 configs.flags.savedata=1;
+configs.flgas.savefigs=0;
 configs.flags.verbose=0;
 configs.flags.graphics=1;
 
@@ -42,7 +43,7 @@ configs.bec{2}.pos{2}=[vz*0.3988,-3.5e-3,4.2e-3];
 configs.bec{2}.Rmax=10e-3;      % max condensate sph radius
 configs.bec{2}.dR_tail=1;     % BEC tail radial frac diff
 % configs.halo{2}.R{1}=20e-3;     % estimated radius of halo
-configs.halo{2}.dR=0.2;      % broad radial mask fractional width (in/out)
+configs.halo{2}.dR=0.4;      % broad radial mask fractional width (in/out)
 configs.halo{2}.zcap=0.8;   % z-cutoff (fractional wrt radius)
 configs.halo{2}.string='$m_F=1$';
 
