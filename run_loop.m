@@ -7,6 +7,8 @@ path_config='config_loop2_20171103_1.m';
 
 % vars to save to output
 vars_save={'configs','path_config',...
+    'fullpath_config',...
+    'fname_save','path_save',...
     'nloop',...
     'nazim','nelev',...
     'Az','El',...
@@ -29,7 +31,9 @@ configs=updateConfig(configs);
 
 % set up this run's ID and misc paths
 run_id=getdatetimestr;
-path_save=fullfile(fileparts(configs.files.path_loop),'arch',[mfilename,'__',run_id,'.mat']);
+fname_save=[mfilename,'__',run_id];
+path_save=fullfile(fileparts(configs.files.path_loop),'arch',fname_save);
+mkdir(path_save);   % create dir to output any files to save to disk
 
 % parse main data directory
 cd(configs.files.path_loop);
@@ -223,12 +227,12 @@ end
 %% plot
 if configs.flags.graphics
     %% Flat halo density distribution    
+    t_hfig=figure();
     for tmf=1:2
         tnplot=nloop_m(tmf);
-        
         for ii=1:tnplot
             % compare count dist between mf for this run
-            this_fig=figure();
+            clf(t_hfig);
             for jj=1:2
                 subplot(1,2,jj);
                 plotFlatMapWrappedRad(Az,El,nn_halo_m{tmf}{jj}(:,:,ii),'eckert4');
@@ -237,53 +241,63 @@ if configs.flags.graphics
                 title(strTitle);
                 
             end
+            drawnow
+            
+            % save fig
             figname=sprintf('fig_ndist_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
             if configs.flags.savefigs
-                saveas(this_fig,figname,'png');
+                saveas(t_hfig,fullfile(path_save,figname),'png');
             end
         end
     end
     
-    %% Spherical distribution
-    % Population ratio
-    figure();
-    tmf=1;
-    tnplot=nloop_m(tmf);
-    for ii=1:tnplot
-        subplot(1,tnplot,ii);
-        plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
-        colorbar('southoutside');
+    %% Population ratio - spherical distribution
+    
+    t_hfig=figure();
+    for tmf=1:2
+        tnplot=nloop_m(tmf);
+        for ii=1:tnplot
+            clf(t_hfig);
+            
+            plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
+            
+            % annotate fig
+            t_cb=colorbar('southoutside');
+            
+            drawnow
+            
+            % save fig
+            figname=sprintf('fig_pop_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
+            if configs.flags.savefigs
+                saveas(t_hfig,fullfile(path_save,figname),'fig');
+            end
+        end
     end
     
-    figure();
-    tmf=2;
-    tnplot=nloop_m(tmf);
-    for ii=1:tnplot
-        subplot(1,tnplot,ii);
-        plot_sph_surf(Az,El,P_rabi_m{tmf}(:,:,ii));
-        colorbar('southoutside');
+    %% Theta - spherical distribution
+    t_hfig=figure();
+    for tmf=1:2
+        tnplot=nloop_m(tmf);
+        
+        for ii=1:tnplot
+            clf(t_hfig);
+            
+            plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
+              
+            % annotate fig
+            t_cb=colorbar('southoutside');
+            
+            drawnow
+            
+            % save fig
+            figname=sprintf('fig_theta_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
+            if configs.flags.savefigs
+                saveas(t_hfig,fullfile(path_save,figname),'fig');
+            end
+        end
     end
     
-    % Theta
-    figure();
-    tmf=1;
-    tnplot=nloop_m(tmf);
-    for ii=1:tnplot
-        subplot(1,tnplot,ii);
-        plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
-        colorbar('southoutside');
-    end
-
-    figure();
-    tmf=2;
-    tnplot=nloop_m(tmf);
-    for ii=1:tnplot
-        subplot(1,tnplot,ii);
-        plot_sph_surf(Az,El,th_rabi_m{tmf}(:,:,ii));
-        colorbar('southoutside');
-    end
-    
-    %% Modes
+    %% Rabi oscillation at selected momentum modes
     % define modes to plot Rabi process
     ndiv_az=configs.zone.ndiv_az;
     ndiv_el=configs.zone.ndiv_el;
@@ -291,13 +305,13 @@ if configs.flags.graphics
     el_idx=1:ceil(nelev/ndiv_el):nelev-1;
     [Az_idx,El_idx]=ndgrid(az_idx,el_idx);
     
-    % annotation config
+    % config - fig annotations
     pcolors=distinguishable_colors(ndiv_az*ndiv_el);
     pmarkers={'o','^'};
     plinestyles={'-','--'};
     
     % Population
-    figure(); clf;
+    t_hfig=figure();
     for ii=1:numel(Az_idx)
         for jj=1:2
             if isempty(P_rabi_m{jj})
@@ -316,7 +330,7 @@ if configs.flags.graphics
     ylabel('$P(\uparrow)$');
     
     % theta
-    figure(); clf;
+    t_hfig=figure();
     for ii=1:numel(Az_idx)
         for jj=1:2
             if isempty(th_rabi_m{jj})
@@ -405,7 +419,7 @@ if configs.flags.savedata
         warning('Directory to save data %s does not exist. Creating directory.',dir_save);
         mkdir(dir_save);
     end
-    save(path_save,varsExist{:});
+    save([path_save,'.mat'],varsExist{:});
 end
 
 %% END
