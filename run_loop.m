@@ -246,7 +246,7 @@ if configs.flags.graphics
             % save fig
             figname=sprintf('fig_ndist_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
             if configs.flags.savefigs
-                saveas(t_hfig,fullfile(path_save,figname),'png');
+                saveas(t_hfig,[fullfile(path_save,figname),'.png']);
             end
         end
     end
@@ -269,7 +269,7 @@ if configs.flags.graphics
             % save fig
             figname=sprintf('fig_pop_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
             if configs.flags.savefigs
-                saveas(t_hfig,fullfile(path_save,figname),'fig');
+                saveas(t_hfig,[fullfile(path_save,figname),'.png']);
             end
         end
     end
@@ -292,7 +292,7 @@ if configs.flags.graphics
             % save fig
             figname=sprintf('fig_theta_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
             if configs.flags.savefigs
-                saveas(t_hfig,fullfile(path_save,figname),'fig');
+                saveas(t_hfig,[fullfile(path_save,figname),'.png']);
             end
         end
     end
@@ -338,7 +338,7 @@ if configs.flags.graphics
         % save fig
         figname=sprintf('fig_rabipop_%d',tmf-1);
         if configs.flags.savefigs
-            saveas(t_hfig,fullfile(path_save,figname),'fig');
+            saveas(t_hfig,[fullfile(path_save,figname),'.png']);
         end
     end
     
@@ -370,7 +370,7 @@ if configs.flags.graphics
         % save fig
         figname=sprintf('fig_theta_%d',tmf-1);
         if configs.flags.savefigs
-            saveas(t_hfig,fullfile(path_save,figname),'fig');
+            saveas(t_hfig,[fullfile(path_save,figname),'.png']);
         end
     end
     
@@ -427,7 +427,7 @@ if configs.flags.graphics
         % save fig
         figname=sprintf('fig_histdtheta_%d',tmf-1);
         if configs.flags.savefigs
-            saveas(t_hfig,fullfile(path_save,figname),'fig');
+            saveas(t_hfig,[fullfile(path_save,figname),'.png']);
         end
     end
 end
