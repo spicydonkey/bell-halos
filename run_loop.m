@@ -311,62 +311,93 @@ if configs.flags.graphics
     plinestyles={'-','--'};
     
     % Population
-    t_hfig=figure();
-    for ii=1:numel(Az_idx)
-        for jj=1:2
-            if isempty(P_rabi_m{jj})
-                continue
-            end
+    for tmf=1:2
+        if isempty(P_rabi_m{tmf})
+            continue
+        end
+        
+        t_hfig=figure();
+        for ii=1:numel(Az_idx)
             hold on;
-            plot(amp_m{jj},squeeze(P_rabi_m{jj}(Az_idx(ii),El_idx(ii),:)),...
-                'LineStyle',plinestyles{jj},...
-                'Marker',pmarkers{jj},...
+            plot(amp_m{tmf},squeeze(P_rabi_m{tmf}(Az_idx(ii),El_idx(ii),:)),...
+                'LineStyle',plinestyles{tmf},...
+                'Marker',pmarkers{tmf},...
                 'Color',pcolors(ii,:));
         end
+        
+        % annotate fig
+        box on;
+        hold off;
+        xlabel('Raman Amplitude');
+        ylabel('$P_{0}$');
+        strTitle=sprintf('[src $m_F=%d$]',tmf-1);
+        title(strTitle);
+        
+        drawnow
+        
+        % save fig
+        figname=sprintf('fig_rabipop_%d',tmf-1);
+        if configs.flags.savefigs
+            saveas(t_hfig,fullfile(path_save,figname),'fig');
+        end
     end
-    box on;
-    hold off;
-    xlabel('Raman Amplitude');
-    ylabel('$P(\uparrow)$');
     
     % theta
-    t_hfig=figure();
-    for ii=1:numel(Az_idx)
-        for jj=1:2
-            if isempty(th_rabi_m{jj})
-                continue
-            end
+    for tmf=1:2
+        if isempty(th_rabi_m{tmf})
+            continue
+        end
+        
+        t_hfig=figure();
+        for ii=1:numel(Az_idx)
             hold on;
-            plot(amp_m{jj},squeeze(th_rabi_m{jj}(Az_idx(ii),El_idx(ii),:)),...
-                'LineStyle',plinestyles{jj},...
-                'Marker',pmarkers{jj},...
+            plot(amp_m{tmf},squeeze(th_rabi_m{tmf}(Az_idx(ii),El_idx(ii),:)),...
+                'LineStyle',plinestyles{tmf},...
+                'Marker',pmarkers{tmf},...
                 'Color',pcolors(ii,:));
         end
+        
+        % annotate fig
+        box on;
+        hold off;
+        xlabel('Raman Amplitude');
+        ylabel('$\Theta$');
+        strTitle=sprintf('[src $m_F=%d$]',tmf-1);
+        title(strTitle);
+        
+        drawnow
+        
+        % save fig
+        figname=sprintf('fig_theta_%d',tmf-1);
+        if configs.flags.savefigs
+            saveas(t_hfig,fullfile(path_save,figname),'fig');
+        end
     end
-    box on;
-    hold off;
-    xlabel('Raman Amplitude');
-    ylabel('$\Theta$');
     
     %% Relative angle histogram
-    for mm=1:2
-        cc=distinguishable_colors(nloop_m(mm));
+    for tmf=1:2
+        if nloop_m(tmf)==0
+            continue
+        end
         
-        h_ss(mm)=figure(); hold on;
+        t_hfig=figure();
         
+        cc=distinguishable_colors(nloop_m(tmf));
+        
+        
+
         pp=[];
-        for ii=1:nloop_m(mm)
-            ss=ster_dth{mm}(ii,:);
+        for ii=1:nloop_m(tmf)
+            ss=ster_dth{tmf}(ii,:);
+            tstr=sprintf('%0.2g',amp_m{tmf}(ii));
             
-            figure(h_ss(mm));
-            tstr=sprintf('%0.2g',amp_m{mm}(ii));
+            hold on;
             pp(ii)=plot(ct_dth,ss,...
                 'Color',cc(ii,:),'LineWidth',1.5,...
                 'DisplayName',tstr);
         end
-        figure(h_ss(mm)); hold off;
         
-        % test angles - lines
+        % mark CHSH angles
         testAngles=[-pi/4,pi/4,3/4*pi];
         
         hold on;
@@ -381,7 +412,6 @@ if configs.flags.graphics
         end
         
         % annotation
-        figure(h_ss(mm));
         ax=gca;
         xlabel('$\Delta\psi$');
         ylabel('Solid angle in halo [sr]');
@@ -391,8 +421,15 @@ if configs.flags.graphics
         leg.Title.String='Raman amp.';
         ax.FontSize=12;
         leg.FontSize=10;
+        
+        drawnow
+        
+        % save fig
+        figname=sprintf('fig_histdtheta_%d',tmf-1);
+        if configs.flags.savefigs
+            saveas(t_hfig,fullfile(path_save,figname),'fig');
+        end
     end
-
 end
 
 %% Save results
