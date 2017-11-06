@@ -204,15 +204,18 @@ if configs.flags.graphics
         
         for ii=1:tnplot
             % compare count dist between mf for this run
-            figure();
+            this_fig=figure();
             for jj=1:2
-                subplot(2,1,jj);
+                subplot(1,2,jj);
                 plotFlatMapWrappedRad(Az,El,nn_halo_m{tmf}{jj}(:,:,ii),'eckert4');
                 
                 strTitle=sprintf('[src $m_F=%d$] $m_F=%d$, $K_R=%0.2g$',tmf-1,jj-1,amp_m{tmf}(ii));
                 title(strTitle);
                 
+                
             end
+            figname=sprintf('%d_%0.2g.png',tmf-1,amp_m{tmf}(ii));
+            saveas(this_fig,figname);
         end
     end
     
