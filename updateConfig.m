@@ -10,7 +10,7 @@ if ~exist('verbose','var')
 end
 
 % 2017/11/06
-if ~exist('configs_new.flags.savefigs','var')
+if ~isfield(configs_new.flags,'savefigs')
     errout=1;
     if verbose>0
         warning('CONFIGS.flags.savefigs does not exist. setting to default 0.');
