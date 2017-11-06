@@ -22,9 +22,10 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
     [] smooth halo sph density before further processing incl population, theta,...
     [] bad zones: pad with NaN (at density eval)
     	[x] poles (use inZone.m)
-    	[] dark spots
+    	[x] ~~dark spots~~: `holes` in mF=1 halos came from bad halo capture at an initial radial culling stage
     	[x] --spontaneous halo-- general region selector: inZone.m
-    [] scat mode histogram of theta
+        [] implement it!
+    [x] scat mode histogram of theta
     	[x] assuming mf=0 rotate like 1
     [] processing the 0's?
     [] verify each halo capture
@@ -32,8 +33,16 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
         [x] graphical
         [] 2D gaussian smoothing
         [] print out
-    [] data for higher raman amp
+    [x] data for higher raman amp
 [] general theta (no modulo pi) by fitting Rabi flopping to population ratio
+    [] Rabi oscillation model: quite tricky - there are difficulties from AOM amp --> diff efficiency relation
+    [] interpolation: a smoothing fit
+    [] how does this affect dTheta histogram?
+[] LOOP pulse after varying delay from SOURCE
+    [] evolution of Pop/Theta histogram
+[] better halo capture
+    [] liberal inclusion of points for input to halo capture
+    [] u-sph fitted halo needs filtering
 
 ## 3. Detection
 
