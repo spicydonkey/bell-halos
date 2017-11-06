@@ -160,6 +160,9 @@ end
 aRabiFreq=NaN(size(Az,1),size(Az,2),2);
 for kk=1:2
     this_amp=amp_m{kk};
+    if isempty(this_amp)
+        continue
+    end
     for ii=1:size(Az,1)
         for jj=1:size(Az,2)
             this_pp=squeeze(P_rabi_m{kk}(ii,jj,:));
@@ -197,6 +200,7 @@ for ii=1:2
     % TODO 
     % this is a trial dth - assuming mf=0 rotates like mf=1
     DTHETA{ii}=th_rabi_m{ii}-flip_bb(th_rabi_m{ii});
+    
 %     DTHETA{ii}=NaN(size(th_rabi_m{ii}));
 %     for jj=1:this_nloop
 %         DTHETA{ii}(:,:,jj)=th_rabi_m{ii}(:,:,jj)-flip_bb(th_rabi_m{ii}(:,:,jj));
