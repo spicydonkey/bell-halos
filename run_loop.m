@@ -103,8 +103,8 @@ for ii=1:nloop
     
     % state rotation angle at each momentum mode
     % formula: Pr(ORIGIGNAL_STATE)=cos(ROT_ANGLE/2)^2
+    % limitation - modulo pi
     %   ROT_ANGLE >= 0 by convention
-    % TODO - can only tell rotation angle modulo pi
     tth_rabi=2*acos(sqrt(tP_rabi));
     if tmf==0
         tth_rabi=pi-tth_rabi;
@@ -154,6 +154,23 @@ for ii=1:2
     P_rabi_m{ii}=P_rabi_m{ii}(:,:,Is);
     th_rabi_m{ii}=th_rabi_m{ii}(:,:,Is);
 end
+
+%% Fit Rabi oscillation
+% TODO - Rabi oscillation fitted theta - amplitude
+aRabiFreq=NaN(size(Az,1),size(Az,2),2);
+for kk=1:2
+    this_amp=amp_m{kk};
+    for ii=1:size(Az,1)
+        for jj=1:size(Az,2)
+            this_pp=squeeze(P_rabi_m{kk}(ii,jj,:));
+            if kk==1
+                this_pp=1-this_pp;      % for mf=0 the pop reverses
+            end
+            aRabiFreq(ii,jj,kk)=fitRabiOsc(this_amp,this_pp);
+        end
+    end
+end
+% TODO - evaluate fitted theta map
 
 %% 1D zonal histogram
 nzones=numel(Az);
