@@ -24,6 +24,9 @@ dirsource=fileparts(mfilename('fullpath'));     % device independent source dire
 fullpath_config=fullfile(dirsource,'config',path_config);   % full path to configs dir
 run(fullpath_config);
 
+% update configuration
+configs=updateConfig(configs);
+
 % set up this run's ID and misc paths
 run_id=getdatetimestr;
 path_save=fullfile(fileparts(configs.files.path_loop),'arch',[mfilename,'__',run_id,'.mat']);
@@ -233,10 +236,11 @@ if configs.flags.graphics
                 strTitle=sprintf('[src $m_F=%d$] $m_F=%d$, $K_R=%0.2g$',tmf-1,jj-1,amp_m{tmf}(ii));
                 title(strTitle);
                 
-                
             end
-            figname=sprintf('%d_%0.2g.png',tmf-1,amp_m{tmf}(ii));
-            saveas(this_fig,figname);
+            figname=sprintf('fig_ndist_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
+            if configs.flags.savefigs
+                saveas(this_fig,figname,'png');
+            end
         end
     end
     
