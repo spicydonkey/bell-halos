@@ -20,6 +20,11 @@ param0=1;
 % coefname={'aOmega','A'};
 % param0=[1,0.33];
 
+% BELOW SEEMS TO WORK!?!
+% y ~ cos(p1 + p2*a + p3*a^2 + p4*a^3)^2 
+% p0=[0.1,0.1,0.1,0.1];     % this is way off
+%
+
 fopts=statset('TolFun',1e-6,'TolX',1e-6,'MaxIter',1e2);
 
 fit_rabi=fitnlm(amp,pp,aRabiFun,param0,...

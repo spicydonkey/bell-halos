@@ -178,6 +178,11 @@ end
 
 %% Fit Rabi oscillation
 % TODO - Rabi oscillation fitted theta - amplitude
+%
+% Model selection
+% [] simple physical model
+% [] trend fit
+
 aRabiFreq=NaN(size(Az,1),size(Az,2),2);
 for kk=1:2
     this_amp=amp_m{kk};
