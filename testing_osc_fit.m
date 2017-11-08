@@ -1,15 +1,19 @@
-az_idx=85;       %[1,99]
-el_idx=32;       %[1,50]
+az_idx=60;       %[1,99]
+el_idx=35;       %[1,50]
 
 a=amp_m{2};
 p=squeeze(P_rabi_m{2}(az_idx,el_idx,:));
 
+
 feq_rabi=@(p,a) cos(abs(p(1)+p(2)*a+p(3)*a.^2+p(4)*a.^3)).^2;
-p0=[0.1,0.1,0.1,0.1];
+p0=[1,0.1,0.1,0.1];
 
-fopts=statset('TolFun',1e-12,'TolX',1e-12,'MaxIter',1e3);
+% feq_rabi=@(p,a) cos(abs(p(1)*a.^2)).^2;
+% p0=[1];
 
-f=fitnlm(a,p,feq_rabi,p0,'Options',fopts);
+fopts=statset('TolFun',1e-12,'TolX',1e-12,'MaxIter',1e3,'Display','final');
+
+f=fitnlm(a,p,feq_rabi,p0,'Options',fopts)
 
 x=linspace(0,0.55);
 y=feval(f,x);
