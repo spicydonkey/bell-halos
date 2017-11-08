@@ -8,6 +8,11 @@ function [halo_k,bec_cent]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,zcap,v
 % [] return more info
 %
 
+% TODO
+% [] improve algorithm
+% 1. capture BEC: get BEC positions ==> get approx to halo center
+% 2. 
+
 % parse input
 if ~exist('verbose','var')
     warning('verbose is not provided - setting to quiet (0)');
