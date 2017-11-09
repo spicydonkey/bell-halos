@@ -52,7 +52,10 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
 %   [x] capture rough halo counts and center shot-wise
 %   [] 2.1. liberal filtering of counts: radial, BEC, thermal
         [x] radial - kdR_hicap is currently hardcoded into function
-        [] elev filter
+        [x] elev filter
+            ~[] need to define field "elev_max" for each configs.halo element~
+            - configs.halo{I}.zcap isn't used anymore
+            [x] translate zcap --> elev_max if undefined
         [] filter stages need to be handled better
 % [x] 2.2. ellipsoid mapping --> unit sphere
         [x] packaged mapping into a function
