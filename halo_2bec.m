@@ -72,7 +72,7 @@ bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOut
 % % capture halo!
 % halo_zxy0=cellfun(@(ZXY,BOOL)ZXY(BOOL,:),halo_zxy0,bool_halo_r_hicap,'UniformOutput',false);
 
-%%%% elevation (TODO)
+%%%% polar (TODO)
 % removing caps using Z complicates angular analysis: use elevation angles
 % instead
 % % remove caps
@@ -106,28 +106,61 @@ halo_zxy0=cellfun(@(ZXY,BOOL)ZXY(BOOL,:),halo_zxy0,bool_halo_filt1,'UniformOutpu
 %% 3. Demanipulate halo
 %%% 3.1. Ellipsoid fit
 efit_flag='';
-[ecent,erad,evecs,ev,echi2]=ellipsoid_fit(circshift(vertcat(halo_zxy0{:}),-1,2),efit_flag);
+[ecent,erad,evec]=ellipsoid_fit(circshift(vertcat(halo_zxy0{:}),-1,2),efit_flag);   % collate all shots for fitting
 
 %%% 3.2. Unit sphere mapping 
 %%%% Tranform to unit sphere (k-space)
-% Initialise k-vector in XYZ coord
-halo_k=cellfun(@(x) circshift(x,-1,2),halo_zxy0,'UniformOutput',false);
+% TODO test wrapped code below
+halo_k=cellfun(@(v_zxy) ellip2usph(v_zxy,ecent,erad,evec,verbose),...
+    halo_zxy0,'UniformOutput',false);
+% % Initialise k-vector in XYZ coord
+% halo_k=cellfun(@(x) circshift(x,-1,2),halo_zxy0,'UniformOutput',false);
+% 
+% % Centre to fitted ellipsoid
+% halo_k(:)=boost_zxy(halo_k,-ecent');
+% 
+% % Transform to ellipsoid principal axis (Rotation)
+% M_rot=evecs;   % rotation matrix: X'Y'Z'(principal ellipsoid) --> XYZ
+% halo_k=cellfun(@(x) (M_rot\x')',halo_k,'UniformOutput',false);     % inverse transform
+% 
+% % Stretch to UNIT sphere: unit in collision wave-vector/momenta
+% halo_k=cellfun(@(x) x./repmat(erad',size(x,1),1),halo_k,'UniformOutput',false);
+% 
+% % Reverse transform to original/detector axis
+% halo_k=cellfun(@(x) (M_rot*x')',halo_k,'UniformOutput',false);
+% 
+% % transform to ZXY system
+% halo_k=cellfun(@(x) circshift(x,1,2),halo_k,'UniformOutput',false);
 
-% Centre to fitted ellipsoid
-halo_k(:)=boost_zxy(halo_k,-ecent');
+%% 4. Clean the halo
+%%% 4.1. Final filters
+%%%% Radial
+% r0=cellfun(@(x)sqrt(sum(x.^2,2)),halo_zxy0,'UniformOutput',false);
+% rlim_hicap=R_halo_mean*(1+dR_halo*kdR_hicap*[-1,1]);       % radial limits for sph-shell capture
+% bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOutput',false);    % atoms in radial limits
 
-% Transform to ellipsoid principal axis (Rotation)
-M_rot=evecs;   % rotation matrix: X'Y'Z'(principal ellipsoid) --> XYZ
-halo_k=cellfun(@(x) (M_rot\x')',halo_k,'UniformOutput',false);     % inverse transform
+r_halo_k=cellfun(@(k_zxy) sqrt(sum(k_zxy.^2,2)),halo_k,'UniformOutput',false);
+rlim_clean=1+dR_halo*[-1,1];        % a final hard crop
+bool_halo_r_clean=cellfun(@(r) (r<rlim_clean(2))&(r>rlim_clean(1)),r_halo_k,'UniformOutput',false);    % atoms in radial limits
 
-% Stretch to UNIT sphere: unit in collision wave-vector/momenta
-halo_k=cellfun(@(x) x./repmat(erad',size(x,1),1),halo_k,'UniformOutput',false);
+%%%% Polar
+% TODO
 
-% Reverse transform to original/detector axis
-halo_k=cellfun(@(x) (M_rot*x')',halo_k,'UniformOutput',false);
 
-% transform to ZXY system
-halo_k=cellfun(@(x) circshift(x,1,2),halo_k,'UniformOutput',false);
+%%% 4.2. Filtered halo
+% TODO - this is nasty joining cells like this. user must supply how many
+% filters used: n_halo_clean
+% combine different filters
+n_halo_clean=1;
+bool_halo_clean_joined=cell(size(bool_halo_r_clean,1),n_halo_clean);
+bool_halo_clean_joined(:,1)=bool_halo_r_clean;
+
+% get first stage filter
+bool_halo_clean=cell_horzcat(bool_halo_clean_joined);
+bool_halo_clean=cellfun(@(x) all(x,2),bool_halo_clean,'UniformOutput',false);
+
+% apply the filter
+halo_k=cellfun(@(ZXY,BOOL)ZXY(BOOL,:),halo_k,bool_halo_clean,'UniformOutput',false);
 
 
 end
