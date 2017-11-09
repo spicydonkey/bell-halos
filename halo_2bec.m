@@ -1,4 +1,4 @@
-function [halo_k,bec_cent]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,zcap,verbose)
+function [halo_k,bec_cent]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_therm,dR_halo,elev_max,verbose)
 % captures halo based on 2 source BECs at poles
 %
 % DKS 31/10/2017
@@ -6,6 +6,7 @@ function [halo_k,bec_cent]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,zcap,v
 % TODO
 % [] cull thermal fraction (r_th) around BEC center
 % [] return more info
+% [] comment code
 %
 
 % TODO
@@ -75,6 +76,10 @@ bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOut
 %%%% polar (TODO)
 % removing caps using Z complicates angular analysis: use elevation angles
 % instead
+% TODO - test does this work? cellfun multiple output?
+[~,elev_halo_zxy0]=cellfun(@(zxy) zxy2sphpol(zxy),halo_zxy0,'UniformOutput',false);  % get elev angles [-pi/2,pi/2]
+bool_halo_elev_hicap=cellfun(@(el) (abs(el)<elev_max),elev_halo_zxy0,'UniformOutput',false);    % atoms in elev limits
+
 % % remove caps
 % % TODO - try removing the caps after ellipsoid fit
 % dz_poles=cellfun(@(c1,c2)abs(c1(1)-c2(1)),bec_cent(:,1),bec_cent(:,2),'UniformOutput',false);
@@ -92,9 +97,10 @@ bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOut
 % TODO - this is nasty joining cells like this. user must supply how many
 % filters used: n_halo_filt1
 % combine different filters
-n_halo_filt1=1;
+n_halo_filt1=2;
 bool_halo_filt1_joined=cell(size(bool_halo_r_hicap,1),n_halo_filt1);
 bool_halo_filt1_joined(:,1)=bool_halo_r_hicap;
+bool_halo_filt1_joined(:,2)=bool_halo_elev_hicap;
 
 % get first stage filter
 bool_halo_filt1=cell_horzcat(bool_halo_filt1_joined);
@@ -144,16 +150,18 @@ rlim_clean=1+dR_halo*[-1,1];        % a final hard crop
 bool_halo_r_clean=cellfun(@(r) (r<rlim_clean(2))&(r>rlim_clean(1)),r_halo_k,'UniformOutput',false);    % atoms in radial limits
 
 %%%% Polar
-% TODO
-
+% TODO - check as above usage
+[~,elev_halo_k]=cellfun(@(zxy) zxy2sphpol(zxy),halo_k,'UniformOutput',false);  % get elev angles [-pi/2,pi/2]
+bool_halo_elev_clean=cellfun(@(el) (abs(el)<elev_max),elev_halo_k,'UniformOutput',false);    % atoms in elev limits
 
 %%% 4.2. Filtered halo
 % TODO - this is nasty joining cells like this. user must supply how many
 % filters used: n_halo_clean
 % combine different filters
-n_halo_clean=1;
+n_halo_clean=2;
 bool_halo_clean_joined=cell(size(bool_halo_r_clean,1),n_halo_clean);
 bool_halo_clean_joined(:,1)=bool_halo_r_clean;
+bool_halo_clean_joined(:,2)=bool_halo_elev_clean;
 
 % get first stage filter
 bool_halo_clean=cell_horzcat(bool_halo_clean_joined);
