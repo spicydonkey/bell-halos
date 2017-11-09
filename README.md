@@ -57,7 +57,7 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
             ~[] need to define field "elev_max" for each configs.halo element~
             - configs.halo{I}.zcap isn't used anymore
             [x] translate zcap --> elev_max if undefined
-        [] thermal fraction around poles/BEC
+        [x] thermal fraction around poles/BEC
         [] filter stages need to be handled better
 
 % [x] 2.2. ellipsoid mapping --> unit sphere
