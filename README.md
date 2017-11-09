@@ -41,8 +41,9 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
 [] LOOP pulse after varying delay from SOURCE
     [] evolution of Pop/Theta histogram
 [] better halo capture
-    [] liberal inclusion of points for input to halo capture
-    [] u-sph fitted halo needs filtering
+    [x] liberal inclusion of points for input to halo capture
+    [x] u-sph fitted halo needs filtering
+        [] test
 
 % TODO
 % [] improve algorithm
@@ -56,12 +57,14 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
             ~[] need to define field "elev_max" for each configs.halo element~
             - configs.halo{I}.zcap isn't used anymore
             [x] translate zcap --> elev_max if undefined
+        [] thermal fraction around poles/BEC
         [] filter stages need to be handled better
+
 % [x] 2.2. ellipsoid mapping --> unit sphere
         [x] packaged mapping into a function
-% [] 3. clean halo
+% [x] 3. clean halo
 %   [x] 3.1. radial filter
-%   [] 3.2. pole filter
+%   [x] 3.2. pole filter
 %
 
 ## 3. Detection
