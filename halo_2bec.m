@@ -1,10 +1,13 @@
-function [halo_k,bec_cent]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_therm,dR_halo,elev_max,verbose)
+function [halo_k,bec_cent]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,elev_max,verbose)
 % captures halo based on 2 source BECs at poles
 %
 % DKS 31/10/2017
 %
 % TODO
-% [] cull thermal fraction (r_th) around BEC center
+% [x] cull thermal fraction (r_th) around BEC center
+%   [x] r_th is an absolute magnitude now: need to be ~2*r_bec
+%       [] update configs
+%   [] test
 % [] return more info
 % [] comment code
 %
@@ -34,14 +37,35 @@ kdR_hicap=2;
 
 
 %% 1. Capture marker BECs
-% capture BEC to mark halo poles
+%%% 1.1. capture BEC to mark halo poles
 [bec_cent,bool_bec]=capture_bec(zxy,{p_bec1,p_bec2},{r_bec,r_bec},verbose);
 
-% get atoms in BEC
-% bool_bec_combined=cellfun(@(x,y)x|y,bool_bec(:,1),bool_bec(:,2),'UniformOutput',false);
+%%% 1.2. get atoms in BEC
 bool_bec_combined=cell_horzcat(bool_bec);       % boolean array to indicate which BEC atoms belongs to
-bool_bec_combined=cellfun(@(x)sum(x,2)>0,bool_bec_combined,'UniformOutput',false);    % row-wise OR
-% boolean for: is this atom from a BEC?
+bool_bec_combined=cellfun(@(b) any(b,2),bool_bec_combined,'UniformOutput',false);    % row-wise OR
+
+%%% 1.3. thermal
+% centered around BEC locations but radius can be ~2-3 times larger than used
+% for BEC
+bool_thermal=cell(size(zxy,1),2);
+for ii=1:2
+    % get BEC centered counts
+    this_zxy0=cellfun(@(x,xc) x-repmat(xc,size(x,1),1),zxy,bec_cent(:,ii),'UniformOutput',false);
+    this_r0=cellfun(@(x) zxy2rdist(x),this_zxy0,'UniformOutput',false);
+    this_bool_thermal=cellfun(@(r) r<r_th,this_r0,'UniformOutput',false);
+    this_bool_thermal=cellfun(@(b1,b2) b1&(~b2),this_bool_thermal,bool_bec_combined);      % select thermal but not BEC
+    
+    bool_thermal(:,ii)=this_bool_thermal;
+end
+clearvars this_zxy0 this_r0 this_bool_thermal;
+bool_thermal_combined=cell_horzcat(bool_thermal);
+bool_thermal_combined=cellfun(@(b) any(b,2),bool_thermal_combined,'UniformOutput',false);
+
+%%% 1.4. collate BEC and thermal counts: a flare in image
+% BEC and thermal counts are extremely large signals compared to scattered
+% particle signal of interest
+bool_flare=cellfun(@(b1,b2) b1|b2,bool_bec_combined,bool_thermal_combined,'UniformOutput',false);
+
 
 %% 2. First stage halo capture
 %%% 2.1. Locate halo center 
@@ -54,8 +78,8 @@ R_halo_mean=mean(R_halo);
 R_halo_std=std(R_halo);
 
 %%% 2.2. first capture of halo counts
-% get counts in halo by popping BEC from raw
-halo_zxy=cellfun(@(ZXY,BOOL)ZXY(~BOOL,:),zxy,bool_bec_combined,'UniformOutput',false);
+% get counts in halo by popping BEC and thermal from raw
+halo_zxy=cellfun(@(x,b) x(~b,:),zxy,bool_flare,'UniformOutput',false);
 
 % roughly center the halo to each shot-wise evaluated halo center
 halo_zxy0=cellfun(@(zxy,c0)zxy-repmat(c0,[size(zxy,1),1]),halo_zxy,halo_cent,'UniformOutput',false);
@@ -69,15 +93,9 @@ rlim_hicap=R_halo_mean*(1+dR_halo*kdR_hicap*[-1,1]);       % radial limits for s
 bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOutput',false);    % atoms in radial limits
 
 %%%% polar
-% removing caps using Z complicates angular analysis: use elevation angles
-% instead
 % TODO - test does this work? cellfun multiple output?
 [~,elev_halo_zxy0]=cellfun(@(zxy) zxy2sphpol(zxy),halo_zxy0,'UniformOutput',false);  % get elev angles [-pi/2,pi/2]
 bool_halo_elev_hicap=cellfun(@(el) (abs(el)<elev_max),elev_halo_zxy0,'UniformOutput',false);    % atoms in elev limits
-
-%%%% thermal (TODO)
-% centered around BEC locations but radius is ~2-3 times larger than used
-% for BEC?
 
 %%%% Filtered halo
 % TODO - this is nasty joining cells like this. user must supply how many
@@ -93,7 +111,7 @@ bool_halo_filt1=cell_horzcat(bool_halo_filt1_joined);
 bool_halo_filt1=cellfun(@(x) all(x,2),bool_halo_filt1,'UniformOutput',false);
 
 % apply the filter
-halo_zxy0=cellfun(@(ZXY,BOOL)ZXY(BOOL,:),halo_zxy0,bool_halo_filt1,'UniformOutput',false);
+halo_zxy0=cellfun(@(z,b)z(b,:),halo_zxy0,bool_halo_filt1,'UniformOutput',false);
 
 %% 3. Demanipulate halo
 %%% 3.1. Ellipsoid fit
@@ -131,7 +149,7 @@ bool_halo_clean=cell_horzcat(bool_halo_clean_joined);
 bool_halo_clean=cellfun(@(x) all(x,2),bool_halo_clean,'UniformOutput',false);
 
 % apply the filter
-halo_k=cellfun(@(ZXY,BOOL)ZXY(BOOL,:),halo_k,bool_halo_clean,'UniformOutput',false);
+halo_k=cellfun(@(z,b)z(b,:),halo_k,bool_halo_clean,'UniformOutput',false);
 
 
 end
