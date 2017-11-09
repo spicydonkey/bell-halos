@@ -44,6 +44,23 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
     [] liberal inclusion of points for input to halo capture
     [] u-sph fitted halo needs filtering
 
+% TODO
+% [] improve algorithm
+% [x] 1. capture BEC: get BEC positions: jitter, indexible bec counts
+% [x] 2. 1st stage halo capture
+%   [x] approx to halo center
+%   [x] capture rough halo counts and center shot-wise
+%   [] 2.1. liberal filtering of counts: radial, BEC, thermal
+        [x] radial - kdR_hicap is currently hardcoded into function
+        [] elev filter
+        [] filter stages need to be handled better
+% [x] 2.2. ellipsoid mapping --> unit sphere
+        [x] packaged mapping into a function
+% [] 3. clean halo
+%   [x] 3.1. radial filter
+%   [] 3.2. pole filter
+%
+
 ## 3. Detection
 
 ## 4. Correlation
