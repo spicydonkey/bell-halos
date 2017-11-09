@@ -68,26 +68,12 @@ rlim_hicap=R_halo_mean*(1+dR_halo*kdR_hicap*[-1,1]);       % radial limits for s
 
 bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOutput',false);    % atoms in radial limits
 
-% TODO: keep regional IN bool-array from each filtering stage, AND it when the
-% filtered halo is needed
-% % capture halo!
-% halo_zxy0=cellfun(@(ZXY,BOOL)ZXY(BOOL,:),halo_zxy0,bool_halo_r_hicap,'UniformOutput',false);
-
-%%%% polar (TODO)
+%%%% polar
 % removing caps using Z complicates angular analysis: use elevation angles
 % instead
 % TODO - test does this work? cellfun multiple output?
 [~,elev_halo_zxy0]=cellfun(@(zxy) zxy2sphpol(zxy),halo_zxy0,'UniformOutput',false);  % get elev angles [-pi/2,pi/2]
 bool_halo_elev_hicap=cellfun(@(el) (abs(el)<elev_max),elev_halo_zxy0,'UniformOutput',false);    % atoms in elev limits
-
-% % remove caps
-% % TODO - try removing the caps after ellipsoid fit
-% dz_poles=cellfun(@(c1,c2)abs(c1(1)-c2(1)),bec_cent(:,1),bec_cent(:,2),'UniformOutput',false);
-% dz_poles=mean(vertcat(dz_poles{:}));    % pole-pole distance (BEC) in Z
-% 
-% bool_zcap=cellfun(@(zxy)abs(zxy(:,1))>(0.5*dz_poles*zcap),halo_zxy0,'UniformOutput',false);
-% 
-% halo_zxy0=cellfun(@(ZXY,BOOL)ZXY(~BOOL,:),halo_zxy0,bool_zcap,'UniformOutput',false);
 
 %%%% thermal (TODO)
 % centered around BEC locations but radius is ~2-3 times larger than used
@@ -116,35 +102,12 @@ efit_flag='';
 
 %%% 3.2. Unit sphere mapping 
 %%%% Tranform to unit sphere (k-space)
-% TODO test wrapped code below
 halo_k=cellfun(@(v_zxy) ellip2usph(v_zxy,ecent,erad,evec,verbose),...
     halo_zxy0,'UniformOutput',false);
-% % Initialise k-vector in XYZ coord
-% halo_k=cellfun(@(x) circshift(x,-1,2),halo_zxy0,'UniformOutput',false);
-% 
-% % Centre to fitted ellipsoid
-% halo_k(:)=boost_zxy(halo_k,-ecent');
-% 
-% % Transform to ellipsoid principal axis (Rotation)
-% M_rot=evecs;   % rotation matrix: X'Y'Z'(principal ellipsoid) --> XYZ
-% halo_k=cellfun(@(x) (M_rot\x')',halo_k,'UniformOutput',false);     % inverse transform
-% 
-% % Stretch to UNIT sphere: unit in collision wave-vector/momenta
-% halo_k=cellfun(@(x) x./repmat(erad',size(x,1),1),halo_k,'UniformOutput',false);
-% 
-% % Reverse transform to original/detector axis
-% halo_k=cellfun(@(x) (M_rot*x')',halo_k,'UniformOutput',false);
-% 
-% % transform to ZXY system
-% halo_k=cellfun(@(x) circshift(x,1,2),halo_k,'UniformOutput',false);
 
 %% 4. Clean the halo
 %%% 4.1. Final filters
 %%%% Radial
-% r0=cellfun(@(x)sqrt(sum(x.^2,2)),halo_zxy0,'UniformOutput',false);
-% rlim_hicap=R_halo_mean*(1+dR_halo*kdR_hicap*[-1,1]);       % radial limits for sph-shell capture
-% bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOutput',false);    % atoms in radial limits
-
 r_halo_k=cellfun(@(k_zxy) sqrt(sum(k_zxy.^2,2)),halo_k,'UniformOutput',false);
 rlim_clean=1+dR_halo*[-1,1];        % a final hard crop
 bool_halo_r_clean=cellfun(@(r) (r<rlim_clean(2))&(r>rlim_clean(1)),r_halo_k,'UniformOutput',false);    % atoms in radial limits
