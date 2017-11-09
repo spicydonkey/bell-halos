@@ -176,40 +176,54 @@ for ii=1:2
 end
 
 
-%% Fit Rabi oscillation
+%% Rotation angle
 % TODO - Rabi oscillation fitted theta - amplitude
 %
 % Model selection
 % [] simple physical model
 % [] trend fit
 
-aRabiFreq=NaN(size(Az,1),size(Az,2),2);
-for kk=1:2
-    this_amp=amp_m{kk};
-    if isempty(this_amp)
-        continue
-    end
-    for ii=1:size(Az,1)
-        for jj=1:size(Az,2)
-            this_pp=squeeze(P_rabi_m{kk}(ii,jj,:));
-%             if kk==1
-%                 this_pp=1-this_pp;      % for mf=0 the pop reverses
-%             end
-            aRabiFreq(ii,jj,kk)=fitRabiOsc(this_amp,this_pp);
-        end
-    end
-end
-
-%% evaluate fitted theta map
-% fitted rotation angle at the data amps
+%%% 1. Simple formula
 th_rabi_m=cell(size(P_rabi_m));
 for ii=1:2
-    th_rabi_m{ii}=repmat(aRabiFreq(:,:,ii),[1,1,nloop_m(ii)]);
+    if nloop_m(ii)==0
+        continue
+    end
     for jj=1:nloop_m(ii)
-        th_rabi_m{ii}(:,:,jj)=th_rabi_m{ii}(:,:,jj)*amp_m{ii}(jj);
+        this_P_rabi=P_rabi_m{ii}(:,:,jj);
+        this_th_rabi=2*acos(sqrt(this_P_rabi));
+        th_rabi_m{ii}(:,:,jj)=this_th_rabi;
     end
 end
 
+% %%% 2. Model
+% %%%% fit Rabi oscillation
+% aRabiFreq=NaN(size(Az,1),size(Az,2),2);
+% for kk=1:2
+%     this_amp=amp_m{kk};
+%     if isempty(this_amp)
+%         continue
+%     end
+%     for ii=1:size(Az,1)
+%         for jj=1:size(Az,2)
+%             this_pp=squeeze(P_rabi_m{kk}(ii,jj,:));
+% %             if kk==1
+% %                 this_pp=1-this_pp;      % for mf=0 the pop reverses
+% %             end
+%             aRabiFreq(ii,jj,kk)=fitRabiOsc(this_amp,this_pp);
+%         end
+%     end
+% end
+% 
+% %%%% evaluate fitted theta map
+% % fitted rotation angle at the data amps
+% th_rabi_m=cell(size(P_rabi_m));
+% for ii=1:2
+%     th_rabi_m{ii}=repmat(aRabiFreq(:,:,ii),[1,1,nloop_m(ii)]);
+%     for jj=1:nloop_m(ii)
+%         th_rabi_m{ii}(:,:,jj)=th_rabi_m{ii}(:,:,jj)*amp_m{ii}(jj);
+%     end
+% end
 
 %% 1D zonal histogram
 nzones=numel(Az);
