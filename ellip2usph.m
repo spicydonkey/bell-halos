@@ -17,7 +17,7 @@ xyz_temp=circshift(zxy,-1,2);
 xyz_temp=xyz_temp-repmat(ecent',nvecs,1);
 
 % rotate to ellipsoid principal axis coords
-M_rot=evecs;   % rotation matrix: X'Y'Z'(principal ellipsoid) --> XYZ
+M_rot=evec;   % rotation matrix: X'Y'Z'(principal ellipsoid) --> XYZ
 xyz_temp=(M_rot\xyz_temp')';    % inverse transform
 
 % map to unit-sphere by scaling along principal axis
@@ -29,5 +29,7 @@ xyz_temp=(M_rot*xyz_temp')';
 
 % we work in the ZXY coord system
 zxy_usph=circshift(xyz_temp,1,2);
+
+%%% TODO verbose output to show the before/after vecs
 
 end
