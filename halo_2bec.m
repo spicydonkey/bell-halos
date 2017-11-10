@@ -66,13 +66,7 @@ bool_thermal_combined=cellfun(@(b) any(b,2),bool_thermal_combined,'UniformOutput
 % particle signal of interest
 bool_flare=cellfun(@(b1,b2) b1|b2,bool_bec_combined,bool_thermal_combined,'UniformOutput',false);
 
-%%% summary
-% TODO
-%   - [x] average bec_cent
-%   - [x] shot-to-shot bec_cent oscillation
-%   - [x] plot raw ZXY scatter distribution
-%       - [x] indicate captured BECs and thermal
-
+%%% Summary
 % get all evaluated BEC cents
 bec_cent_all=cell(1,2);
 for ii=1:2
@@ -91,6 +85,8 @@ if verbose>0
     zlabel('Z [m]');
     title('Raw ZXY');
     axis equal;
+    box on;
+    view(3);
     
     % BEC cents
     for ii=1:2
@@ -114,6 +110,8 @@ if verbose>0
     axis equal;
     box on;
     view(3);
+    
+    drawnow
     
     % clean workspace
     clearvars zxy0_flare zxy_remnant;
@@ -146,7 +144,6 @@ rlim_hicap=R_halo_mean*(1+dR_halo*kdR_hicap*[-1,1]);       % radial limits for s
 bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOutput',false);    % atoms in radial limits
 
 %%%% polar
-% TODO - test does this work? cellfun multiple output? the answer is no. and fixed below
 halo_zxy0_sphpol=cellfun(@(zxy) zxy2sphpol(zxy),halo_zxy0,'UniformOutput',false);  
 % get elev angles [-pi/2,pi/2]
 halo_zxy0_el=cellfun(@(pol) pol(:,2),halo_zxy0_sphpol,'UniformOutput',false);
@@ -169,6 +166,26 @@ bool_halo_filt1=cellfun(@(x) all(x,2),bool_halo_filt1,'UniformOutput',false);
 % apply the filter
 halo_zxy0=cellfun(@(z,b)z(b,:),halo_zxy0,bool_halo_filt1,'UniformOutput',false);
 
+%%% Summary
+if verbose>0
+    % Halo size
+    fprintf('[%s]: %s: R_halo_mean=%0.3f\n',mfilename,getdatetimestr,R_halo_mean);
+    fprintf('[%s]: %s: R_halo_std=%0.3f\n',mfilename,getdatetimestr,R_halo_std);
+    %         fprintf('==========================================================================================\n');    %90 chars
+    
+    % plot first stage captured halos
+    h_halo_zxy0=figure();
+    plot_zxy(halo_zxy0,1e4,10,'b');
+    xlabel('X [m]');
+    ylabel('Y [m]');
+    zlabel('Z [m]');
+    title('Halo (1st stage filtering)');
+    axis equal;
+    box on;
+    view(3);
+    drawnow
+end
+
 %% 3. Demanipulate halo
 %%% 3.1. Ellipsoid fit
 efit_flag='';
@@ -187,7 +204,6 @@ rlim_clean=1+dR_halo*[-1,1];        % a final hard crop
 bool_halo_r_clean=cellfun(@(r) (r<rlim_clean(2))&(r>rlim_clean(1)),r_halo_k,'UniformOutput',false);    % atoms in radial limits
 
 %%%% Polar
-% TODO - check as above usage - fixed
 halo_k_sphpol=cellfun(@(zxy) zxy2sphpol(zxy),halo_k,'UniformOutput',false);
 halo_k_el=cellfun(@(pol) pol(:,2),halo_k_sphpol,'UniformOutput',false);
 bool_halo_elev_clean=cellfun(@(el) (abs(el)<elev_max),halo_k_el,'UniformOutput',false);    % atoms in elev limits
