@@ -32,7 +32,7 @@ configs.load.window{3}=[-35e-3,35e-3];    % Y [m]
 configs.bec{1}.pos{1}=[vz*0.4049,-3e-3,4.2e-3];   % approx condensate locations (z,x,y)
 configs.bec{1}.pos{2}=[vz*0.4178,-2.9e-3,4.6e-3];
 configs.bec{1}.Rmax=12e-3;      % max condensate sph radius
-configs.bec{1}.dR_tail=1;     % BEC tail radial frac diff
+configs.bec{1}.dR_tail=0;     % BEC tail radial frac diff
 % configs.halo{1}.R{1}=26e-3;     % estimated radius of halo
 configs.halo{1}.dR=0.2;      % broad radial mask fractional width (in/out)
 configs.halo{1}.zcap=0.8;   % z-cutoff (fractional wrt radius)
@@ -41,9 +41,9 @@ configs.halo{1}.string='$m_F=0$';
 configs.bec{2}.pos{1}=[vz*0.3861,-3e-3,3.2e-3];   % approx condensate locations (z,x,y)
 configs.bec{2}.pos{2}=[vz*0.3988,-3.5e-3,4.2e-3];
 configs.bec{2}.Rmax=12e-3;      % max condensate sph radius
-configs.bec{2}.dR_tail=1;     % BEC tail radial frac diff
+configs.bec{2}.dR_tail=0;     % BEC tail radial frac diff
 % configs.halo{2}.R{1}=20e-3;     % estimated radius of halo
-configs.halo{2}.dR=0.4;      % broad radial mask fractional width (in/out)
+configs.halo{2}.dR=0.2;      % broad radial mask fractional width (in/out)
 configs.halo{2}.zcap=0.8;   % z-cutoff (fractional wrt radius)
 configs.halo{2}.string='$m_F=1$';
 

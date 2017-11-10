@@ -46,10 +46,11 @@ end
 for ii=1:numel(configs_new.bec)
     if ~isfield(configs_new.bec{ii},'r_th')
         errout=1;
-        if ~isfield(configs_new.bec{ii},'dR_tail')'
+        if ~isfield(configs_new.bec{ii},'dR_tail')
             if verbose>0
-                warning('Size for thermal fraction is undefined. Setting r_th to default 0.01.');
+                warning('Size for thermal fraction is undefined. Setting r_th to default Rmax.');
             end
+            configs_new.bec{ii}.r_th=configs_new.bec{ii}.Rmax;
         else
             if verbose>0
                 warning('r_th is undefined. Will evaluate from dR_tail.');
