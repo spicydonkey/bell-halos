@@ -53,7 +53,7 @@ for ii=1:2
     this_zxy0=cellfun(@(x,xc) x-repmat(xc,size(x,1),1),zxy,bec_cent(:,ii),'UniformOutput',false);
     this_r0=cellfun(@(x) zxy2rdist(x),this_zxy0,'UniformOutput',false);
     this_bool_thermal=cellfun(@(r) r<r_th,this_r0,'UniformOutput',false);
-    this_bool_thermal=cellfun(@(b1,b2) b1&(~b2),this_bool_thermal,bool_bec_combined);      % select thermal but not BEC
+    this_bool_thermal=cellfun(@(b1,b2) b1&(~b2),this_bool_thermal,bool_bec_combined,'UniformOutput',false);      % select thermal but not BEC
     
     bool_thermal(:,ii)=this_bool_thermal;
 end
@@ -93,9 +93,12 @@ rlim_hicap=R_halo_mean*(1+dR_halo*kdR_hicap*[-1,1]);       % radial limits for s
 bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOutput',false);    % atoms in radial limits
 
 %%%% polar
-% TODO - test does this work? cellfun multiple output?
-[~,elev_halo_zxy0]=cellfun(@(zxy) zxy2sphpol(zxy),halo_zxy0,'UniformOutput',false);  % get elev angles [-pi/2,pi/2]
-bool_halo_elev_hicap=cellfun(@(el) (abs(el)<elev_max),elev_halo_zxy0,'UniformOutput',false);    % atoms in elev limits
+% TODO - test does this work? cellfun multiple output? the answer is no. and fixed below
+halo_zxy0_sphpol=cellfun(@(zxy) zxy2sphpol(zxy),halo_zxy0,'UniformOutput',false);  
+% get elev angles [-pi/2,pi/2]
+halo_zxy0_el=cellfun(@(pol) pol(:,2),halo_zxy0_sphpol,'UniformOutput',false);
+bool_halo_elev_hicap=cellfun(@(el) (abs(el)<elev_max),halo_zxy0_el,'UniformOutput',false);    % atoms in elev limits
+clearvars halo_zxy0_sphpol halo_zxy0_el;
 
 %%%% Filtered halo
 % TODO - this is nasty joining cells like this. user must supply how many
@@ -131,9 +134,11 @@ rlim_clean=1+dR_halo*[-1,1];        % a final hard crop
 bool_halo_r_clean=cellfun(@(r) (r<rlim_clean(2))&(r>rlim_clean(1)),r_halo_k,'UniformOutput',false);    % atoms in radial limits
 
 %%%% Polar
-% TODO - check as above usage
-[~,elev_halo_k]=cellfun(@(zxy) zxy2sphpol(zxy),halo_k,'UniformOutput',false);  % get elev angles [-pi/2,pi/2]
-bool_halo_elev_clean=cellfun(@(el) (abs(el)<elev_max),elev_halo_k,'UniformOutput',false);    % atoms in elev limits
+% TODO - check as above usage - fixed
+halo_k_sphpol=cellfun(@(zxy) zxy2sphpol(zxy),halo_k,'UniformOutput',false);
+halo_k_el=cellfun(@(pol) pol(:,2),halo_k_sphpol,'UniformOutput',false);
+bool_halo_elev_clean=cellfun(@(el) (abs(el)<elev_max),halo_k_el,'UniformOutput',false);    % atoms in elev limits
+clearvars halo_k_sphpol halo_k_el;
 
 %%% 4.2. Filtered halo
 % TODO - this is nasty joining cells like this. user must supply how many
