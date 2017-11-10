@@ -38,7 +38,7 @@ kdR_hicap=2;
 
 %% 1. Capture marker BECs
 %%% 1.1. capture BEC to mark halo poles
-[bec_cent,bool_bec]=capture_bec(zxy,{p_bec1,p_bec2},{r_bec,r_bec},verbose);
+[bec_cent,bool_bec]=capture_bec(zxy,{p_bec1,p_bec2},{r_bec,r_bec},verbose-1);
 
 %%% 1.2. get atoms in BEC
 bool_bec_combined=cell_horzcat(bool_bec);       % boolean array to indicate which BEC atoms belongs to
@@ -94,22 +94,28 @@ if verbose>0
     
     % BEC cents
     for ii=1:2
-        fprintf('[%s]: %s: bec_cent_mean{%d}=(%0.2g, %0.2g, %0.2g)\n',mfilename,getdatetimestr,ii,bec_cent_mean{ii});
-        fprintf('[%s]: %s: bec_cent_std{%d}=(%0.2g, %0.2g, %0.2g)\n',mfilename,getdatetimestr,ii,bec_cent_std{ii});
+        fprintf('[%s]: %s: bec_cent_mean{%d}=(%0.4f, %0.4f, %0.4f)\n',mfilename,getdatetimestr,ii,bec_cent_mean{ii});
+        fprintf('[%s]: %s: bec_cent_std{%d}=(%0.4f, %0.4f, %0.4f)\n',mfilename,getdatetimestr,ii,bec_cent_std{ii});
+%         fprintf('==========================================================================================\n');    %90 chars
     end
     
     % oscillation compensated BEC/thermal categorized counts 
-    zxy0_flare=cellfun(@(x,b) x(b),zxy,bool_flare,'UniformOutput',false);
-    zxy0_remnant=cellfun(@(x,b) x(~b),zxy,bool_flare,'UniformOutput',false);
+    zxy0_flare=cellfun(@(x,b) x(b,:),zxy,bool_flare,'UniformOutput',false);
+    zxy0_remnant=cellfun(@(x,b) x(~b,:),zxy,bool_flare,'UniformOutput',false);
+    
     h_zxy0=figure();
     hold on;
     plot_zxy(zxy0_flare,1e4,1,'r');
-    plot_zxy(zxy0_remnant,1e4,1,'k');
+    plot_zxy(zxy0_remnant,1e4,10,'k');
     xlabel('X [m]');
     ylabel('Y [m]');
     zlabel('Z [m]');
     title('Captured BEC/thermal');
     axis equal;
+    box on;
+    view(3);
+    
+    % clean workspace
     clearvars zxy0_flare zxy_remnant;
 end
 
@@ -170,7 +176,7 @@ efit_flag='';
 
 %%% 3.2. Unit sphere mapping 
 %%%% Tranform to unit sphere (k-space)
-halo_k=cellfun(@(v_zxy) ellip2usph(v_zxy,ecent,erad,evec,verbose),...
+halo_k=cellfun(@(v_zxy) ellip2usph(v_zxy,ecent,erad,evec,verbose-1),...
     halo_zxy0,'UniformOutput',false);
 
 %% 4. Clean the halo
