@@ -46,6 +46,10 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
         [] TEST IT!
     [] verbose output
 	[] output a figure at each stage
+		[x] bec + thermal
+		[x] first stage halo capture
+		[] ellipsoid fit
+		[] cleaned halo
 
 % TODO
 % [x] improve algorithm
