@@ -6,9 +6,10 @@ function [halo_k,bec_cent]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,elev_m
 % TODO
 % [x] cull thermal fraction (r_th) around BEC center
 %   [x] r_th is an absolute magnitude now: need to be ~2*r_bec
-%       [] update configs
+%       [x] update configs
 %   [] test
 % [] return more info
+%   [] verbose output
 % [] comment code
 %
 
@@ -34,7 +35,6 @@ end
 
 %% Configs 
 kdR_hicap=2;
-
 
 %% 1. Capture marker BECs
 %%% 1.1. capture BEC to mark halo poles
@@ -65,6 +65,53 @@ bool_thermal_combined=cellfun(@(b) any(b,2),bool_thermal_combined,'UniformOutput
 % BEC and thermal counts are extremely large signals compared to scattered
 % particle signal of interest
 bool_flare=cellfun(@(b1,b2) b1|b2,bool_bec_combined,bool_thermal_combined,'UniformOutput',false);
+
+%%% summary
+% TODO
+%   - [x] average bec_cent
+%   - [x] shot-to-shot bec_cent oscillation
+%   - [x] plot raw ZXY scatter distribution
+%       - [x] indicate captured BECs and thermal
+
+% get all evaluated BEC cents
+bec_cent_all=cell(1,2);
+for ii=1:2
+    bec_cent_all{ii}=vertcat(bec_cent{:,ii});
+end
+bec_cent_mean=cellfun(@(x) mean(x,1),bec_cent_all,'UniformOutput',false);
+bec_cent_std=cellfun(@(x) std(x,1),bec_cent_all,'UniformOutput',false);
+
+% output to screen
+if verbose>0
+    % raw zxy
+    h_zxy_raw=figure();
+    plot_zxy(zxy,1e4,1,'k');
+    xlabel('X [m]');
+    ylabel('Y [m]');
+    zlabel('Z [m]');
+    title('Raw ZXY');
+    axis equal;
+    
+    % BEC cents
+    for ii=1:2
+        fprintf('[%s]: %s: bec_cent_mean{%d}=(%0.2g, %0.2g, %0.2g)\n',mfilename,getdatetimestr,ii,bec_cent_mean{ii});
+        fprintf('[%s]: %s: bec_cent_std{%d}=(%0.2g, %0.2g, %0.2g)\n',mfilename,getdatetimestr,ii,bec_cent_std{ii});
+    end
+    
+    % oscillation compensated BEC/thermal categorized counts 
+    zxy0_flare=cellfun(@(x,b) x(b),zxy,bool_flare,'UniformOutput',false);
+    zxy0_remnant=cellfun(@(x,b) x(~b),zxy,bool_flare,'UniformOutput',false);
+    h_zxy0=figure();
+    hold on;
+    plot_zxy(zxy0_flare,1e4,1,'r');
+    plot_zxy(zxy0_remnant,1e4,1,'k');
+    xlabel('X [m]');
+    ylabel('Y [m]');
+    zlabel('Z [m]');
+    title('Captured BEC/thermal');
+    axis equal;
+    clearvars zxy0_flare zxy_remnant;
+end
 
 
 %% 2. First stage halo capture
