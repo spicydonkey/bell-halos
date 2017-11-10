@@ -3,7 +3,7 @@
 % User config
 % path_config='config_loop2_20171031_1.m';
 % path_config='config_loop2_20171103_1.m';
-path_config='config_loop2_20171103_2.m';
+path_config='config_loop2_4ms_20171106_2.m';
 
 % vars to save to output
 vars_save={'configs','path_config',...

@@ -20,5 +20,5 @@
 *.fig*
 
 # vim
-*.swn
-*.swm
+*.sw*
+*~

@@ -44,6 +44,8 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
     [x] liberal inclusion of points for input to halo capture
     [x] u-sph fitted halo needs filtering
         [] TEST IT!
+    [] verbose output
+	[] output a figure at each stage
 
 % TODO
 % [x] improve algorithm
