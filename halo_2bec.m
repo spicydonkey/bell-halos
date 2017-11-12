@@ -262,7 +262,8 @@ halo_R=cellfun(@(c) zxy2rdist(c),halo_k,'UniformOutput',false);
 halo_R=vertcat(halo_R{:});
 
 %%% radial histogram
-rhist_nbin=ceil(length(halo_R)/100);    % number of bins
+rhist_nbin=100;
+%rhist_nbin=ceil(length(halo_R)/100);    % number of bins
 [n_R,R_edge]=histcounts(halo_R,rhist_nbin);     % count in radial bins
 R_cent=R_edge(1:end-1)+0.5*diff(R_edge);        % bin centers
 n_R=n_R./(sum(n_R)*diff(R_edge));      % number to probability density function
@@ -285,7 +286,7 @@ end
 % see fit_gauss_1d
 
 parameq={[],[],[],0};   % offset set to 0
-param0=[100,0,0.033];   % [amplitude,mean,rmswidth]
+param0=[10,1,0.033];   % [amplitude,mean,rmswidth]
 [paramfit,~,rdist_gfit]=fit_gauss_1d(R_cent,n_R,param0,parameq);
 
 % get fitted results
@@ -296,7 +297,7 @@ nR_fit=feval(rdist_gfit,R_fit);
 if verbose>0
     figure(h_rdist);
     hold on;
-    plot(R_fit,nR_fit,'k--');
+    plot(R_fit,nR_fit,'k--','LineWidth',2);
 end
 
 
