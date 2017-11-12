@@ -196,6 +196,21 @@ efit_flag='';
 halo_k=cellfun(@(v_zxy) ellip2usph(v_zxy,ecent,erad,evec,verbose-1),...
     halo_zxy0,'UniformOutput',false);
 
+%%% Summary
+if verbose>0
+    % unit sphere mapped halo
+    h_halo_k=figure();
+    plot_zxy(halo_k,1e4,10,'k');
+    xlabel('K_x');
+    ylabel('K_y');
+    zlabel('K_z');
+    title('Halo - unit-sphere mapped');
+    axis equal;
+    box on;
+    view(3);
+    drawnow;
+end
+    
 %% 4. Clean the halo
 %%% 4.1. Final filters
 %%%% Radial
@@ -225,5 +240,72 @@ bool_halo_clean=cellfun(@(x) all(x,2),bool_halo_clean,'UniformOutput',false);
 % apply the filter
 halo_k=cellfun(@(z,b)z(b,:),halo_k,bool_halo_clean,'UniformOutput',false);
 
+%%% Summary
+if verbose>0
+    % draw over unit-sph mapped halo
+    figure(h_halo_k); 
+    hold on;
+    %h_halo_k_filt=figure();
+    plot_zxy(halo_k,1e4,20,'g');
+    hold off;
+    drawnow
+end
+
+%% 5. Radial distribution
+% TODO
+% - [x] radial distribution + Gaussian fit
+%   - [] TEST!
+%
+
+% get radial dist to origin
+halo_R=cellfun(@(c) zxy2rdist(c),halo_k,'UniformOutput',false);
+halo_R=vertcat(halo_R{:});
+
+%%% radial histogram
+rhist_nbin=ceil(length(halo_R)/100);    % number of bins
+[n_R,R_edge]=histcounts(halo_R,rhist_nbin);     % count in radial bins
+R_cent=R_edge(1:end-1)+0.5*diff(R_edge);        % bin centers
+n_R=n_R./(sum(n_R)*diff(R_edge));      % number to probability density function
+% TODO - need to normalise 3D --> 1D radial (use R_cent)
+
+if verbose>0
+    h_rdist=figure();
+    plot(R_cent,n_R,'o');   % radial histogram of data fitted to unit sphere
+
+    box on;
+    title('Halo radial distribution');
+    xlabel('K');
+    ylabel('PDF');
+
+    drawnow
+end
+
+%%% fit distribution
+% Model - 1D Gaussian with 0 offset
+% see fit_gauss_1d
+
+parameq={[],[],[],0};   % offset set to 0
+param0=[100,0,0.033];   % [amplitude,mean,rmswidth]
+[paramfit,~,rdist_gfit]=fit_gauss_1d(R_cent,n_R,param0,parameq);
+
+% get fitted results
+dk_rms=paramfit(3,:);   % rms halo thickness, fit SE
+R_fit=linspace(min(R_cent),max(R_cent));
+nR_fit=feval(rdist_gfit,R_fit);
+
+if verbose>0
+    figure(h_rdist);
+    hold on;
+    plot(R_fit,nR_fit,'k--');
+end
+
+
+%% 6. Number in halo
+% TODO
+% - [] mean and SE
+% - account for filters
+%   - elev filter
+%   - QE?
+%
 
 end
