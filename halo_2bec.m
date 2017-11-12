@@ -298,6 +298,8 @@ if verbose>0
     figure(h_rdist);
     hold on;
     plot(R_fit,nR_fit,'k--','LineWidth',2);
+
+    drawnow
 end
 
 
