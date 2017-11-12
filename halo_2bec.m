@@ -87,18 +87,22 @@ if verbose>0
     axis equal;
     box on;
     view(3);
-    
+end
+
+if verbose>0
     % BEC cents
     for ii=1:2
         fprintf('[%s]: %s: bec_cent_mean{%d}=(%0.4f, %0.4f, %0.4f)\n',mfilename,getdatetimestr,ii,bec_cent_mean{ii});
         fprintf('[%s]: %s: bec_cent_std{%d}=(%0.4f, %0.4f, %0.4f)\n',mfilename,getdatetimestr,ii,bec_cent_std{ii});
 %         fprintf('==========================================================================================\n');    %90 chars
     end
+end
     
-    % oscillation compensated BEC/thermal categorized counts 
-    zxy0_flare=cellfun(@(x,b) x(b,:),zxy,bool_flare,'UniformOutput',false);
-    zxy0_remnant=cellfun(@(x,b) x(~b,:),zxy,bool_flare,'UniformOutput',false);
+% oscillation compensated BEC/thermal categorized counts 
+zxy0_flare=cellfun(@(x,b) x(b,:),zxy,bool_flare,'UniformOutput',false);
+zxy0_remnant=cellfun(@(x,b) x(~b,:),zxy,bool_flare,'UniformOutput',false);
     
+if verbose>0
     h_zxy0=figure();
     hold on;
     plot_zxy(zxy0_flare,1e4,1,'r');
@@ -112,10 +116,10 @@ if verbose>0
     view(3);
     
     drawnow
-    
-    % clean workspace
-    clearvars zxy0_flare zxy_remnant;
 end
+
+% clean workspace
+clearvars zxy0_flare zxy_remnant;
 
 
 %% 2. First stage halo capture
@@ -172,7 +176,9 @@ if verbose>0
     fprintf('[%s]: %s: R_halo_mean=%0.3f\n',mfilename,getdatetimestr,R_halo_mean);
     fprintf('[%s]: %s: R_halo_std=%0.3f\n',mfilename,getdatetimestr,R_halo_std);
     %         fprintf('==========================================================================================\n');    %90 chars
-    
+end
+
+if verbose>0
     % plot first stage captured halos
     h_halo_zxy0=figure();
     plot_zxy(halo_zxy0,1e4,10,'b');
@@ -295,6 +301,10 @@ R_fit=linspace(min(R_cent),max(R_cent));
 nR_fit=feval(rdist_gfit,R_fit);
 
 if verbose>0
+    fprintf('[%s]: %s: dk_rms=%0.3f (%0.1f)\n',mfilename,getdatetimestr,dk_rms);
+end
+
+if verbose>0
     figure(h_rdist);
     hold on;
     plot(R_fit,nR_fit,'k--','LineWidth',2);
@@ -305,10 +315,23 @@ end
 
 %% 6. Number in halo
 % TODO
-% - [] mean and SE
-% - account for filters
-%   - elev filter
-%   - QE?
-%
+% - [x] mean and sdev 
+% - [] account for filters
+%   - [] elev filter
+%   - [x] QE?
+% - [] TEST
+
+ncounts_halo_k_shots=cellfun(@(k) size(k,1),halo_k);  % counts in halo_k per shot
+n_scat=[mean(ncounts_halo_k_shots),std(ncounts_halo_k_shots)];  % number in filtered halo
+
+% estimate total number in scattered halo (unfiltered)
+vol_factor_elev=1;      % TODO - formula for this? f(elev_max)
+det_qe=0.1;     % TODO may be closer to 0.08?
+n_scat=n_scat/(det_qe*vol_factor_elev);
+
+%%% Summary
+if verbose>0
+    fprintf('[%s]: %s: n_scat=%0.3f (%0.1f)\n',mfilename,getdatetimestr,n_scat);
+end
 
 end
