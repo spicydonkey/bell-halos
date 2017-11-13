@@ -11,6 +11,7 @@ vars_save={'configs','path_config',...
     'fullpath_config',...
     'fname_save','path_save',...
     'nloop',...
+    'bec_cent','Nsc_m','dk_m',...
     'nazim','nelev',...
     'Az','El',...
     'mf','mbool','nloop_m',...
@@ -74,6 +75,10 @@ end
 % TODO - need to check if BEC centers vary significantly between exps
 bec_cent=cell(nloop,1);
 
+% halo summary
+Nsc=NaN(nloop,2);   % esimate of no. scattered atoms in halo - not very useful in this analysis
+dk=NaN(nloop,2);    % halo rms width in k-space
+
 % get count distribution in halo
 for ii=1:nloop
     tdir=dloop{ii};
@@ -90,10 +95,12 @@ for ii=1:nloop
     
     %% get halos for mf=0,1
     halo_k=cell(nshots,2);
+    tNsc=NaN(1,2);
+    tdk=NaN(1,2);
     tbec_cent=cell(1,2);
     hfig_halos=cell(1,2);
     for jj=1:2
-        [halo_k(:,jj),tbec_cent{jj},hfig_halos{jj}]=halo_2bec(zxy,...
+        [halo_k(:,jj),tNsc(jj),~,tdk(jj),~,tbec_cent{jj},hfig_halos{jj}]=halo_2bec(zxy,...
             configs.bec{jj}.pos{1},configs.bec{jj}.pos{2},...
             configs.bec{jj}.Rmax,configs.bec{jj}.r_th,...
             configs.halo{jj}.dR,configs.halo{jj}.elev_max,...
@@ -132,6 +139,8 @@ for ii=1:nloop
         nn_halo{jj}(:,:,ii)=tnn_halo{jj};
     end
     
+    Nsc(ii,:)=tNsc;
+    dk(ii,:)=tdk;
     bec_cent{ii}=tbec_cent;
     
     % save figs output
@@ -163,21 +172,30 @@ nloop_m=cellfun(@sum,mbool);
 amp_m=cell(1,2);
 ver_m=cell(1,2);
 nn_halo_m=cell(1,2);
+Nsc_m=cell(1,2);
+dk_m=cell(1,2);
 for ii=1:2
     amp_m{ii}=amp(mbool{ii});
     ver_m{ii}=ver(mbool{ii});
     for jj=1:2
         nn_halo_m{ii}{jj}=nn_halo{jj}(:,:,mbool{ii});
     end
+    Nsc_m{ii}=Nsc(mbool{ii},:);
+    dk_m{ii}=dk(mbool{ii},:);
 end
 
 % sort by Raman amp
 for ii=1:2
+    % get sorted index list
     [amp_m{ii},Is]=sort(amp_m{ii});
+    
+    % sort rest
     ver_m{ii}=ver_m{ii}(Is);
     for jj=1:2
         nn_halo_m{ii}{jj}=nn_halo_m{ii}{jj}(:,:,Is);
     end
+    Nsc_m{ii}=Nsc_m{ii}(Is,:);
+    dk_m{ii}=dk_m{ii}(Is,:);
 end
 
 

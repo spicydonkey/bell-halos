@@ -1,4 +1,4 @@
-function [halo_k,bec_cent,hfig]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,elev_max,verbose)
+function [halo_k,Nsc_avg,Nsc_std,dk_avg,dk_std,bec_cent,hfig]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,elev_max,verbose)
 % captures halo based on 2 source BECs at poles
 %
 % [halo_k,bec_cent,hfig]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,elev_max,verbose)
@@ -287,8 +287,11 @@ dk_rms=paramfit(3,:);   % rms halo thickness, fit SE
 R_fit=linspace(min(R_cent),max(R_cent));
 nR_fit=feval(rdist_gfit,R_fit);
 
+dk_avg=dk_rms(1);
+dk_std=dk_rms(2);
+
 if verbose>0
-    fprintf('[%s]: %s: dk_rms=%0.3e (%0.1e)\n',mfilename,getdatetimestr,dk_rms);
+    fprintf('[%s]: %s: dk_rms=%0.3e (%0.1e)\n',mfilename,getdatetimestr,dk_avg,dk_std);
 end
 
 if verbose>0
@@ -310,9 +313,12 @@ vol_factor_elev=sin(elev_max);
 det_qe=0.1;     % TODO may be closer to 0.08?
 n_scat=n_scat/(det_qe*vol_factor_elev);
 
+Nsc_avg=n_scat(1);
+Nsc_std=n_scat(2);
+
 %%% Summary
 if verbose>0
-    fprintf('[%s]: %s: n_scat=%0.3e (%0.1e)\n',mfilename,getdatetimestr,n_scat);
+    fprintf('[%s]: %s: n_scat=%0.3e (%0.1e)\n',mfilename,getdatetimestr,Nsc_avg,Nsc_std);
 end
 
 
