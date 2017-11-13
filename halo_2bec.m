@@ -7,27 +7,6 @@ function [halo_k,bec_cent,hfig]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,e
 %
 % 
 
-% TODO
-% [x] cull thermal fraction (r_th) around BEC center
-%   [x] r_th is an absolute magnitude now: need to be ~2*r_bec
-%       [x] update configs
-%   [] test
-% [] return more info
-%   [] verbose output
-% [] comment code
-%
-
-% TODO
-% [] improve algorithm
-% 1. capture BEC: get BEC positions ==> get approx to halo center
-% 2. 1st stage halo capture
-%   2.1. liberal filtering of counts: radial, BEC, thermal
-%   2.2. ellipsoid mapping --> unit sphere
-% 3. clean halo
-%   3.1. radial filter
-%   3.2. pole filter
-%
-
 % - kdR_hicap: factor to make first stage radial culling more liberal
 
 
@@ -267,7 +246,7 @@ end
 %% 5. Radial distribution
 % TODO
 % - [x] radial distribution + Gaussian fit
-%   - [] TEST!
+%   - [x] TEST!
 %
 
 % get radial dist to origin
@@ -279,8 +258,9 @@ rhist_nbin=100;
 %rhist_nbin=ceil(length(halo_R)/100);    % number of bins
 [n_R,R_edge]=histcounts(halo_R,rhist_nbin);     % count in radial bins
 R_cent=R_edge(1:end-1)+0.5*diff(R_edge);        % bin centers
-n_R=n_R./(sum(n_R)*diff(R_edge));      % number to probability density function
-% TODO - need to normalise 3D --> 1D radial (use R_cent)
+R_norm_area=4*pi*R_cent.^2;
+% normalise 3D --> 1D radial (use R_cent) - 4*pi*r^2
+n_R=n_R./(sum(n_R)*diff(R_edge).*R_norm_area);      % number to probability density function: normalised by total counts, dR, and radial integration volume
 
 if verbose>0
     h_rdist=figure();
@@ -321,18 +301,12 @@ end
 
 
 %% 6. Number in halo
-% TODO
-% - [x] mean and sdev 
-% - [] account for filters
-%   - [] elev filter
-%   - [x] QE?
-% - [] TEST
-
 ncounts_halo_k_shots=cellfun(@(k) size(k,1),halo_k);  % counts in halo_k per shot
 n_scat=[mean(ncounts_halo_k_shots),std(ncounts_halo_k_shots)];  % number in filtered halo
 
 % estimate total number in scattered halo (unfiltered)
-vol_factor_elev=1;      % TODO - formula for this? f(elev_max)
+vol_factor_elev=sin(elev_max);
+% sampled fraction in halo with the elev-angle culling is given by: $r_{samp}=V_{samp}/V_{tot}=sin(\phi_{max})$
 det_qe=0.1;     % TODO may be closer to 0.08?
 n_scat=n_scat/(det_qe*vol_factor_elev);
 
