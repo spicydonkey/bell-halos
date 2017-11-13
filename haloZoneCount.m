@@ -12,7 +12,7 @@ function [nn_halo,z_az,z_el]=haloZoneCount(halo_k,nAz,nEl,sig,lim,histtype)
 % [x] how to handle BAD regions: bad regions are post-processed by NaN-padding
 % [] accept SHOT data (array)
 %   [x] gauss
-%       [] TEST
+%       [x] TEST
 %   [] latlon
 % [] document code
 

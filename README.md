@@ -57,7 +57,7 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
 - [] halo fit
     - [] to unit sphere
     - [] fast g2 amplitude algorithm for BB-pairs
-    
+- [] analyse bell data 
 
 ## MISC
 - [x] plotFlatMap
