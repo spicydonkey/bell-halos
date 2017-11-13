@@ -78,8 +78,8 @@ end
 if verbose>0
     % BEC cents
     for ii=1:2
-        fprintf('[%s]: %s: bec_cent_mean{%d}=(%0.4g, %0.4g, %0.4g)\n',mfilename,getdatetimestr,ii,bec_cent_mean{ii});
-        fprintf('[%s]: %s: bec_cent_std{%d}=(%0.4g, %0.4g, %0.4g)\n',mfilename,getdatetimestr,ii,bec_cent_std{ii});
+        fprintf('[%s]: %s: bec_cent_mean{%d}=(%0.4e, %0.4e, %0.4e)\n',mfilename,getdatetimestr,ii,bec_cent_mean{ii});
+        fprintf('[%s]: %s: bec_cent_std{%d}=(%0.4e, %0.4e, %0.4e)\n',mfilename,getdatetimestr,ii,bec_cent_std{ii});
 %         fprintf('==========================================================================================\n');    %90 chars
     end
 end
@@ -159,8 +159,8 @@ halo_zxy0=cellfun(@(z,b)z(b,:),halo_zxy0,bool_halo_filt1,'UniformOutput',false);
 %%% Summary
 if verbose>0
     % Halo size
-    fprintf('[%s]: %s: R_halo_mean=%0.3g\n',mfilename,getdatetimestr,R_halo_mean);
-    fprintf('[%s]: %s: R_halo_std=%0.3g\n',mfilename,getdatetimestr,R_halo_std);
+    fprintf('[%s]: %s: R_halo_mean=%0.3e\n',mfilename,getdatetimestr,R_halo_mean);
+    fprintf('[%s]: %s: R_halo_std=%0.3e\n',mfilename,getdatetimestr,R_halo_std);
     %         fprintf('==========================================================================================\n');    %90 chars
 end
 
@@ -288,7 +288,7 @@ R_fit=linspace(min(R_cent),max(R_cent));
 nR_fit=feval(rdist_gfit,R_fit);
 
 if verbose>0
-    fprintf('[%s]: %s: dk_rms=%0.3g (%0.1g)\n',mfilename,getdatetimestr,dk_rms);
+    fprintf('[%s]: %s: dk_rms=%0.3e (%0.1e)\n',mfilename,getdatetimestr,dk_rms);
 end
 
 if verbose>0
@@ -312,7 +312,7 @@ n_scat=n_scat/(det_qe*vol_factor_elev);
 
 %%% Summary
 if verbose>0
-    fprintf('[%s]: %s: n_scat=%0.3g (%0.1g)\n',mfilename,getdatetimestr,n_scat);
+    fprintf('[%s]: %s: n_scat=%0.3e (%0.1e)\n',mfilename,getdatetimestr,n_scat);
 end
 
 
