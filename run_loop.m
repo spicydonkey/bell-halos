@@ -87,21 +87,20 @@ for ii=1:nloop
         configs.load.rot_angle,1,...
         configs.flags.verbose,0);
     zxy=txy2zxy(txy);
-    clearvars txy;
     nshots=size(zxy,1);
     
     % get halos for mf=0,1
     halo_k=cell(nshots,2);
     tbec_cent=cell(1,2);
+    hfig_halos=cell(1,2);
     for jj=1:2
-        [halo_k(:,jj),tbec_cent{jj}]=halo_2bec(zxy,...
+        [halo_k(:,jj),tbec_cent{jj},hfig_halos{jj}]=halo_2bec(zxy,...
             configs.bec{jj}.pos{1},configs.bec{jj}.pos{2},...
             configs.bec{jj}.Rmax,configs.bec{jj}.r_th,...
             configs.halo{jj}.dR,configs.halo{jj}.elev_max,...
             configs.flags.verbose);
     end
-    clearvars zxy;
-    
+
     % analyse the Rabi state flopping for this parameter set (pop is for
     % mf=1)
 %     [~,~,tP_rabi,tnn_halo]=rabiAnalyse(halo_k,configs.zone.nazim,configs.zone.nelev,...
@@ -110,7 +109,6 @@ for ii=1:nloop
     tnn_halo=haloZoneCount(halo_k,configs.zone.nazim,configs.zone.nelev,...
         configs.zone.sig,configs.zone.lim,...
         configs.zone.histtype);
-    clearvars halo_k;
     
 %     % state rotation angle at each momentum mode
 %     % formula: Pr(ORIGIGNAL_STATE)=cos(ROT_ANGLE/2)^2
@@ -132,10 +130,29 @@ for ii=1:nloop
 %     th_rabi(:,:,ii)=tth_rabi;
     
     bec_cent{ii}=tbec_cent;
+    
+    % save figs output
+    if verbose>0
+        for mm=1:2
+            for ll=1:numel(hfig_halos{mm})
+                % get this fig
+                t_hfig=hfig_halos(ll);
+                figname=sprintf('fig_preproc_%0.2g_%0.2g_%d_%d_%d',tver,tamp,tmf-1,mm-1,ll);
+                if configs.flags.savefigs
+                    % save fig
+                    saveas(t_hfig,[fullfile(path_save,figname),'.png']);
+                end
+            end
+        end
+    end
+    close(hfig_halos{:});
 end
+clearvars txy zxy halo_k;   % clean workspace
+
 mbool{1}=(mf==0);
 mbool{2}=(mf==1);
 nloop_m=cellfun(@sum,mbool);
+
 
 %% clean loop results
 % categorise to mf

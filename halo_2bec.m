@@ -1,8 +1,12 @@
-function [halo_k,bec_cent]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,elev_max,verbose)
+function [halo_k,bec_cent,hfig]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,elev_max,verbose)
 % captures halo based on 2 source BECs at poles
+%
+% [halo_k,bec_cent,hfig]=halo_2bec(zxy,p_bec1,p_bec2,r_bec,r_th,dR_halo,elev_max,verbose)
 %
 % DKS 31/10/2017
 %
+% 
+
 % TODO
 % [x] cull thermal fraction (r_th) around BEC center
 %   [x] r_th is an absolute magnitude now: need to be ~2*r_bec
@@ -35,6 +39,9 @@ end
 
 %% Configs 
 kdR_hicap=2;
+
+% initialise figure outputs
+hfig=[];    % figure array
 
 %% 1. Capture marker BECs
 %%% 1.1. capture BEC to mark halo poles
@@ -207,9 +214,9 @@ if verbose>0
     % unit sphere mapped halo
     h_halo_k=figure();
     plot_zxy(halo_k,1e4,10,'k');
-    xlabel('K_x');
-    ylabel('K_y');
-    zlabel('K_z');
+    xlabel('$K_x$');
+    ylabel('$K_y$');
+    zlabel('$K_z$');
     title('Halo - unit-sphere mapped');
     axis equal;
     box on;
@@ -333,5 +340,9 @@ n_scat=n_scat/(det_qe*vol_factor_elev);
 if verbose>0
     fprintf('[%s]: %s: n_scat=%0.3f (%0.1f)\n',mfilename,getdatetimestr,n_scat);
 end
+
+
+%% Collate figures
+hfig=[h_zxy_raw,h_zxy0,h_halo_zxy0,h_halo_k,h_rdist];
 
 end
