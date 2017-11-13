@@ -70,8 +70,6 @@ nn_halo=cell(1,2);
 for ii=1:2
     nn_halo{ii}=nan_alloc;
 end
-% P_rabi=nan_alloc;
-% th_rabi=nan_alloc;
 
 % TODO - need to check if BEC centers vary significantly between exps
 bec_cent=cell(nloop,1);
@@ -104,9 +102,6 @@ for ii=1:nloop
 
     % analyse the Rabi state flopping for this parameter set (pop is for
     % mf=1)
-%     [~,~,tP_rabi,tnn_halo]=rabiAnalyse(halo_k,configs.zone.nazim,configs.zone.nelev,...
-%         configs.zone.sig,configs.zone.lim,...
-%         configs.zone.histtype);
     tnn_halo=haloZoneCount(halo_k,configs.zone.nazim,configs.zone.nelev,...
         configs.zone.sig,configs.zone.lim,...
         configs.zone.histtype);     % counts at Az, El ndgrid zones
@@ -118,18 +113,10 @@ for ii=1:nloop
     %%% poles - have been removed since it's close to BEC
     b_poles=cellfun(@(haloS) abs(El)>haloS.elev_max,configs.halo,'UniformOutput',false);
     
+    % apply NaN padding
     for mm=1:2
         tnn_halo{mm}(b_poles{mm})=NaN;
     end
-    
-%     % state rotation angle at each momentum mode
-%     % formula: Pr(ORIGIGNAL_STATE)=cos(ROT_ANGLE/2)^2
-%     % limitation - modulo pi
-%     %   ROT_ANGLE >= 0 by convention
-%     tth_rabi=2*acos(sqrt(tP_rabi));
-%     if tmf==0
-%         tth_rabi=pi-tth_rabi;
-%     end
     
     %% store results
     mf(ii)=tmf;
@@ -138,8 +125,6 @@ for ii=1:nloop
     for jj=1:2
         nn_halo{jj}(:,:,ii)=tnn_halo{jj};
     end
-%     P_rabi(:,:,ii)=tP_rabi;
-%     th_rabi(:,:,ii)=tth_rabi;
     
     bec_cent{ii}=tbec_cent;
     
@@ -161,27 +146,23 @@ for ii=1:nloop
 end
 clearvars txy zxy halo_k;   % clean workspace
 
+
+%% tidy loop results
+% sort data indices by mF
 mbool{1}=(mf==0);
 mbool{2}=(mf==1);
 nloop_m=cellfun(@sum,mbool);
 
-
-%% clean loop results
-% categorise to mf
+% categorise by mf
 amp_m=cell(1,2);
 ver_m=cell(1,2);
 nn_halo_m=cell(1,2);
-% P_rabi_m=cell(1,2);
-% th_rabi_m=cell(1,2);
-
 for ii=1:2
     amp_m{ii}=amp(mbool{ii});
     ver_m{ii}=ver(mbool{ii});
     for jj=1:2
         nn_halo_m{ii}{jj}=nn_halo{jj}(:,:,mbool{ii});
     end
-%     P_rabi_m{ii}=P_rabi(:,:,mbool{ii});
-%     th_rabi_m{ii}=th_rabi(:,:,mbool{ii});
 end
 
 % sort by Raman amp
@@ -191,8 +172,6 @@ for ii=1:2
     for jj=1:2
         nn_halo_m{ii}{jj}=nn_halo_m{ii}{jj}(:,:,Is);
     end
-%     P_rabi_m{ii}=P_rabi_m{ii}(:,:,Is);
-%     th_rabi_m{ii}=th_rabi_m{ii}(:,:,Is);
 end
 
 
@@ -213,6 +192,7 @@ end
 % [] trend fit
 
 %%% 1. Simple formula
+% NOTE: wraps rotation angle to [0,pi]
 th_rabi_m=cell(size(P_rabi_m));
 for ii=1:2
     if nloop_m(ii)==0
@@ -276,14 +256,10 @@ for ii=1:2
     % preallocate 
     ster_dth{ii}=zeros(this_nloop,length(ct_dth));
     
-    % TODO 
+    % NOTE - we assume mf=0 rotates identically to mf=1. mf=0 data has too much background
     % this is a trial dth - assuming mf=0 rotates like mf=1
     DTHETA{ii}=th_rabi_m{ii}-flip_bb(th_rabi_m{ii});
-    
-%     DTHETA{ii}=NaN(size(th_rabi_m{ii}));
-%     for jj=1:this_nloop
-%         DTHETA{ii}(:,:,jj)=th_rabi_m{ii}(:,:,jj)-flip_bb(th_rabi_m{ii}(:,:,jj));
-%     end
+    % TODO - test flip_bb code
     
     for jj=1:this_nloop        
         this_dth=DTHETA{ii}(:,:,jj);
@@ -463,8 +439,6 @@ if configs.flags.graphics
         t_hfig=figure();
         
         cc=distinguishable_colors(nloop_m(tmf));
-        
-        
 
         pp=[];
         for ii=1:nloop_m(tmf)
