@@ -113,11 +113,14 @@ for ii=1:nloop
     
     %% pad bad zones with NaN
     % - [] package into a function
-    % - [] poles
+    % - [x] poles
     % - [] bright/dark spots: spontaneous halo
-    %%% poles
-%     b_poles=Az
+    %%% poles - have been removed since it's close to BEC
+    b_poles=cellfun(@(haloS) abs(El)>haloS.elev_max,configs.halo,'UniformOutput',false);
     
+    for mm=1:2
+        tnn_halo{mm}(b_poles{mm})=NaN;
+    end
     
 %     % state rotation angle at each momentum mode
 %     % formula: Pr(ORIGIGNAL_STATE)=cos(ROT_ANGLE/2)^2
