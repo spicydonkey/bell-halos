@@ -3,7 +3,8 @@
 % User config
 % path_config='config_loop2_20171031_1.m';
 % path_config='config_loop2_20171103_1.m';
-path_config='config_loop2_4ms_20171106_2.m';
+% path_config='config_loop2_4ms_20171106_2.m';
+path_config='config_loop2_test.m';
 
 % vars to save to output
 vars_save={'configs','path_config',...
@@ -80,7 +81,7 @@ for ii=1:nloop
     tdir=dloop{ii};
     [tmf,tamp,tver]=getLoopInfo(tdir);
     
-    % pre-process zxy-counts for this run
+    %% pre-process zxy-counts for this run
     dpath=fullfile(tdir,'d');
     [txy,fout]=load_txy(dpath,[],configs.load.window,...
         configs.load.mincount,configs.load.maxcount,...
@@ -89,7 +90,7 @@ for ii=1:nloop
     zxy=txy2zxy(txy);
     nshots=size(zxy,1);
     
-    % get halos for mf=0,1
+    %% get halos for mf=0,1
     halo_k=cell(nshots,2);
     tbec_cent=cell(1,2);
     hfig_halos=cell(1,2);
@@ -108,7 +109,15 @@ for ii=1:nloop
 %         configs.zone.histtype);
     tnn_halo=haloZoneCount(halo_k,configs.zone.nazim,configs.zone.nelev,...
         configs.zone.sig,configs.zone.lim,...
-        configs.zone.histtype);
+        configs.zone.histtype);     % counts at Az, El ndgrid zones
+    
+    %% pad bad zones with NaN
+    % - [] package into a function
+    % - [] poles
+    % - [] bright/dark spots: spontaneous halo
+    %%% poles
+%     b_poles=Az
+    
     
 %     % state rotation angle at each momentum mode
 %     % formula: Pr(ORIGIGNAL_STATE)=cos(ROT_ANGLE/2)^2
@@ -119,7 +128,7 @@ for ii=1:nloop
 %         tth_rabi=pi-tth_rabi;
 %     end
     
-    % store results
+    %% store results
     mf(ii)=tmf;
     amp(ii)=tamp;
     ver(ii)=tver;
@@ -132,11 +141,11 @@ for ii=1:nloop
     bec_cent{ii}=tbec_cent;
     
     % save figs output
-    if verbose>0
+    if configs.flags.verbose>0
         for mm=1:2
             for ll=1:numel(hfig_halos{mm})
                 % get this fig
-                t_hfig=hfig_halos(ll);
+                t_hfig=hfig_halos{mm}(ll);
                 figname=sprintf('fig_preproc_%0.2g_%0.2g_%d_%d_%d',tver,tamp,tmf-1,mm-1,ll);
                 if configs.flags.savefigs
                     % save fig
