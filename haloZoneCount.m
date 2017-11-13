@@ -1,14 +1,21 @@
 function [nn_halo,z_az,z_el]=haloZoneCount(halo_k,nAz,nEl,sig,lim,histtype)
+% Counts number of vectors around sph-polar zones
+%   a wrapper for testing different zone-types
+%
 % [NN_HALO, Z_AZ, Z_EL] = HALOZONECOUNT(HALO_K, NAZ, NEL, SIG, LIM, HISTTYPE)
 %
-%
-% NN_HALO: 1x2 cell of counts in zone
 %
 
 % Count each zone
 % TODO
 % [] compare against the lat-lon counting
-% [] how to handle BAD regions
+% [x] how to handle BAD regions: bad regions are post-processed by NaN-padding
+% [] accept SHOT data (array)
+%   [x] gauss
+%       [] TEST
+%   [] latlon
+% [] document code
+
 
 switch histtype
     case 'gauss'
@@ -18,18 +25,18 @@ switch histtype
         el=linspace(-pi/2,pi/2,nEl);
         [z_az,z_el]=ndgrid(az,el);      % grid to preserve dimensional ordering in array indexing
         
-        % TODO
-        % do each shot and get error statistics
-        
-        % simplify by collating all shots
-        halo_k_combined=cell(1,2);
-        for ii=1:2
-            halo_k_combined{ii}=vertcat(halo_k{:,ii});
-        end
-        
-        % Gaussian
-        nn_halo=cellfun(@(halo) wHaloDensity(halo,nAz,nEl,sig,lim),halo_k_combined,'UniformOutput',false);
-        
+        % % simplify by collating all shots
+        % halo_k_combined=cell(1,2);
+        % for ii=1:2
+        %     halo_k_combined{ii}=vertcat(halo_k{:,ii});
+        % end
+        % 
+        % % Gaussian
+        % nn_halo=cellfun(@(halo) wHaloDensity(halo,nAz,nEl,sig,lim),halo_k_combined,'UniformOutput',false);
+        % 
+
+        nn_halo=wHaloDensity(halo_k,nAz,nEl,sig,lim);
+
     case 'latlon'
         % lat-lon
         az=linspace(-pi,pi,nAz);

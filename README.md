@@ -64,3 +64,9 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
     - see plotFlatMapWrappedRad
     - [x] rad
     - [x] wrapping
+- generalise processes by letting functions take array (shot) inputs
+    - complete experiment is equivalent to a large shot
+    - [] capture_bec
+    - [] haloZoneCount
+    - [] halo_zone_density: the lat-lon zone-counting function
+

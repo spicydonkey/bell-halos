@@ -100,13 +100,19 @@ for ii=1:nloop
             configs.flags.verbose);
     end
 
-    % analyse the Rabi state flopping for this parameter set (pop is for
-    % mf=1)
-    tnn_halo=haloZoneCount(halo_k,configs.zone.nazim,configs.zone.nelev,...
-        configs.zone.sig,configs.zone.lim,...
-        configs.zone.histtype);     % counts at Az, El ndgrid zones
+    %% get count distribution around the sphere 
+    % NOTE
+    % - combines all shots - ignore shot-to-shot noise for theta characterisation
+    tnn_halo=cell(1,2);
+    for mm=1:2
+        tnn_halo{mm}=haloZoneCount(vertcat(halo_k{:,mm}),...
+            configs.zone.nazim,configs.zone.nelev,...
+            configs.zone.sig,configs.zone.lim,...
+            configs.zone.histtype);     % counts at Az, El ndgrid zones
+    end
     
-    %% pad bad zones with NaN
+    % pad bad zones with NaN
+    % TODO
     % - [] package into a function
     % - [x] poles
     % - [] bright/dark spots: spontaneous halo
