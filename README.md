@@ -27,6 +27,8 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
         - [x] implement it!
     - [x] scat mode histogram of theta
     	- [x] assuming mf=0 rotate like 1
+        - [ ] DEBUG sphere-zone histogram
+            - histsphzone.m
     - [] processing the 0's?
     - [] verify each halo capture
         - [x] return distribution (nn) - for further processing
@@ -53,10 +55,10 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
 
 ### Data
 #### 2017/11/14
-- [ ] 3 ms
-- [ ] 3.5 ms
-- [ ] 4 ms
-- [ ] 3 ms - hi power
+- [x] 3 ms
+- [x] 3.5 ms
+- [x] 4 ms
+- [x] 3 ms - hi power
 
 
 ## 3. Detection
