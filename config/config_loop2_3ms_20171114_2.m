@@ -52,14 +52,14 @@ configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
 configs.zone.histtype='gauss';      % {'gauss','latlon'}
-configs.zone.nazim=100;
-configs.zone.nelev=50;
+configs.zone.nazim=201;
+configs.zone.nelev=101;
 
 % configs.zone.histtype='latlon';      % {'gauss','latlon'}
 % configs.zone.nazim=100;
 % configs.zone.nelev=50;
 
-configs.zone.sig=[0.2,Inf];     % NORM completely integrated
+configs.zone.sig=[0.14,Inf];     % NORM completely integrated
 configs.zone.lim=[3,3];
 
 % zone divisions to sample for display

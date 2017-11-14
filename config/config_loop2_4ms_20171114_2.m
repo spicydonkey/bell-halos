@@ -29,8 +29,8 @@ configs.load.window{3}=[-35e-3,35e-3];    % Y [m]
 %% HALO
 % TODO - update with v2 loop info
 %%% HALO PARAMS: BEC counts + oscillation removal for broad capture of halos
-configs.bec{1}.pos{1}=[1.6544,-3.9e-3,3.1e-3];   % approx condensate locations (z,x,y)
-configs.bec{1}.pos{2}=[1.7068,-3.0e-3,4.9e-3];
+configs.bec{1}.pos{1}=[1.6544,-3.4e-3,3.4e-3];   % approx condensate locations (z,x,y)
+configs.bec{1}.pos{2}=[1.7068,-3.0e-3,4.7e-3];
 configs.bec{1}.Rmax=8e-3;      % max condensate sph radius
 configs.bec{1}.dR_tail=0;     % BEC tail radial frac diff
 % configs.halo{1}.R{1}=26e-3;     % estimated radius of halo
@@ -52,14 +52,14 @@ configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
 configs.zone.histtype='gauss';      % {'gauss','latlon'}
-configs.zone.nazim=100;
-configs.zone.nelev=50;
+configs.zone.nazim=200;
+configs.zone.nelev=100;
 
 % configs.zone.histtype='latlon';      % {'gauss','latlon'}
 % configs.zone.nazim=100;
 % configs.zone.nelev=50;
 
-configs.zone.sig=[0.2,Inf];     % NORM completely integrated
+configs.zone.sig=[0.1,Inf];     % NORM completely integrated
 configs.zone.lim=[3,3];
 
 % zone divisions to sample for display

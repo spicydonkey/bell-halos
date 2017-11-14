@@ -29,8 +29,8 @@ configs.load.window{3}=[-35e-3,35e-3];    % Y [m]
 %% HALO
 % TODO - update with v2 loop info
 %%% HALO PARAMS: BEC counts + oscillation removal for broad capture of halos
-configs.bec{1}.pos{1}=[1.6544,-3.9e-3,3.1e-3];   % approx condensate locations (z,x,y)
-configs.bec{1}.pos{2}=[1.7068,-3.0e-3,4.9e-3];
+configs.bec{1}.pos{1}=[1.6543,-3.6e-3,4.0e-3];   % approx condensate locations (z,x,y)
+configs.bec{1}.pos{2}=[1.7067,-3.0e-3,4.9e-3];
 configs.bec{1}.Rmax=8e-3;      % max condensate sph radius
 configs.bec{1}.dR_tail=0;     % BEC tail radial frac diff
 % configs.halo{1}.R{1}=26e-3;     % estimated radius of halo
@@ -38,8 +38,8 @@ configs.halo{1}.dR=0.2;      % broad radial mask fractional width (in/out)
 configs.halo{1}.zcap=0.8;   % z-cutoff (fractional wrt radius)
 configs.halo{1}.string='$m_F=0$';
 
-configs.bec{2}.pos{1}=[1.5781,-3.1e-3,2.8e-3];   % approx condensate locations (z,x,y)
-configs.bec{2}.pos{2}=[1.6297,-3.2e-3,3.6e-3];
+configs.bec{2}.pos{1}=[1.5780,-3.1e-3,2.8e-3];   % approx condensate locations (z,x,y)
+configs.bec{2}.pos{2}=[1.6296,-3.1e-3,3.7e-3];
 configs.bec{2}.Rmax=8e-3;      % max condensate sph radius
 configs.bec{2}.dR_tail=0;     % BEC tail radial frac diff
 % configs.halo{2}.R{1}=20e-3;     % estimated radius of halo
