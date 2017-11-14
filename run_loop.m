@@ -271,7 +271,6 @@ g1d_filt=gaussFilter(g1d_hsize,g1d_sigma);
 
 nster_dth=cell(1,2);
 dTheta=cell(1,2);
-dTheta2=cell(1,2);  % TODO - testing 3D flip_bb
 
 % evaluate relative angular map for each run
 for ii=1:2
@@ -313,7 +312,13 @@ if configs.flags.graphics
             for jj=1:2
                 subplot(1,2,jj);
                 plotFlatMapWrappedRad(Az,El,nn_halo_m{tmf}{jj}(:,:,ii),'eckert4');
-                
+                % TODO
+                % - [x] colormap label
+                %   - [ ] TEST
+                % annotate fig
+                t_cb=colorbar('southoutside');
+                t_cb.Label.String='n';
+
                 strTitle=sprintf('[src $m_F=%d$] $m_F=%d$, $K_R=%0.2g$',tmf-1,jj-1,amp_m{tmf}(ii));
                 title(strTitle);
                 
@@ -459,6 +464,35 @@ if configs.flags.graphics
         end
     end
     
+    %% Relative rotation angle map
+    % TODO
+    % - [ ] test
+        
+    t_hfig=figure();
+    for tmf=1:2
+        tnplot=nloop_m(tmf);
+        for ii=1:tnplot
+            clf(t_hfig);
+
+            plotFlatMapWrappedRad(Az,El,dTheta{tmf}(:,:,ii),'eckert4');
+
+            % annotate fig
+            t_cb=colorbar('southoutside');
+            t_cb.Label.String='\Delta\Theta';
+
+            strTitle=sprintf('[src $m_F=%d$] K_R=%0.2g$',tmf-1,amp_m{tmf}(ii));
+            title(strTitle);
+                
+            drawnow
+            
+            % save fig
+            figname=sprintf('fig_dthmap_%d_%0.2g',tmf-1,amp_m{tmf}(ii));
+            if configs.flags.savefigs
+                saveas(t_hfig,[fullfile(path_save,figname),'.png']);
+            end
+        end
+    end
+
     %% Relative angle histogram
     for tmf=1:2
         if nloop_m(tmf)==0
