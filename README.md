@@ -51,6 +51,14 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
 		- [x] ellipsoid fit
 		- [x] cleaned halo
 
+### Data
+#### 2017/11/14
+- [ ] 3 ms
+- [ ] 3.5 ms
+- [ ] 4 ms
+- [ ] 3 ms - hi power
+
+
 ## 3. Detection
 
 ## 4. Correlation
