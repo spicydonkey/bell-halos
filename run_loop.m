@@ -17,7 +17,7 @@ vars_save={'configs','path_config',...
     'mf','mbool','nloop_m',...
     'amp_m','ver_m',...
     'nn_halo_m','P_rabi_m','th_rabi_m',...
-    'ct_dth','ster_dth','DTHETA',...
+    'ct_dth','nster_dth','dTheta',...
     };
 
 %% Main
@@ -259,12 +259,9 @@ end
 % end
 
 %% 1D zonal histogram
-nzones=numel(Az);
-sterPerZone=(4*pi)/nzones;
-
 % create histogram bin for 1D relative angles
 nbin_dth=configs.zone.nbin_dth_1d;
-ed_dth=linspace(-pi,pi,nbin_dth);
+ed_dth=linspace(-pi,pi,nbin_dth+1);
 ct_dth=ed_dth(1:end-1)+0.5*diff(ed_dth);
 
 % create gaussian filter
@@ -272,27 +269,31 @@ g1d_hsize=configs.zone.g1d_hsize;
 g1d_sigma=configs.zone.g1d_sigma;
 g1d_filt=gaussFilter(g1d_hsize,g1d_sigma);
 
-ster_dth=cell(1,2);
-DTHETA=cell(1,2);
+nster_dth=cell(1,2);
+dTheta=cell(1,2);
 
+% evaluate relative angular map for each run
 for ii=1:2
-    this_nloop=nloop_m(ii);
-    % preallocate 
-    ster_dth{ii}=zeros(this_nloop,length(ct_dth));
+    this_nloop=nloop_m(ii);    
     
+    % calculate relative rotation angle map
     % NOTE - we assume mf=0 rotates identically to mf=1. mf=0 data has too much background
     % this is a trial dth - assuming mf=0 rotates like mf=1
-    DTHETA{ii}=th_rabi_m{ii}-flip_bb(th_rabi_m{ii});
+    dTheta{ii}=th_rabi_m{ii}-flip_bb(th_rabi_m{ii});
     % TODO - test flip_bb code
+    %   - [ ] OMFG MAJOR BUG! FLIP_BB flips the wrong dimension because of
+    %   shift from meshgrid to ndgrid! THIS MESSED EVERYTHING UP!
+    %   - [ ] flip_bb^2 is equivalent to Identity
     
+    nster_dth{ii}=zeros(this_nloop,nbin_dth);     % preallocate data
     for jj=1:this_nloop        
-        this_dth=DTHETA{ii}(:,:,jj);
-        this_dth=this_dth(:);
-        
-        tnn=histcounts(this_dth,ed_dth);
-        tster=tnn*sterPerZone;
-        tster=conv(tster,g1d_filt,'same');
-        ster_dth{ii}(jj,:)=tster;
+        this_dth=dTheta{ii}(:,:,jj);
+
+        this_nster=histsphzone(this_dth,Az,El,ed_dth);
+        this_nster_filt=conv(this_nster,g1d_filt,'same');
+%         this_nster_filt=this_nster;
+
+        nster_dth{ii}(jj,:)=this_nster_filt;
     end
 end
 
@@ -466,7 +467,7 @@ if configs.flags.graphics
 
         pp=[];
         for ii=1:nloop_m(tmf)
-            ss=ster_dth{tmf}(ii,:);
+            ss=nster_dth{tmf}(ii,:);
             tstr=sprintf('%0.2g',amp_m{tmf}(ii));
             
             hold on;
@@ -503,7 +504,7 @@ if configs.flags.graphics
         drawnow
         
         % save fig
-        figname=sprintf('fig_histdtheta_%d',tmf-1);
+        figname=sprintf('fig_histdTheta_%d',tmf-1);
         if configs.flags.savefigs
             saveas(t_hfig,[fullfile(path_save,figname),'.png']);
         end
