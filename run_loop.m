@@ -271,6 +271,7 @@ g1d_filt=gaussFilter(g1d_hsize,g1d_sigma);
 
 nster_dth=cell(1,2);
 dTheta=cell(1,2);
+dTheta2=cell(1,2);  % TODO - testing 3D flip_bb
 
 % evaluate relative angular map for each run
 for ii=1:2
@@ -279,11 +280,14 @@ for ii=1:2
     % calculate relative rotation angle map
     % NOTE - we assume mf=0 rotates identically to mf=1. mf=0 data has too much background
     % this is a trial dth - assuming mf=0 rotates like mf=1
-    dTheta{ii}=th_rabi_m{ii}-flip_bb(th_rabi_m{ii});
+    dTheta{ii}=th_rabi_m{ii}-flip_bb(th_rabi_m{ii},1);
     % TODO - test flip_bb code
-    %   - [ ] OMFG MAJOR BUG! FLIP_BB flips the wrong dimension because of
+    %   - [x] OMFG MAJOR BUG! FLIP_BB flips the wrong dimension because of
     %   shift from meshgrid to ndgrid! THIS MESSED EVERYTHING UP!
-    %   - [ ] flip_bb^2 is equivalent to Identity
+    %   - [x] flip_bb^2 is equivalent to Identity
+    %       - only when azim dim length is EVEN
+    %   - [x] does flip_bb work on 3D array where 3rd dim is independent
+    %   data: YES!
     
     nster_dth{ii}=zeros(this_nloop,nbin_dth);     % preallocate data
     for jj=1:this_nloop        
