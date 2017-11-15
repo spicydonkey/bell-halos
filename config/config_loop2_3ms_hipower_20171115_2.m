@@ -52,8 +52,8 @@ configs.halo{2}.boost=zeros(1,3);
 
 %% Spherical zones
 configs.zone.histtype='gauss';      % {'gauss','latlon'}
-configs.zone.nazim=201;
-configs.zone.nelev=101;
+configs.zone.nazim=101;
+configs.zone.nelev=51;
 
 % configs.zone.histtype='latlon';      % {'gauss','latlon'}
 % configs.zone.nazim=100;
