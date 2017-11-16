@@ -6,6 +6,10 @@
 3. Detection
 4. Correlation
 
+## DAQ/Experiment
+- [ ] Real-time mode occupancy monitor
+    - [ ] first attemp
+
 ## 1. Entangled source
 - [ ] user-friendly and fast monitor of halo mode occupancy
 
@@ -52,7 +56,7 @@ Automated scanning of Raman amplitude (using AOM1 for state rotation) using code
 		- [x] first stage halo capture
 		- [x] ellipsoid fit
 		- [x] cleaned halo
-- [ ] output dTheta map! - if I had done this we wouldn't have had this problem
+- [x] output dTheta map! - if I had done this we wouldn't have had this problem
 
 ### Data
 #### 2017/11/14
