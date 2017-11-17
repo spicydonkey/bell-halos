@@ -1,22 +1,28 @@
 % Get mode occupancy of halos generated from the Bell experiment
 %
 
-% config
+% USER CONFIG
+verbose=1;
+
 txy_window={[0.38,0.44],[-35,35]*1e-3,[-35,35]*1e-3};
 
-bec_pos_1=[1.6543,-3.5e-3,4.0e-3];
-bec_pos_2=[1.7067,-3.0e-3,4.9e-3];
+bec_pos_1=[1.6524,-3.3e-3,4.6e-3];
+bec_pos_2=[1.7055,-2.8e-3,4.8e-3];
 bec_r=8e-3;
 r_th=bec_r;
-halo_dR=0.2;
+halo_dR=0.1;        % mf=0 captures very well
 elev_max=asin(0.8);
 
-dir_data='C:\Users\David\hebec\bell\bell_v2\loop\1_0.382_v2.1';
+dir_data='\\amplpc29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output';
 nShotsLatest=50;
 
 halo_dk_rms=0.033;      % halo width rms
-wbb=0.027;         % rms mom-width of source BEC. sigk ~ wbb/1.1
+wbb=0.03;         % rms mom-width of source BEC. sigk ~ wbb/1.1
+% data from dist halo
 
+
+% close figs
+close all;
 
 % get all reconstructed TXY shot IDs from data directory
 files_txy=dir(fullfile(dir_data,'d_txy_forc*.txt'));
@@ -40,11 +46,19 @@ zxy=txy2zxy(load_txy(fullfile(dir_data,'d'),id_load,txy_window,...
 
 % capture mF=0 halo with polar marker BECs
 %   conveniently returns scattered number in halo too!
-[~,Nsc_avg,Nsc_std]=halo_2bec(zxy,bec_pos_1,bec_pos_2,bec_r,r_th,halo_dR,elev_max,0);
+[~,Nsc_avg,Nsc_std]=halo_2bec(zxy,bec_pos_1,bec_pos_2,bec_r,r_th,halo_dR,elev_max,verbose);
 Nsc_unc=Nsc_std/Nsc_avg;
 
 % evaluate halo mode occupancy
 mocc_halo=halo_mocc(1,halo_dk_rms,Nsc_avg,wbb/1.1);
 
+%% summary
+fprintf('-----------------------------------------------------------------------------\n');
+disp(datetime);     % tag current date-time
+
+% analysed data
+fprintf('* TXY loaded (shot ID): [%d,%d]\n',id_load(1),id_load(end));
 % report estimated mode occupancy
-fprintf('halo (mf=0) mode occupancy = %0.2g (%0.1g)\n',mocc_halo,Nsc_unc*mocc_halo);
+fprintf('* halo (mf=0) mode occupancy = %0.2g (%0.1g)\n',mocc_halo,Nsc_unc*mocc_halo);
+
+%%% end of code
