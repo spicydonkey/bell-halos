@@ -323,6 +323,8 @@ end
 
 
 %% Collate figures
-hfig=[h_zxy_raw,h_zxy0,h_halo_zxy0,h_halo_k,h_rdist];
+if verbose>0
+    hfig=[h_zxy_raw,h_zxy0,h_halo_zxy0,h_halo_k,h_rdist];
+end
 
 end
