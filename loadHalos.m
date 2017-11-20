@@ -1,6 +1,7 @@
 % Load Raman data
 
 % User config
+%%% Bell data
 % path_config='config_bell_load_3ms_0K38_medn_1.m';
 % path_config='config_bell_load_3ms_0K38_medn_2.m';
 % path_config='config_bell_load_3ms_0K29_1.m';
@@ -8,6 +9,9 @@
 % TODO
 path_config='config_bell_load_3ms_0K38_lown_1.m';
 
+%%% loop data
+% path_config='config_loop_load_3ms_0K382.m';
+% path_config='config_loop_load_3ms_0K2889.m';
 
 % vars to save to output
 vars_save={'configs','path_config',...
