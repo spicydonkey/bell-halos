@@ -17,7 +17,16 @@ if ~exist('verbose','var')
 end
 
 %% Configs 
-kdR_hicap=2;
+kdR_hicap=2;    % default coarse/fine adjustment
+
+if length(dR_halo)==2
+    dR_halo_coarse=dR_halo(1);
+    dR_halo_fine=dR_halo(2);
+else
+    dR_halo_coarse=kdR_hicap*dR_halo(1);
+    dR_halo_fine=dR_halo(1);
+end
+
 
 % initialise figure outputs
 hfig=[];    % figure array
@@ -129,7 +138,8 @@ halo_zxy0=cellfun(@(zxy,c0)zxy-repmat(c0,[size(zxy,1),1]),halo_zxy,halo_cent,'Un
 %%%% radial
 % distance from approx halo centre
 r0=cellfun(@(x)sqrt(sum(x.^2,2)),halo_zxy0,'UniformOutput',false);
-rlim_hicap=R_halo_mean*(1+dR_halo*kdR_hicap*[-1,1]);       % radial limits for sph-shell capture
+% rlim_hicap=R_halo_mean*(1+dR_halo*kdR_hicap*[-1,1]);       % radial limits for sph-shell capture
+rlim_hicap=R_halo_mean*(1+dR_halo_coarse*[-1,1]);       % radial limits for sph-shell capture
 
 bool_halo_r_hicap=cellfun(@(r)(r<rlim_hicap(2))&(r>rlim_hicap(1)),r0,'UniformOutput',false);    % atoms in radial limits
 
@@ -207,7 +217,8 @@ end
 %%% 4.1. Final filters
 %%%% Radial
 r_halo_k=cellfun(@(k_zxy) sqrt(sum(k_zxy.^2,2)),halo_k,'UniformOutput',false);
-rlim_clean=1+dR_halo*[-1,1];        % a final hard crop
+% rlim_clean=1+dR_halo*[-1,1];        % a final hard crop
+rlim_clean=1+dR_halo_fine*[-1,1];        % a final hard crop
 bool_halo_r_clean=cellfun(@(r) (r<rlim_clean(2))&(r>rlim_clean(1)),r_halo_k,'UniformOutput',false);    % atoms in radial limits
 
 %%%% Polar
