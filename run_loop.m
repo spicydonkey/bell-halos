@@ -35,7 +35,9 @@ configs=updateConfig(configs);
 run_id=getdatetimestr;
 fname_save=[mfilename,'__',run_id];
 path_save=fullfile(fileparts(configs.files.path_loop),'arch',fname_save);
-mkdir(path_save);   % create dir to output any files to save to disk
+if configs.flags.savedata || configs.flags.savefigs
+    mkdir(path_save);   % create dir to output any files to save to disk
+end
 
 % parse main data directory
 cd(configs.files.path_loop);
