@@ -29,7 +29,7 @@ hfig_trend=figure();
 mocc_latest=NaN(lenCircBuff,1);
 h=plot(mocc_latest,'YDataSource','mocc_latest',...
     'Color','k','LineStyle','--','Marker','o','LineWidth',2);
-title('Real-time mode occupancy monitor');
+title(sprintf('Real-time mode occupancy monitor: %s',datetime));
 ylabel('Mode occupancy');
 
 while true
@@ -48,6 +48,7 @@ while true
     mocc_latest(end)=this_mocc;
 
     % refresh plot
+	title(sprintf('Real-time mode occupancy monitor: %s',datetime));
     refreshdata(h, 'caller')
     axis auto;
     drawnow;
