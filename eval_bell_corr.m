@@ -6,8 +6,8 @@ nelev=configs.zone.nelev;
 binmethod=configs.zone.binmethod;
 binwidth=configs.zone.binwidth;
 
-%%% build meshgrid of zones
-% TODO - the closed mesh problem
+%%% build grid of zones
+% TODO - the closed sphere problem
 switch binmethod
     case 1
         azim_vec=linspace(-pi,pi,nazim);  % edges
@@ -21,7 +21,7 @@ switch binmethod
     case 2
         error('binmethod=2 is unavailable.');
 end
-[azim_grid,elev_grid]=meshgrid(azim_cent,elev_cent);
+[azim_grid,elev_grid]=ndgrid(azim_cent,elev_cent);
 
 %%% get counts in zone
 % TODO - currently binning with fixed bin width - try Gaussian convolution
@@ -59,7 +59,7 @@ max_nn=max(max(nn_halo_mean{2}));   % max counts in zone from mf=1
 
 % background from spontaneous scattering leaves a bright streak in mf=0
 nn_thresh=max_nn*2;     % TODO - seems to work
-bool_thresh=(nn_halo_mean{1}>nn_thresh);    % boolean on meshgrid to treat as noisy
+bool_thresh=(nn_halo_mean{1}>nn_thresh);    % boolean on grid to treat as noisy
 
 %%% cull mf=0
 % set over threshold to NaN
@@ -118,8 +118,8 @@ Jz=nn_halo{2}-nn_halo{1};       % total spin of atoms with same momentum
 clearvars nn_halo;
 
 % simple transform to match back-to-back momentum modes
-nn_sum_bb=flip_bb(nn_sum);
-Jz_bb=flip_bb(Jz);
+nn_sum_bb=flip_bb(nn_sum,1);
+Jz_bb=flip_bb(Jz,1);
 
 % evaluate correlation coefficient
 JJ=Jz.*Jz_bb;

@@ -1,13 +1,7 @@
-function Fbb_thphi=flip_bb_new(F_thphi,dim_azim)
-%
-% mat_thphi: 2D matrix of values defined on wrapped spherical grid
-%   elev x azim mesh (Note: from meshgrid(azim,elev))
-%   elev angles should be symmetric; azim completely wraps 2*pi
-% mat_flipped: angle inverted (back-to-back on sphere)
-
+function Fbb_thphi=flip_bb(F_thphi,dim_azim)
 % Invert spherical map about the origin
 %
-% FBB_THPHI = FLIP_BB_NEW(F_THPHI,DIM_AZIM)
+% FBB_THPHI = FLIP_BB(F_THPHI,DIM_AZIM)
 %
 % F_THPHI: 2D matrix of values defined on a spherical grid given as:
 %   - grid: azim x elev

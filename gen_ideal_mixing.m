@@ -23,7 +23,7 @@ end
 avec=linspace(-pi,pi,nazim);            
 evec=linspace(-pi/2,pi/2,nelev);        % pole-to-pole
 
-[azim{1},elev{1}]=meshgrid(avec,evec);      % data typing conforms with main analysis
+[azim{1},elev{1}]=ndgrid(avec,evec);      % data typing conforms with main analysis
 
 % proxy for simulated ideal mixing map
 ampRaman_mf={NaN};      % NaN is for simulation

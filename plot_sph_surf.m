@@ -2,11 +2,11 @@ function ax=plot_sph_surf(azim,elev,ff)
 % plots a 2D color-surface on sphere
 % AX = PLOT_SPH_SURF(AZIM,ELEV,FF)
 %
-% AZIM: meshgrid of azimuthal angles (rad); ordered and evenly distributed
+% AZIM: grid of azimuthal angles (rad); ordered and evenly distributed
 % in [-pi,pi]; must be unique modulo 2*pi;
-% ELEV: meshgrid of elevation angles (meas from XY plane) (rad); ordered 
+% ELEV: grid of elevation angles (meas from XY plane) (rad); ordered 
 % and in range [-pi/2,pi/2]; must be unique;
-% FF: meshgrid of function values at (AZIM,ELEV) locations on sphere points
+% FF: grid of function values at (AZIM,ELEV) locations on sphere points
 %
 % ax: graphics object
 

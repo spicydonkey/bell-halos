@@ -6,9 +6,17 @@ close all; clc;
 OVERRIDE_CONFIG_FLAG=true;
 
 %% general config
+path_repo=fileparts(mfilename);     % path to main repo
 % datetimestr=datestr(datetime,'yyyymmdd_HHMMSS');    % timestamp when function called
 datetimestr='temp';
-path_data_dir='C:\Users\HE BEC\bell\temp';
+% path_data_dir='C:\Users\HE BEC\bell\temp';
+% path_data_dir='C:\Users\David\hebec\bell\temp';
+path_data_dir=fullfile(path_repo,'data');
+if ~exist(path_data_dir,'dir')
+    warning('Directory %s does not exist. Creating it.',path_data_dir);
+    mkdir(path_data_dir);
+end
+
 path_data_bell=sprintf('bell_sim_%s',datetimestr);
 path_data_loop=sprintf('loop_sim_%s',datetimestr);
 path_data_out=sprintf('out_%s',datetimestr);
@@ -17,8 +25,8 @@ path_data_out=sprintf('out_%s',datetimestr);
 %% BELL TEST
 %%% experiment
 n_shot=1e3;             % number of shots
-n_corr_pairs=50*ones(n_shot,1);        % number of correlated pairs generated from source
-det_qe=1*ones(1,2);       % detection efficiency
+n_corr_pairs=80*ones(n_shot,1);        % number of correlated pairs generated from source
+det_qe=0.1*ones(1,2);       % detection efficiency
 
 % momentum width (implemented on scattered)
 % dk_dither_sd=zeros(1,3);
@@ -29,7 +37,7 @@ dk_dither_sd=3e-2*[1,1,1];
 % fun_localoper=@(th,phi) pi*sin(sqrt(76)*th/(2*pi)).*sin(sqrt(7)*phi*(2*pi)/(pi/2));
 % fun_localoper=@(th,phi) pi*sin(20*th).*sin(20*phi);
 % fun_localoper=@(th,phi) 1.5*phi+pi/2;
-fun_localoper=@(th,phi) 2*phi;
+fun_localoper=@(th,phi) phi;
 % fun_localoper=@(th,phi) 0*phi;              % no local operation
 
 %%% HALO
@@ -43,8 +51,8 @@ configs.halo{1}.boost=[0,0,0];
 configs.halo{2}.boost=[0,0,0];
 
 %%% Spherical zones
-configs.zone.nazim=200;
-configs.zone.nelev=50;
+configs.zone.nazim=201;
+configs.zone.nelev=101;
 
 configs.zone.binmethod=1;
 configs.zone.binwidth=0.05;
@@ -60,9 +68,9 @@ save(fullfile(path_data_dir,path_data_bell),varstosave{:});
 %% MIXING PULSE
 % configure:
 %   
-verbose=0;
-nazim=100;
-nelev=50;
+verbose=1;
+nazim=200;
+nelev=101;
 
 run('gen_ideal_mixing.m');
 

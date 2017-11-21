@@ -44,7 +44,7 @@ end
 azim_raw=S_loop.azim{1};    % TODO - we know azim{ii} are the same
 elev_raw=S_loop.elev{1};
 
-Theta_raw=zeros([size(azim_raw),2]);       % ELEV X AZIM X MF
+Theta_raw=zeros([size(azim_raw),2]);       % AZIM X ELV X MF
 Theta_raw=[];      % rotation angle loaded from file (coarsely meshed?)
 for ii=1:2
     Theta_raw(:,:,ii)=S_loop.Theta{ii}(:,:,idx_Theta(ii));
@@ -59,14 +59,16 @@ if raman_amp==0
 end
 
 % difference in rotation angle between back-to-back zones
-dTh_bb_raw=Theta_raw(:,:,2)-flip_bb(Theta_raw(:,:,1));
+dTh_bb_raw=Theta_raw(:,:,2)-flip_bb(Theta_raw(:,:,1),1);
 
 % interpolate to build diff rotation angle at Bell data
 % TODO - it's only approximate now - pretty messy!
 if isnan(raman_amp)
-    dTh_bb=interp2(azim_raw,elev_raw,dTh_bb_raw,azim_g(1:end-1,1:end-1),elev_g(1:end-1,1:end-1));
+%     dTh_bb=interp2(azim_raw,elev_raw,dTh_bb_raw,azim_g(1:end-1,1:end-1),elev_g(1:end-1,1:end-1));
+    dTh_bb=interpn(azim_raw,elev_raw,dTh_bb_raw,azim_g(1:end-1,1:end-1),elev_g(1:end-1,1:end-1));
 else
-    dTh_bb=interp2(azim_raw(1:end-1,1:end-1),elev_raw(1:end-1,1:end-1),dTh_bb_raw,azim_g(1:end-1,1:end-1),elev_g(1:end-1,1:end-1));
+%     dTh_bb=interp2(azim_raw(1:end-1,1:end-1),elev_raw(1:end-1,1:end-1),dTh_bb_raw,azim_g(1:end-1,1:end-1),elev_g(1:end-1,1:end-1));
+    dTh_bb=interpn(azim_raw(1:end-1,1:end-1),elev_raw(1:end-1,1:end-1),dTh_bb_raw,azim_g(1:end-1,1:end-1),elev_g(1:end-1,1:end-1));
 end
 
 % plot interpolated rotation angle
@@ -87,8 +89,10 @@ cbar.Label.Interpreter='latex';
 %%% cull elev edges
 % NOTE: culling is as simple as setting those pixel values by NaN
 n_elev_edge_cull=11;     % cull top and bottom by this many pixels
-E(1:n_elev_edge_cull,:)=NaN;
-E(end-n_elev_edge_cull+1:end,:)=NaN;
+% E(1:n_elev_edge_cull,:)=NaN;
+% E(end-n_elev_edge_cull+1:end,:)=NaN;
+E(:,1:n_elev_edge_cull)=NaN;
+E(:,end-n_elev_edge_cull+1:end)=NaN;
 
 %%% Sort
 % sort data
