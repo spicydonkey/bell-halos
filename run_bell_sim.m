@@ -6,7 +6,7 @@ close all; clc;
 OVERRIDE_CONFIG_FLAG=true;
 
 %% general config
-path_repo=fileparts(mfilename);     % path to main repo
+path_repo=fileparts(mfilename('fullpath'));     % path to main repo
 % datetimestr=datestr(datetime,'yyyymmdd_HHMMSS');    % timestamp when function called
 datetimestr='temp';
 % path_data_dir='C:\Users\HE BEC\bell\temp';
