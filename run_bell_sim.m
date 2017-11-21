@@ -90,8 +90,9 @@ run('run_bell.m');
 %% Outputs
 %%% source mode occupancy
 wbb_calc=prod(dk_dither_sd)^(1/length(dk_dither_sd));
-M_calc=2*(1.1^3)*(wbb_calc^-2);
-n_calc=mean(n_corr_pairs)/M_calc;
+% M_calc=2*(1.1^3)*(wbb_calc^-2);
+% n_calc=mean(n_corr_pairs)/M_calc;
+n_calc=halo_mocc(1,wbb_calc,mean(n_corr_pairs),wbb_calc/1.1);
 
 fprintf('Mode occupancy = %0.3g\n',n_calc);
 
