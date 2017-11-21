@@ -52,7 +52,7 @@ dTheta=thetaFilt;
 dThetaFilt=zeros(size(dTheta));
 for ii=1:nLoopConfig
     tDTheta=dTheta(:,:,ii);
-    tDTheta=tDTheta-flip_bb(tDTheta);
+    tDTheta=tDTheta-flip_bb(tDTheta,1);
     tDThetaFilt=imfilter(tDTheta,hFiltGauss);
     
     dTheta(:,:,ii)=tDTheta;

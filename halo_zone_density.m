@@ -14,7 +14,7 @@ function nn=halo_zone_density(halo,azim_vec,elev_vec,binwidth,binmethod,verbose)
 %   2: angular - require binwidth (may be one-to-many OR miss counts).
 %   
 %
-% nn: num_shot x 1 cello-array of meshgrid of double-array of normalised number density
+% nn: num_shot x 1 cell-array of normalised number density defined on spherical grid
 
 %% parse inputs
 if ~exist('binwidth','var')||~exist('binmethod','var')
@@ -40,8 +40,8 @@ for ii=1:nshot
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end
 
-% build meshgrid
-[azim_grid,elev_grid]=meshgrid(azim_vec,elev_vec);
+% build spherical grid zones
+[azim_grid,elev_grid]=ndgrid(azim_vec,elev_vec);
 nazim=length(azim_vec);
 nelev=length(elev_vec);
 
@@ -65,13 +65,13 @@ for ii=1:nshot
         % build this_N_zone - counts/intensity at the defined spherical grid
         case 1
             % Simple spherical Lat-Lon grid 
-            this_N_zone=nhist(this_halo_thphi,thphi_edge)';     % 2D histogram - transpose
+            this_N_zone=nhist(this_halo_thphi,thphi_edge);     % 2D histogram - transpose
             
         case 2
             % Difference angle
             % NOTE: this method isn't one-to-one!
             % for each grid-point evaluate angle difference
-            this_N_zone=zeros(nazim,nelev)';   % preallocate counts in zones
+            this_N_zone=zeros(nazim,nelev);   % preallocate counts in zones
             for jj=1:ngrid
                 this_thphi=grid_thphi(jj,:);  % this grid point
                 % evaluate diff angles to the grid point

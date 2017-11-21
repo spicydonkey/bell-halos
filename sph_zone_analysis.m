@@ -178,8 +178,8 @@ nelev=configs.zone.nelev;
 binmethod=configs.zone.binmethod;
 binwidth=configs.zone.binwidth;
 
-%%% build meshgrid of zones
-% TODO - the closed mesh problem
+%%% build spherical grid of zones
+% TODO - the closed sphere problem
 switch binmethod
     case 1
 %         azim_vec=linspace(-pi,pi,nazim+1);  % edges
@@ -219,7 +219,7 @@ switch binmethod
         azim_cent=azim_vec;
         elev_cent=elev_vec;
 end
-[azim_grid,elev_grid]=meshgrid(azim_cent,elev_cent);
+[azim_grid,elev_grid]=ndgrid(azim_cent,elev_cent);
 
 %%% get counts in zone
 % TODO - currently binning with fixed bin width - try Gaussian convolution
