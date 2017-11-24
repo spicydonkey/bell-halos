@@ -9,11 +9,11 @@ configs.flags.graphics=1;       % toggle to control graphics/plotting options
 configs.flags.build_txy=1;
 
 %%% Load
-dpath='\\amplpc29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_v2\bell\run_3ms_0.38_lown_1\d';
-configs.load.id=[];         % file id numbers to use for analysis
+% dpath='\\amplpc29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_v2\bell\run_3ms_0.38_lown_1\d';
+% configs.load.id=[];         % file id numbers to use for analysis
 % 
-% dpath='\\amplpc29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\d';
-% configs.load.id=1:4180;         % file id numbers to use for analysis
+dpath='\\amplpc29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_v2\bell\run_3ms_0.38_lown_2\d';
+configs.load.id=[];         % file id numbers to use for analysis
 
 configs.load.mincount=500;         % min counts in window - 0 for no min
 configs.load.maxcount=1300;          % max counts in window - Inf for no max
