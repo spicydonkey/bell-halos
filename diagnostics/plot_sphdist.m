@@ -28,11 +28,12 @@ lim=[3,Inf];
 plot_sph_surf(az,el,n);
 
 % annotate
-cbar=colorbar;
+cbar=colorbar('South');
 cbar.Label.String='density [arb u]';
 
 % configs summary
-titlestr=sprintf('nBins=[%d,%d]; sig=[%0.3g,%0.3g], lim=[%0.3g,%0.3g]',nBins,sig,lim);
+%   nBins; sig; lim
+titlestr=sprintf('[%d,%d]; [%0.3g,%0.3g]; [%0.3g,%0.3g]',nBins,sig,lim);
 title(titlestr);
 
 end
