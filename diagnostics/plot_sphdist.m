@@ -31,4 +31,8 @@ plot_sph_surf(az,el,n);
 cbar=colorbar;
 cbar.Label.String='density [arb u]';
 
+% configs summary
+titlestr=sprintf('nBins=[%d,%d]; sig=[%0.3g,%0.3g], lim=[%0.3g,%0.3g]',nBins,sig,lim);
+title(titlestr);
+
 end
