@@ -1,4 +1,5 @@
 %%% load data
+% add MACHINE_DEPENDENT\bell\out\20171128 to path
 load('run2_K_20171127.mat');
 
 %%% config
