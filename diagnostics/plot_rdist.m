@@ -1,4 +1,4 @@
-function [n,r]=plot_rdist(kk,Nbins)
+function [n,r,b]=plot_rdist(kk,Nbins)
 % Plot normalised radial histogram
 %
 % [n,r] = plot_rdist(kk,Nbins)
@@ -38,7 +38,7 @@ n=n./(sum(n)*diff(r_ed));
 
 
 %%% plot
-bar(r,n,1,'FaceAlpha',0.5);
+b=bar(r,n,1,'FaceAlpha',0.5);
 
 % annotate
 box on;
