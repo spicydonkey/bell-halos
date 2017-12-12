@@ -46,7 +46,8 @@ for mm=1:2
     figure(h_r0_map); hold on;
     subplot(1,2,mm);
     plotFlatMapWrappedRad(az,el,r0,'eckert4');
-    title('peak radius around halo');
+    hcb=colorbar('Southoutside');
+    hcb.Label.String='K_{pk}';
     drawnow;
     
     %%% transform
