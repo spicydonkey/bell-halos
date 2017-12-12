@@ -32,8 +32,8 @@ end
 
 % default annotations
 colormap('magma');
-hcb=colorbar('Southoutside');
-hcb.TickLabelInterpreter='latex';
-hcb.Label.Interpreter='latex';
+% hcb=colorbar('Southoutside');
+% hcb.TickLabelInterpreter='latex';
+% hcb.Label.Interpreter='latex';
 
 end
