@@ -3,7 +3,7 @@ function [g2,dk,h]=summary_disthalo_g2(K,bfastrun)
 % functions
 % Useful diagnostic to check how well halos were processed
 %
-% [g2,dk,h]=summary_disthalo_g2(K)
+% [g2,dk,h]=summary_disthalo_g2(K,bfastrun)
 %
 % TODO
 % [ ] documentation
