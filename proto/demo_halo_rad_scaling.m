@@ -66,6 +66,10 @@ for mm=1:2
             
             % get normalising radius
             tr0=r0(idx_th,idx_phi);
+            if isnan(tr0)
+                tr0=1;      % hack - won't transform counts with undefined radius to zone
+                % TODO - could fit r-profile to the whole halo
+            end
             
             % transform this vector
             ts_new(jj,3)=ts(jj,3)/tr0;
