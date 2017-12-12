@@ -43,12 +43,17 @@ E=haloBellCorr(N_halo{:});
 
 
 % report summary
-n_nan=sum(sum(isnan(E)));
-E_mean=sum(sum(E,'omitnan'),'omitnan')/(numel(E)-n_nan);
+nz_tot=numel(E);    % total number of momenta zones scanned
+nz_nan=sum(sum(isnan(E)));  % number of zones with undefined correlation
+
+E_mean=sum(sum(E,'omitnan'),'omitnan')/(nz_tot-nz_nan);
+
+fprintf('NaN fraction = %0.2g\n',nz_nan/nz_tot);
 fprintf('avg E corr = %0.2g\n',E_mean);
 
 
 % visualisation
 figure;
-plotFlatMapWrappedRad(Az,El,E,'eckert4');
-colorbar('SouthOutside');
+plotFlatMapWrappedRad(Az,El,-E,'eckert4');
+cbar=colorbar('SouthOutside');
+cbar.Label.String='-E(0,0)';
