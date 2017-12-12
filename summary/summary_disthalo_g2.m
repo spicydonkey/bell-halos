@@ -27,6 +27,12 @@ dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};      % symmetric in cart axis
 dk_cent={dk_cent_vec,dk_cent_vec,dk_cent_vec};
 dk=ndgrid(dk_cent{:});      % grid of dk centers
 
+%%% G2 smoothing
+filter_toggle=true;       % turn filter on/off
+filter_type='gaussian';
+filter_size=5;
+filter_sd=1.5;
+
 %% g2 analysis
 % preallocate 
 g2=cell(1,3);
@@ -37,21 +43,31 @@ counter=1;
 %%% Single halo: (0,0)/(1,1)
 for mm=1:2
     if bfastrun
-        [g2{counter},G2s{counter},G2n{counter}]=g2_bb_fast(K(:,mm),dk_ed,0.1);
+        [g2{counter},G2s{counter},G2n{counter}]=g2_bb_fast(K(:,mm),dk_ed,0.05);
     else
         [g2{counter},G2s{counter},G2n{counter}]=g2_bb(K(:,mm),dk_ed);
     end
-    
+    if filter_toggle
+        % filter g2
+        G2s{counter}=smooth3(G2s{counter},filter_type,filter_size,filter_sd);
+        G2n{counter}=smooth3(G2n{counter},filter_type,filter_size,filter_sd);
+        g2{counter}=G2s{counter}./G2n{counter};
+    end
     counter=counter+1;
 end
 
 %%% X-species: (0,1)
 if bfastrun
-    [g2{counter},G2s{counter},G2n{counter}]=g2x_bb_fast(K,dk_ed,0.1);
+    [g2{counter},G2s{counter},G2n{counter}]=g2x_bb_fast(K,dk_ed,0.05);
 else
     [g2{counter},G2s{counter},G2n{counter}]=g2x_bb(K,dk_ed);
 end
-
+if filter_toggle
+    % filter g2
+    G2s{counter}=smooth3(G2s{counter},filter_type,filter_size,filter_sd);
+    G2n{counter}=smooth3(G2n{counter},filter_type,filter_size,filter_sd);
+    g2{counter}=G2s{counter}./G2n{counter};
+end
 
 %% plot
 
