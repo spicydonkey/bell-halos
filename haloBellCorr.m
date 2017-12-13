@@ -16,6 +16,6 @@ N_B=flip_bb(N_A,1);
 % evaluate correlation
 JJ=Jz_A.*Jz_B;
 NN=N_A.*N_B;
-E=mean(JJ,3)./mean(NN,3);
+E=mean(JJ,3,'omitnan')./mean(NN,3,'omitnan');       % TODO - this is a hack to prevent NaN catastrophe from some shots
 
 end
