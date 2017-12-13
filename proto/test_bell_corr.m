@@ -107,7 +107,7 @@ figure;
 plot(DD,EE,'b.');
 xlim([-pi,pi]);
 ylim([-1,1]);
-xlabel('$\Delta\Psi$');
+xlabel('$\Delta\psi$');
 ylabel('$E$');
 
 %% smoothing
