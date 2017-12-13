@@ -1,9 +1,10 @@
 % Testing Bell correlation distribution around source halo
 
 % load data
-load('run_source1_20171212.mat');
+load('src1_data_digest.mat');
 % loads entangled source halos in K
-
+K=halo_k0;
+clearvars halo_k0;
 
 %% configure
 % scattered zones
