@@ -1,31 +1,41 @@
-% Testing Bell correlation distribution around source halo
+% Testing Bell correlation distribution in SOURCE
+%
 
-% load data
+tstart=tic;
+
+%% load data
 load('src1_data_digest.mat');
-% loads entangled source halos in K
+% loads entangled source halos (halo_k0)
 K=halo_k0;
-clearvars halo_k0;
+
 
 %% configure
-% scattered zones
-nAz=100;
-nEl=50;
+% scattered modes
+nAz=100;        % num of azimuthal divisions in [-pi,pi)
+nEl=50;         % num of elevation divisions in [-pi/2,pi/2]
+% NOTE: nAz should be EVEN to ensure flip_bb.m correctly matches
+% spherically opposite modes
 
+% counting
+count_mode='gauss';
+sig_mode=[0.03,Inf];
+lim_mode=[2,Inf];
+
+
+%% set-up
+% scattered modes
 az=linspace(-pi,pi,nAz+1);
 az=az(1:end-1);
 el=linspace(-pi/2,pi/2,nEl);
 
 [Az,El]=ndgrid(az,el);
 
-% counting
-sig_mode=[0.03,Inf];
-lim_mode=[2,Inf];
-count_mode='gauss';
-
 
 %% get counts in momenta modes
+z_max_nan=0.7;      % max-z used to filter halos as bad
+b_bad=(abs(El)>asin(z_max_nan));      % bool to bad region around poles
+
 nShots=size(K,1);
-b_bad=(abs(El)>asin(0.7));      % polar caps culled - bad spherical region
 
 N_halo=cell(1,2);
 for mm=1:2
@@ -58,3 +68,6 @@ figure;
 plotFlatMapWrappedRad(Az,El,-E,'eckert4');
 cbar=colorbar('SouthOutside');
 cbar.Label.String='-E(0,0)';
+
+
+toc(tstart);    % report elapsed time
