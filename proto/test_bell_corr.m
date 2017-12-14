@@ -13,7 +13,7 @@ K=K_g2_opt;
 % load('run2_Knew_g2_opt_20171212.mat');
 % % K is original
 
-%%% Calibrated relative rotation
+%%% Calibrated relative rotation - 3ms,0.382
 S_loop=load('dpsi_20171213_0.mat');
 
 
@@ -84,6 +84,13 @@ plotFlatMapWrappedRad(Az,El,-E,'eckert4');
 cbar=colorbar('southoutside');
 cbar.Label.String='-E(P)';
 
+%%% summary
+% histogram of corrs
+figure;
+histogram(E(:),'Normalization','pdf');
+xlabel('$E$');
+ylabel('PDF');
+
 
 %% Bell correlation vs. rel rotation
 % generate interpolated rotation map
@@ -109,6 +116,7 @@ xlim([-pi,pi]);
 ylim([-1,1]);
 xlabel('$\Delta\psi$');
 ylabel('$E$');
+
 
 %% smoothing
 n_dpsi_bin=31;

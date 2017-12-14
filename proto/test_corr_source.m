@@ -11,15 +11,15 @@ K=halo_k0;
 
 %% configure
 % scattered modes
-nAz=100;        % num of azimuthal divisions in [-pi,pi)
-nEl=50;         % num of elevation divisions in [-pi/2,pi/2]
+nAz=200;        % num of azimuthal divisions in [-pi,pi)
+nEl=100;         % num of elevation divisions in [-pi/2,pi/2]
 % NOTE: nAz should be EVEN to ensure flip_bb.m correctly matches
 % spherically opposite modes
 
 % counting
 count_mode='gauss';
-sig_mode=[0.03,Inf];
-lim_mode=[2,Inf];
+sig_mode=[0.02,Inf];
+lim_mode=[3,Inf];
 
 
 %% set-up
@@ -64,10 +64,25 @@ fprintf('avg E corr = %0.2g\n',E_mean);
 
 
 % visualisation
+% E corr
+figure;
+plotFlatMapWrappedRad(Az,El,E,'eckert4');
+cbar=colorbar('southoutside');
+cbar.Label.String='E(P)';
+
+% inverted E
 figure;
 plotFlatMapWrappedRad(Az,El,-E,'eckert4');
-cbar=colorbar('SouthOutside');
-cbar.Label.String='-E(0,0)';
+cbar=colorbar('southoutside');
+cbar.Label.String='-E(P)';
 
 
+%%% summary
+% histogram of corrs
+figure;
+histogram(E(:),'Normalization','pdf');
+xlabel('$E$');
+ylabel('PDF');
+
+%% end of code
 toc(tstart);    % report elapsed time
