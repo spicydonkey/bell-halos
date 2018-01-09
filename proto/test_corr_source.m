@@ -18,7 +18,7 @@ nEl=100;         % num of elevation divisions in [-pi/2,pi/2]
 
 % counting
 count_mode='gauss';
-sig_mode=[0.02,Inf];
+sig_mode=[0.018,Inf];
 lim_mode=[3,Inf];
 
 
@@ -69,13 +69,6 @@ figure;
 plotFlatMapWrappedRad(Az,El,E,'eckert4');
 cbar=colorbar('southoutside');
 cbar.Label.String='E(P)';
-
-% inverted E
-figure;
-plotFlatMapWrappedRad(Az,El,-E,'eckert4');
-cbar=colorbar('southoutside');
-cbar.Label.String='-E(P)';
-
 
 %%% summary
 % histogram of corrs

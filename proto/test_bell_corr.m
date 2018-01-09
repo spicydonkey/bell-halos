@@ -78,12 +78,6 @@ plotFlatMapWrappedRad(Az,El,E,'eckert4');
 cbar=colorbar('southoutside');
 cbar.Label.String='E(P)';
 
-% inverted E
-figure;
-plotFlatMapWrappedRad(Az,El,-E,'eckert4');
-cbar=colorbar('southoutside');
-cbar.Label.String='-E(P)';
-
 %%% summary
 % histogram of corrs
 figure;
