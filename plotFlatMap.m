@@ -11,24 +11,24 @@ if ~exist('axesOpts','var')
     axesOpts='rect';
 end
 
-% axes type
+% set up axes
 switch axesOpts
     case 'eckert4'
         axesm eckert4;
         framem; gridm;
         axis off;
-        
-        h=geoshow(lat,lon,Z,'DisplayType','texturemap');
-        
-    case 'rect'        
-        h=geoshow(lat,lon,Z,'DisplayType','texturemap');
-        
+
+    case 'rect'                
         xlim([-180,180]);
         ylim([-90,90]);
         
     otherwise
         warning('axesOpts should be set to either "eckert4" or "rect".');
 end
+% draw data like map
+% h=geoshow(lat,lon,Z,'DisplayType','texturemap');  % NaN as minimum value; smooth
+h=geoshow(lat,lon,Z,'DisplayType','surface');   % NaN transparent; no smooth
+
 
 % default annotations
 colormap('magma');
