@@ -4,7 +4,8 @@ function [nn_halo,z_az,z_el]=haloZoneCount(halo_k,nAz,nEl,sig,lim,histtype)
 %
 % [NN_HALO, Z_AZ, Z_EL] = HALOZONECOUNT(HALO_K, NAZ, NEL, SIG, LIM, HISTTYPE)
 %
-%
+% HALO_K: Nx3 array (shot) (TODO - not for latlon)
+% 
 
 % Count each zone
 % TODO
@@ -13,30 +14,44 @@ function [nn_halo,z_az,z_el]=haloZoneCount(halo_k,nAz,nEl,sig,lim,histtype)
 % [] accept SHOT data (array)
 %   [x] gauss
 %       [x] TEST
+%   [x] simple
+%       [ ] TEST
 %   [] latlon
 % [] document code
 
 
 switch histtype
-    case 'gauss'
+    case 'simple'
+        % simple atom counting in bin: convolution with top-hat/rectangle filter
+        % i.e. counts atoms "in" a defined solid-angle 
+        % TODO - radial
+        
+        dpsi_max=sig(1);
+%         dr_max=sig(2);    % TODO - something like this
+        
         % define spherical momentum zones
         az=linspace(-pi,pi,nAz);
         az=az(1:end-1);             % unique angles only
         el=linspace(-pi/2,pi/2,nEl);
         [z_az,z_el]=ndgrid(az,el);      % grid to preserve dimensional ordering in array indexing
         
-        % % simplify by collating all shots
-        % halo_k_combined=cell(1,2);
-        % for ii=1:2
-        %     halo_k_combined{ii}=vertcat(halo_k{:,ii});
-        % end
-        % 
-        % % Gaussian
-        % nn_halo=cellfun(@(halo) wHaloDensity(halo,nAz,nEl,sig,lim),halo_k_combined,'UniformOutput',false);
-        % 
+        % counting atoms in bins
+        k_sph=zxy2sphpol(halo_k);   % cart to sph-polar
+        nn_halo=zeros(size(z_az));  % preallocate bin counts
+        for ii=1:numel(z_az)
+            dpsi=diffAngleSph(k_sph(:,1),k_sph(:,2),z_az(ii),z_el(ii));
+            nn_halo(ii)=sum(dpsi<dpsi_max);     % number of atoms in this zone
+        end
+        
+    case 'gauss'
+        % define spherical momentum zones
+        az=linspace(-pi,pi,nAz);
+        az=az(1:end-1);             % unique angles only
+        el=linspace(-pi/2,pi/2,nEl);
+        [z_az,z_el]=ndgrid(az,el);      % grid to preserve dimensional ordering in array indexing
 
-        nn_halo=wHaloDensity(halo_k,nAz,nEl,sig,lim);
-
+        nn_halo=wHaloDensity(halo_k,nAz,nEl,sig,lim);        % gaussian weighted counting
+        
     case 'latlon'
         % lat-lon
         az=linspace(-pi,pi,nAz);

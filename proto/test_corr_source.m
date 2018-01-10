@@ -17,10 +17,13 @@ nEl=100;         % num of elevation divisions in [-pi/2,pi/2]
 % spherically opposite modes
 
 % counting
-count_mode='gauss';
-sig_mode=[0.018,Inf];
-lim_mode=[3,Inf];
+% count_mode='gauss';
+% sig_mode=[0.018,Inf];
+% lim_mode=[3,Inf];
 
+count_mode='simple';
+sig_mode=0.05;
+lim_mode=[];
 
 %% set-up
 % scattered modes
