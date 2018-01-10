@@ -19,16 +19,19 @@ S_loop=load('dpsi_20171213_0.mat');
 
 %% configure
 % scattered modes
-nAz=50;        % num of azimuthal divisions in [-pi,pi)
-nEl=25;         % num of elevation divisions in [-pi/2,pi/2]
+nAz=100;        % num of azimuthal divisions in [-pi,pi)
+nEl=50;         % num of elevation divisions in [-pi/2,pi/2]
 % NOTE: nAz should be EVEN to ensure flip_bb.m correctly matches
 % spherically opposite modes
 
 % atom counting
-count_mode='gauss';
-sig_mode=[0.0133,Inf];
-lim_mode=[4.5,Inf];
+% count_mode='gauss';
+% sig_mode=[0.0133,Inf];
+% lim_mode=[4.5,Inf];
 
+count_mode='simple';
+sig_mode=0.03;
+lim_mode=[];
 
 %% set-up
 % scattered modes
@@ -60,16 +63,16 @@ end
 %% Bell correlations
 E=haloBellCorr(N_halo{:});
 
-
 % report summary
 nz_tot=numel(E);    % total number of momenta zones scanned
-nz_nan=sum(sum(isnan(E)));  % number of zones with undefined correlation
+nz_nan=sum(isnan(E(:)));  % number of zones with undefined correlation
+nz_valid=nz_tot-nz_nan;
 
-E_mean=sum(sum(E,'omitnan'),'omitnan')/(nz_tot-nz_nan);
+E_mean=mean(E(:),'omitnan');
+E_err=std(E(:),'omitnan')/sqrt(nz_valid);
 
 fprintf('NaN fraction = %0.2g\n',nz_nan/nz_tot);
-fprintf('avg E corr = %0.2g\n',E_mean);
-
+fprintf('avg E corr = %0.2g (%0.1g)\n',E_mean,E_err);
 
 % visualisation
 % E corr

@@ -55,15 +55,16 @@ end
 %% Bell correlations
 E=haloBellCorr(N_halo{:});
 
-
 % report summary
 nz_tot=numel(E);    % total number of momenta zones scanned
-nz_nan=sum(sum(isnan(E)));  % number of zones with undefined correlation
+nz_nan=sum(isnan(E(:)));  % number of zones with undefined correlation
+nz_valid=nz_tot-nz_nan;
 
-E_mean=sum(sum(E,'omitnan'),'omitnan')/(nz_tot-nz_nan);
+E_mean=mean(E(:),'omitnan');
+E_err=std(E(:),'omitnan')/sqrt(nz_valid);
 
 fprintf('NaN fraction = %0.2g\n',nz_nan/nz_tot);
-fprintf('avg E corr = %0.2g\n',E_mean);
+fprintf('avg E corr = %0.2g (%0.1g)\n',E_mean,E_err);
 
 
 % visualisation
