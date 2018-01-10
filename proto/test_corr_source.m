@@ -36,7 +36,7 @@ el=linspace(-pi/2,pi/2,nEl);
 
 %% get counts in momenta modes
 z_max_nan=0.7;      % max-z used to filter halos as bad
-b_bad=(abs(El)>asin(z_max_nan));      % bool to bad region around poles
+b_pole=(abs(El)>asin(z_max_nan));      % bool to bad region around poles
 
 nShots=size(K,1);
 
@@ -48,7 +48,7 @@ for mm=1:2
     
     N_halo{mm}=cat(3,N_halo{mm}{:});   % concatenate cell-array (shots) to matrix
     
-    N_halo{mm}(repmat(b_bad,[1,1,nShots]))=NaN;   % handle empty polar regions
+    N_halo{mm}(repmat(b_pole,[1,1,nShots]))=NaN;   % handle empty polar regions
 end
 
 
