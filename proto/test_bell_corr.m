@@ -19,8 +19,8 @@ S_loop=load('dpsi_20171213_0.mat');
 
 %% configure
 % scattered modes
-nAz=200;        % num of azimuthal divisions in [-pi,pi)
-nEl=100;         % num of elevation divisions in [-pi/2,pi/2]
+nAz=100;        % num of azimuthal divisions in [-pi,pi)
+nEl=50;         % num of elevation divisions in [-pi/2,pi/2]
 % NOTE: nAz should be EVEN to ensure flip_bb.m correctly matches
 % spherically opposite modes
 
@@ -33,23 +33,25 @@ count_mode='simple';
 sig_mode=0.05;
 lim_mode=[];
 
+z_max_nan=0.7;      % max-z used to filter halos as bad
+
+
 %% set-up
 [Az,El]=sphgrid(nAz,nEl);
 
+
 %% get counts in momenta modes
-z_max_nan=0.7;      % max-z used to filter halos as bad
+
 b_pole=(abs(El)>asin(z_max_nan));      % bool to bad region around poles
 
 nShots=size(K,1);
 
 N_halo=cell(1,2);
 for mm=1:2
-    N_halo{mm}=cellfun(@(k) haloZoneCount(k,nAz+1,nEl,...
+    N_halo{mm}=cellfun(@(k) haloZoneCount(k,Az,El,...
         sig_mode,lim_mode,count_mode),K(:,mm),'UniformOutput',false);
-    % gaussian weighted counting
     
     N_halo{mm}=cat(3,N_halo{mm}{:});   % concatenate cell-array (shots) to matrix
-    
     N_halo{mm}(repmat(b_pole,[1,1,nShots]))=NaN;   % handle empty polar regions
 end
 
@@ -68,7 +70,7 @@ E_err=std(E(:),'omitnan')/sqrt(nz_valid);
 fprintf('NaN fraction = %0.2g\n',nz_nan/nz_tot);
 fprintf('avg E corr = %0.2g (%0.1g)\n',E_mean,E_err);
 
-% visualisation
+%%%% visualisation
 % E corr
 figure;
 plotFlatMapWrappedRad(Az,El,E,'eckert4');
@@ -133,7 +135,7 @@ for ii=1:n_dpsi_bin
     EE_sm(2,ii)=std(e_bin,'omitnan')/sqrt(n_items);
 end
 
-% plot
+%%% plot
 figure;
 % plot(DD_sm(1,:),EE_sm(1,:),'b.');
 hh=ploterr(DD_sm(1,:),EE_sm(1,:),DD_sm(2,:),EE_sm(2,:),'o','hhxy',0);

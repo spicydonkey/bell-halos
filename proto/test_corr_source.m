@@ -37,12 +37,11 @@ nShots=size(K,1);
 
 N_halo=cell(1,2);
 for mm=1:2
-    N_halo{mm}=cellfun(@(k) haloZoneCount(k,nAz+1,nEl,...
+    N_halo{mm}=cellfun(@(k) haloZoneCount(k,Az,El,...
         sig_mode,lim_mode,count_mode),K(:,mm),'UniformOutput',false);
     % gaussian weighted counting
     
     N_halo{mm}=cat(3,N_halo{mm}{:});   % concatenate cell-array (shots) to matrix
-    
     N_halo{mm}(repmat(b_pole,[1,1,nShots]))=NaN;   % handle empty polar regions
 end
 

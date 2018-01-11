@@ -27,9 +27,8 @@ count_mode='gauss';
 sig=[0.1,Inf];
 lim=[3,Inf];
 
-% count and normalise by gaussian convolution
-[n,az,el]=haloZoneCount(kk,nBins(1)+1,nBins(2),sig,lim,count_mode);
-
+[az,el]=sphgrid(nBins(1),nBins(2));     % create grid
+n=haloZoneCount(kk,az,el,sig,lim,count_mode);   % count around sphere
 
 %%% Plot results
 switch plotmode
