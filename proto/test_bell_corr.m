@@ -34,13 +34,7 @@ sig_mode=0.05;
 lim_mode=[];
 
 %% set-up
-% scattered modes
-az=linspace(-pi,pi,nAz+1);
-az=az(1:end-1);
-el=linspace(-pi/2,pi/2,nEl);
-
-[Az,El]=ndgrid(az,el);
-
+[Az,El]=sphgrid(nAz,nEl);
 
 %% get counts in momenta modes
 z_max_nan=0.7;      % max-z used to filter halos as bad
