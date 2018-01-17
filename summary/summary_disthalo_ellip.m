@@ -30,10 +30,11 @@ k_all=collate_shots(K);     % we don't need corr info
     k_all,'UniformOutput',false);
 
 % plots
+figure;
 for ii=1:numel(r0)
-    figure;
+    subplot(1,numel(r0),ii);
     plotFlatMapWrappedRad(az,el,r0{ii},'eckert4');
-    cbar=colorbar();
+    cbar=colorbar('southoutside');
     cbar.Label.String='Mean Radius';
 end
 
