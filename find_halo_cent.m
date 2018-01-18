@@ -7,6 +7,10 @@ function [cent_best,dr_best] = find_halo_cent(vs)
 %   cent_best: 1x3 best centre to minimise rms width
 %   dr_best: minimum rms of vec norms
 %
+%   TODO
+%   [ ] width of halo should be found from a proper evaluation of
+%   radial density profile then fitting a gaussian
+%
 
 fun_normrms = @(x) std(zxy2rdist(vs,x));      % rms function
 cent0 = [0,0,0];       % initial param at zero

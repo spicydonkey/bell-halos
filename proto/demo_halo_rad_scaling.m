@@ -1,15 +1,18 @@
 %%% load data
 % add MACHINE_DEPENDENT\bell\out\20171128 to path
-load('run2_K_20171127.mat');
+% load('run2_K_20171127.mat');
 
 %%% config
 % zones
 nAz=100;
 nEl=50;
-vaz=linspace(-pi,pi,nAz);
-vaz=vaz(1:end-1);
-vel=linspace(-pi/2,pi/2,nEl);
-[az,el]=ndgrid(vaz,vel);
+% vaz=linspace(-pi,pi,nAz);
+% vaz=vaz(1:end-1);
+% vel=linspace(-pi/2,pi/2,nEl);
+% [az,el]=ndgrid(vaz,vel);
+[az,el]=sphgrid(nAz,nEl);
+vaz=unique(az(:));
+vel=unique(el(:));
 
 % sph-polar sampling
 dpsi=0.3;

@@ -11,8 +11,8 @@ K=halo_k0;
 
 %% configure
 % scattered modes
-nAz=200;        % num of azimuthal divisions in [-pi,pi)
-nEl=100;         % num of elevation divisions in [-pi/2,pi/2]
+nAz=100;        % num of azimuthal divisions in [-pi,pi)
+nEl=50;         % num of elevation divisions in [-pi/2,pi/2]
 % NOTE: nAz should be EVEN to ensure flip_bb.m correctly matches
 % spherically opposite modes
 
