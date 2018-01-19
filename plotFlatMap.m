@@ -7,8 +7,8 @@ function h = plotFlatMap(lat,lon,Z,axproj)
 %
 
 if ~exist('axproj','var')
-    warning('axproj is undefined. Default to rectangle map.');
-    axproj='rect';
+    warning('axproj is undefined. Default to eckert4 map.');
+    axproj='eckert4';
 end
 
 % set up axes

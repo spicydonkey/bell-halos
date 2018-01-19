@@ -11,8 +11,8 @@ function h = plotFlatMapWrappedRad(Az,El,Z,axproj)
 
 % input checking
 if ~exist('axproj','var')
-    warning('axproj is undefined. Default to rectangle map.');
-    axproj='rect';
+    warning('axproj is undefined. Default to eckert4 map.');
+    axproj='eckert4';
 end
 
 % wrap azimuthal angle to close surface
