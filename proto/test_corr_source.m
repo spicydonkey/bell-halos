@@ -25,13 +25,20 @@ count_mode='simple';
 sig_mode=0.05;
 lim_mode=[];
 
-%% set-up
+z_max_nan=0.7;      % max-z used to filter halos as bad
+
+% construct sph-grid zones
 [Az,El]=sphgrid(nAz,nEl);
 
 
 %% get counts in momenta modes
-z_pole=0.7;      % max-z used to filter halos as bad
-b_pole=(abs(El)>asin(z_pole));      % bool to bad region around poles
+% TODO 
+%   [ ] doesn't need to be run (?) for new halo k-space dataset if we could
+%   manipulate this
+%   [ ] Parallelise
+%
+
+b_pole=(abs(El)>asin(z_max_nan));      % bool to bad region around poles
 
 nShots=size(K,1);
 

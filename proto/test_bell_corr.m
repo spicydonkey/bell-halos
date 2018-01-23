@@ -14,8 +14,8 @@ K=K_g2_opt;
 % % K is original
 
 %%% Calibrated relative rotation - 3ms,0.382
-S_loop=load('dpsi_20171213_0.mat');
-
+% S_loop=load('dpsi_20171213_0.mat');
+S_loop=load('dpsi_0.38_20180119.mat');
 
 %% configure
 % scattered modes
@@ -35,12 +35,16 @@ lim_mode=[];
 
 z_max_nan=0.7;      % max-z used to filter halos as bad
 
-
-%% set-up
+% construct sph-grid zones
 [Az,El]=sphgrid(nAz,nEl);
 
 
 %% get counts in momenta modes
+% TODO 
+%   [ ] doesn't need to be run (?) for new halo k-space dataset if we could
+%   manipulate this
+%   [ ] Parallelise
+%
 
 b_pole=(abs(El)>asin(z_max_nan));      % bool to bad region around poles
 
