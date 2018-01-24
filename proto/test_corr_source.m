@@ -22,7 +22,7 @@ nEl=50;         % num of elevation divisions in [-pi/2,pi/2]
 % lim_mode=[3,Inf];
 
 count_mode='simple';
-sig_mode=0.05;
+sig_mode=0.1;
 lim_mode=[];
 
 z_max_nan=0.7;      % max-z used to filter halos as bad
@@ -35,21 +35,35 @@ z_max_nan=0.7;      % max-z used to filter halos as bad
 % TODO 
 %   [ ] doesn't need to be run (?) for new halo k-space dataset if we could
 %   manipulate this
-%   [ ] Parallelise
+%   [x] Parallelise
+%       1. serial: 30 s
+%       2. parallel: 10 s
 %
 
 b_pole=(abs(El)>asin(z_max_nan));      % bool to bad region around poles
-
 nShots=size(K,1);
 
+%%% 1. serial
+% N_halo=cell(1,2);
+% for mm=1:2
+%     N_halo{mm}=cellfun(@(k) haloZoneCount(k,Az,El,...
+%         sig_mode,lim_mode,count_mode),K(:,mm),'UniformOutput',false);
+%     
+%     N_halo{mm}=cat(3,N_halo{mm}{:});   % concatenate cell-array (shots) to matrix
+%     N_halo{mm}(repmat(b_pole,[1,1,nShots]))=NaN;   % handle empty polar regions
+% end
+
+%%% 2. parallel
 N_halo=cell(1,2);
 for mm=1:2
-    N_halo{mm}=cellfun(@(k) haloZoneCount(k,Az,El,...
-        sig_mode,lim_mode,count_mode),K(:,mm),'UniformOutput',false);
-    % gaussian weighted counting
+    N_halo_temp=NaN([size(Az),nShots]);
+    parfor ii=1:nShots
+        N_halo_temp(:,:,ii)=haloZoneCount(K{ii,mm},Az,El,sig_mode,lim_mode,count_mode);
+    end
+    N_halo{mm}=N_halo_temp;
     
-    N_halo{mm}=cat(3,N_halo{mm}{:});   % concatenate cell-array (shots) to matrix
-    N_halo{mm}(repmat(b_pole,[1,1,nShots]))=NaN;   % handle empty polar regions
+    % handle empty polar regions
+    N_halo{mm}(repmat(b_pole,[1,1,nShots]))=NaN;   
 end
 
 

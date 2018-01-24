@@ -31,10 +31,17 @@ switch histtype
         dpsi_max=sig(1);    % max relative angle from bin-vector
         
         % counting atoms in bins
-        k_sph=zxy2sphpol(halo_k);   % cart to sph-polar
+        k_sph=zxy2sphpol(halo_k);   % cart to sph-polar - more efficient than cart
         nn_halo=zeros(size(az));  % preallocate bin counts
         for ii=1:numel(az)
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % performance
+            %   cart: 90 s
+            %   sphpol: 12 s
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%
             dpsi=diffAngleSph(k_sph(:,1),k_sph(:,2),az(ii),el(ii));
+%             u_ref=sphpol2zxy([az(ii),el(ii),1]);    % cart-vec of this zone
+%             dpsi=diffAngleCart(halo_k,u_ref);
             nn_halo(ii)=sum(dpsi<dpsi_max);     % number of atoms in this zone
         end
         
