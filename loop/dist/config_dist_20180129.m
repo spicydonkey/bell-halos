@@ -1,0 +1,14 @@
+%Categorise mF-species
+%
+
+configs.mf{1}.mf=1;
+configs.mf{1}.bec=[0.3868,  -3.3e-3,    3.4e-3;
+                   0.3993,  -3.0e-3,    4.3e-3];
+
+configs.mf{2}.mf=0;
+configs.mf{2}.bec=[0.4051,  -3.3e-3,    4.6e-3;
+                   0.4182,  -3.0e-3,    5.1-3];
+                              
+configs.mf{3}.mf=-1;
+configs.mf{3}.bec=[0.4251,  -3.7e-3,    5.1e-3;
+                   0.4381,  -2.0e-3,    5.1-3];
