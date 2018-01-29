@@ -16,7 +16,7 @@ if ~exist('N','var')
 end
 
 %%% Histogram
-knorm=myvecnorm(kk);      % get vector norms
+knorm=vnorm(kk);      % get vector norms
 
 % build bins for histogram 
 r_ed=linspace(min(knorm),max(knorm),Nbins+1)';

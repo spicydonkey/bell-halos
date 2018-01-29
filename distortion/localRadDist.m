@@ -35,7 +35,7 @@ if size(zxy_in,1)<min_n_cone
 end
 
 % get norms
-r=vecnorm(zxy_in);
+r=vnorm(zxy_in);
 
 % radial profile
 red=linspace(min(r),max(r),numel(r)/n_per_bin);
