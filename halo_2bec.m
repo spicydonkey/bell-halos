@@ -32,8 +32,17 @@ end
 hfig=[];    % figure array
 
 %% 1. Capture marker BECs
+bec_cent0={p_bec1,p_bec2};
+
 %%% 1.1. capture BEC to mark halo poles
-[bec_cent,bool_bec]=capture_bec(zxy,{p_bec1,p_bec2},{r_bec,r_bec},verbose-1);
+nshot=size(zxy,1);
+bec_cent=cell(nshot,2);
+bool_bec=cell(nshot,2);
+for ii=1:nshot
+    for jj=1:2
+        [bec_cent{ii,jj},bool_bec{ii,jj}]=capture_bec(zxy{ii},bec_cent0{jj},r_bec,verbose-1);
+    end
+end
 
 %%% 1.2. get atoms in BEC
 bool_bec_combined=cell_horzcat(bool_bec);       % boolean array to indicate which BEC atoms belongs to
