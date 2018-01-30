@@ -3,23 +3,28 @@
 
 dbg=1;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN PREPROCESSING
+addpath(genpath('C:\Users\HE BEC\exp-data\bell\loop_tscan'));
+
 
 %% 1. Load raw data
 % create txy and save mat file
 
 % or LOAD IT!
 load('txy_20180129.mat');
-shotid=fout.id_ok;
+shot_id=fout.id_ok;
 
 
 %% 1.1. Load parameter log
+% see load_params.m
 %   params
 %   id_in_params
 
-load('param_20180129.mat');
+load('param_20180130.mat');
 
 % build boolean array selector for scanned parameter-set
-b_paramset=cellfun(@(idx) ismember(shotid,idx),...
+b_paramset=cellfun(@(idx) ismember(shot_id,idx),...
     id_in_param,'UniformOutput',false);
 b_paramset=horzcat(b_paramset{:});
 
@@ -147,9 +152,7 @@ for ii=1:n_mf
     tr_halo=vnorm(cent_bec_avg0{ii,1});     % BECs define poles of sphere
     r_lim=r_crop*tr_halo;
     
-    for jj=1:2
-        zxy_halo(:,ii)=cfilter_norm(zxy_halo(:,ii),r_lim(1),r_lim(2));
-    end
+    zxy_halo(:,ii)=cfilter_norm(zxy_halo(:,ii),r_lim(1),r_lim(2));
 end
 
 if dbg
@@ -163,16 +166,68 @@ if dbg
 end
 
 
-%% 3. Transform to k-space
+%% 3. k-space
 %   Unit-spherise
 %
 
-%%% A) real-halo local ellipticity
-% config
-nAz=30;
-nEl=15;
-dth_cone=(2*pi/nAz);
+%%% ellipsoid fit
+%   a fast first-attempt to spherise
+k_halo=cell(size(zxy_halo));
+for ii=1:n_mf
+    k_halo(:,ii)=map2usph(zxy_halo(:,ii));
+end
 
-% get spherical matp of local halo radius and thickness
-[r0,dr,az,el]=summary_disthalo_ellip(zxy_halo,[nAz,nEl],dth_cone,dbg);
+if dbg
+    scatter_halo(k_halo);
+end 
 
+% %%% A) real-halo local ellipticity
+% % config
+% nAz=30;
+% nEl=15;
+% dth_cone=(2*pi/nAz);
+% 
+% % get spherical matp of local halo radius and thickness
+% [r0,dr,az,el]=summary_disthalo_ellip(zxy_halo,[nAz,nEl],dth_cone,dbg);
+
+
+%%% clean
+r_lim=[0.9,1.1];
+k_halo=cfilter_norm(k_halo,r_lim(1),r_lim(2));
+
+if dbg
+    scatter_halo(k_halo);
+end
+
+
+%% 4. Classify halo data by exp-params
+% classify data in param-space
+k_par=cell(n_par_iter);
+for ii=1:nparam
+    this_par=params(ii,:);      % this param-vect
+    this_idx=num2cell(par_tab(ii,:));     % location in table 
+    %cell-formated to distribute as argument list
+    
+    k_par{this_idx{:}}=k_halo(b_paramset(:,ii),:);      % get all halo data
+    %from this param-set and store
+end
+
+if dbg
+    for ii=1:numel(k_par)
+%         this_idx=cell(1,dim_param);
+%         [this_idx{:}]=ind2sub(n_par_iter,ii);	% get array subscripts
+        
+        h=summary_disthalo_ndist(k_par{ii});
+        
+        
+    end
+end
+
+
+%%% END OF PREPROCESSING
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEGIN ANALYSIS 
+
+%% 1. 
