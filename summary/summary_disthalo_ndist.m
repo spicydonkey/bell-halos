@@ -1,5 +1,5 @@
 function [h,nn,az,el]=summary_disthalo_ndist(K,nBins,plotmode)
-% Summarise distinguishable (2-species) halos with density distribution
+% Summarise distinguishable halos with density distribution.
 %
 % [h,nn,az,el]=summary_disthalo_ndist(K,OPTS)
 %
@@ -15,23 +15,24 @@ if ~exist('plotmode','var')
 end
 
 % configs
-color_mf={'b','r'};
+n_mf=size(K,2);
+color_mf=distinguishable_colors(n_mf);
 
 %%% radial dist
 h(1)=figure();
-for ii=1:2
+for ii=1:n_mf
     hold on;
     [~,~,tbar]=plot_rdist(vertcat(K{:,ii}));
-    tbar.FaceColor=color_mf{ii};
+    tbar.FaceColor=color_mf(ii,:);
 end
 drawnow
 
 %%% sph density dist
 h(2)=figure();
 [az,el]=sphgrid(nBins(1),nBins(2));
-nn=cell(1,2);       % number density (arb) around halo
-for ii=1:2
-    subplot(1,2,ii);
+nn=cell(1,n_mf);       % number density (arb) around halo
+for ii=1:n_mf
+    subplot(1,n_mf,ii);
     [nn{ii}]=plot_sphdist(vertcat(K{:,ii}),nBins,plotmode);
 end
 drawnow

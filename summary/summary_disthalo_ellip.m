@@ -29,9 +29,16 @@ k_all=collate_shots(K);     % we don't need corr info
 nspecies=size(K,2);
 
 % peak radii around halo
-[r0,dr]=cellfun(@(c)...
-    arrayfun(@(a,e) localRadDist(double(c),a,e,dtheta,0),az,el),...
-    k_all,'UniformOutput',false);
+r0=cell(1,nspecies);
+dr=cell(1,nspecies);
+parfor ii=1:nspecies
+    [r0{ii},dr{ii}]=arrayfun(@(a,e) localRadDist(double(k_all{ii}),...
+        a,e,dtheta),az,el);
+end
+    
+% [r0,dr]=cellfun(@(c)...
+%     arrayfun(@(a,e) localRadDist(double(c),a,e,dtheta,0),az,el),...
+%     k_all,'UniformOutput',false);
 
 
 %% plots
