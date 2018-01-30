@@ -213,14 +213,14 @@ for ii=1:nparam
 end
 
 if dbg
-    for ii=1:numel(k_par)
-%         this_idx=cell(1,dim_param);
-%         [this_idx{:}]=ind2sub(n_par_iter,ii);	% get array subscripts
-        
-        h=summary_disthalo_ndist(k_par{ii});
-        
-        
-    end
+%     for ii=1:numel(k_par)
+% %         this_idx=cell(1,dim_param);
+% %         [this_idx{:}]=ind2sub(n_par_iter,ii);	% get array subscripts
+%         
+%         h=summary_disthalo_ndist(k_par{ii});
+%         
+%         
+%     end
 end
 
 
@@ -230,4 +230,45 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN ANALYSIS 
 
-%% 1. 
+%% 1. Atom number distribution
+% create spherical grid zones
+[az,el]=sphgrid(configs.anal.nZone(1),configs.anal.nZone(2));
+
+%%% count points around different parts of sphere
+nk_sph=cell(size(k_par));
+parfor ii=1:nparam
+    tnk_sph=cell(n_mf,1);
+    for jj=1:n_mf
+        tk=vertcat(k_par{ii}{:,jj});    % shot-collated halo
+        tnk_sph{jj}=haloZoneCount(tk,az,el,...
+            configs.anal.sigZone,configs.anal.limZone,...
+            configs.anal.typeZone);     % count points around sphere
+    end
+    nk_sph{ii}=cat(3,tnk_sph{:});       % sph-grid is 2D for now
+    % NOTE: concatenating dim needs to be generalised to resolve radially
+end
+
+if dbg
+    for ii=1:nparam
+        %%% get this param vector
+        % convert 1D index to array subscript
+        idx_vec=cell(1,dim_param);
+        [idx_vec{:}]=ind2sub(n_par_iter,ii);
+        % construct par-vec
+        this_par=cellfun(@(p,i) p(i),par_iter,idx_vec);
+        
+        
+        %%% plot
+        figname=strjoin(string(this_par),', ');
+        figure('Name',figname);
+        for jj=1:n_mf
+            subplot(n_mf,1,jj);
+            plotFlatMapWrappedRad(az,el,nk_sph{ii}(:,:,jj));
+            colorbar('eastoutside');
+        end
+    end
+end
+
+
+%% 2. Population ratio and Rabi cycle
+% TODO
