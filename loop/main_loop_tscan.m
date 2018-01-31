@@ -3,10 +3,13 @@
 
 dbg=1;
 
+% base directory
+dir_base='X:\expdata\spinmom_bell\loop_tscan';
+
+addpath(genpath(dir_base));
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN PREPROCESSING
-addpath(genpath('C:\Users\HE BEC\exp-data\bell\loop_tscan'));
-
 
 %% 1. Load raw data
 % create txy and save mat file
@@ -230,6 +233,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% BEGIN ANALYSIS 
 
+path_config='config_anal.m';
+run(path_config);
+
 %% 1. Atom number distribution
 % create spherical grid zones
 [az,el]=sphgrid(configs.anal.nZone(1),configs.anal.nZone(2));
@@ -259,13 +265,20 @@ if dbg
         
         
         %%% plot
-        figname=strjoin(string(this_par),', ');
+        figname=strjoin(string(this_par),'_');
         figure('Name',figname);
         for jj=1:n_mf
             subplot(n_mf,1,jj);
             plotFlatMapWrappedRad(az,el,nk_sph{ii}(:,:,jj));
             colorbar('eastoutside');
         end
+        
+        % save
+        if exist('SAVEFIG','var') && SAVEFIG
+            fname=fullfile(dir_base,'out','img',char(figname));
+            print(fname,'-dpng');
+        end
+        
     end
 end
 
