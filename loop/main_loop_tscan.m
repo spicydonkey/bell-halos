@@ -364,3 +364,21 @@ if dbg
     end
 end
 
+
+%% 4. Clean data
+% concatenate raman pulse duration
+P_mf=cell(1,2);
+for ii=1:2
+    P_mf{ii}=cat(3,P{ii,:});
+end
+
+th_mf=cell(1,2);
+for ii=1:2
+    th_mf{ii}=cat(3,th{ii,:});
+end
+
+% exp-params
+mf=par_iter{1};
+traman=par_iter{2};
+
+
