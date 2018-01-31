@@ -377,8 +377,4 @@ for ii=1:2
     th_mf{ii}=cat(3,th{ii,:});
 end
 
-% exp-params
-mf=par_iter{1};
-traman=par_iter{2};
-
 

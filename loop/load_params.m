@@ -6,6 +6,8 @@
 % DK Shin
 
 % path_log = 'C:\Users\HE BEC\exp-data\bell\loop_tscan\LOG_parameters.txt';
+
+dir_base='X:\expdata\spinmom_bell\loop_tscan';
 path_log=fullfile(dir_base,'raw','LOG_parameters.txt');
 
 param_log = load_logfile(path_log);
@@ -47,3 +49,8 @@ for ii=1:nparam
     this_idx=num2cell(par_tab(ii,:));     % location in table 
     parvec_tab{this_idx{:}}=params(ii,:);
 end
+
+
+% summary of experimental params
+mf=par_iter{1};
+traman=par_iter{2};
