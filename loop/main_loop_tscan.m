@@ -284,8 +284,9 @@ end
 
 
 %% 2. Population ratio and Rabi cycle
-P=cell(size(nk_sph));       % population ratio of excited state
 
+% evaluate excited state pop ratio
+P=cell(size(nk_sph));       % population ratio of excited state
 parfor ii=1:nparam
     this_parvec=parvec_tab{ii};   % get param-vec: [mf, traman]
     t_mf=this_parvec(1);
@@ -303,7 +304,11 @@ parfor ii=1:nparam
     N_exc=N_all-nk(:,:,idx_mf);
     
     P{ii}=N_exc./N_all;
+    
+    % pad polar regions
+    P{ii}=pad_sphgrid_poles(el,P{ii},configs.anal.maxPhi,NaN);
 end
+
 
 if dbg
     for ii=1:nparam
@@ -327,4 +332,35 @@ if dbg
     end
 end
 
+
+%% 3. Rotation angle
+
+% P_excited = sin(theta/2)^2
+%   Theta   --> P
+%   pi      --> 1
+%   0       --> 0
+%
+
+th=cellfun(@(p) 2*asin(p),P,'UniformOutput',false);
+
+if dbg
+    for ii=1:nparam
+        this_parvec=parvec_tab{ii};   % get param-vec: [mf, traman]
+        
+        %%% plot
+        figname=char(strjoin(string(this_parvec),'_'));
+        figname=['theta_',figname];
+        
+        figure('Name',figname);
+        plotFlatMapWrappedRad(az,el,th{ii}/pi);
+        cbar=colorbar('southoutside');
+        cbar.Label.String='\theta/\pi';
+
+        % save
+        if exist('SAVEFIG','var') && SAVEFIG
+            fname=fullfile(dir_base,'out','img',figname);
+            print(fname,'-dpng');
+        end
+    end
+end
 
