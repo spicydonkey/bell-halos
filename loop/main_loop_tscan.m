@@ -1,6 +1,9 @@
 %Analyse experiment on mF asymmetry
 %
 
+
+%% CONFIG
+
 dbg=1;
 
 % base directory
@@ -8,8 +11,10 @@ dir_base='X:\expdata\spinmom_bell\loop_tscan';
 
 addpath(genpath(dir_base));
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% BEGIN PREPROCESSING
+%% BEGIN PREPROCESSING
+
 
 %% 1. Load raw data
 % create txy and save mat file
@@ -24,7 +29,7 @@ shot_id=fout.id_ok;
 %   params
 %   id_in_params
 
-load('param_20180130.mat');
+load('param_20180131.mat');
 
 % build boolean array selector for scanned parameter-set
 b_paramset=cellfun(@(idx) ismember(shot_id,idx),...
@@ -207,7 +212,6 @@ end
 % classify data in param-space
 k_par=cell(n_par_iter);
 for ii=1:nparam
-    this_par=params(ii,:);      % this param-vect
     this_idx=num2cell(par_tab(ii,:));     % location in table 
     %cell-formated to distribute as argument list
     
@@ -217,9 +221,7 @@ end
 
 if dbg
 %     for ii=1:numel(k_par)
-% %         this_idx=cell(1,dim_param);
-% %         [this_idx{:}]=ind2sub(n_par_iter,ii);	% get array subscripts
-%         
+%         this_parvec=parvec_tab{ii};
 %         h=summary_disthalo_ndist(k_par{ii});
 %         
 %         
@@ -231,10 +233,11 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% BEGIN ANALYSIS 
+%% BEGIN ANALYSIS 
 
 path_config='config_anal.m';
 run(path_config);
+
 
 %% 1. Atom number distribution
 % create spherical grid zones
@@ -256,26 +259,23 @@ end
 
 if dbg
     for ii=1:nparam
-        %%% get this param vector
-        % convert 1D index to array subscript
-        idx_vec=cell(1,dim_param);
-        [idx_vec{:}]=ind2sub(n_par_iter,ii);
-        % construct par-vec
-        this_par=cellfun(@(p,i) p(i),par_iter,idx_vec);
-        
+        this_parvec=parvec_tab{ii};   % get param-vec: [mf, traman]
         
         %%% plot
-        figname=strjoin(string(this_par),'_');
+        figname=char(strjoin(string(this_parvec),'_'));
+        figname=['N_',figname];
+        
         figure('Name',figname);
         for jj=1:n_mf
             subplot(n_mf,1,jj);
             plotFlatMapWrappedRad(az,el,nk_sph{ii}(:,:,jj));
-            colorbar('eastoutside');
+            cbar=colorbar('eastoutside');
+            cbar.Label.String='N';
         end
         
         % save
         if exist('SAVEFIG','var') && SAVEFIG
-            fname=fullfile(dir_base,'out','img',char(figname));
+            fname=fullfile(dir_base,'out','img',figname);
             print(fname,'-dpng');
         end
         
@@ -284,4 +284,47 @@ end
 
 
 %% 2. Population ratio and Rabi cycle
-% TODO
+P=cell(size(nk_sph));       % population ratio of excited state
+
+parfor ii=1:nparam
+    this_parvec=parvec_tab{ii};   % get param-vec: [mf, traman]
+    t_mf=this_parvec(1);
+    
+    %   mf  -->     index
+    %   1   -->     1
+    %   0   -->     2
+    %   -1  -->     3
+    idx_mf=2-t_mf;
+    
+    nk=nk_sph{ii};
+    nk=nk(:,:,1:2);     % NOTE: ignore mf=-1 atoms!
+    
+    N_all=sum(nk,3);
+    N_exc=N_all-nk(:,:,idx_mf);
+    
+    P{ii}=N_exc./N_all;
+end
+
+if dbg
+    for ii=1:nparam
+        this_parvec=parvec_tab{ii};   % get param-vec: [mf, traman]
+        
+        %%% plot
+        figname=char(strjoin(string(this_parvec),'_'));
+        figname=['P_',figname];
+        
+        figure('Name',figname);
+        plotFlatMapWrappedRad(az,el,P{ii});
+        cbar=colorbar('southoutside');
+        cbar.Label.String='P';
+
+        % save
+        if exist('SAVEFIG','var') && SAVEFIG
+            fname=fullfile(dir_base,'out','img',figname);
+            print(fname,'-dpng');
+        end
+        
+    end
+end
+
+

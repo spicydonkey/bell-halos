@@ -5,7 +5,8 @@
 %
 % DK Shin
 
-path_log = 'C:\Users\HE BEC\exp-data\bell\loop_tscan\LOG_parameters.txt';
+% path_log = 'C:\Users\HE BEC\exp-data\bell\loop_tscan\LOG_parameters.txt';
+path_log=fullfile(dir_base,'raw','LOG_parameters.txt');
 
 param_log = load_logfile(path_log);
 param_array = paramlog2array(param_log);
@@ -39,3 +40,10 @@ for ii=1:dim_param
     [~,par_tab(:,ii)]=ismember(params(:,ii),par_iter{ii});
 end
 
+% build reverse-table
+%   data location at (i,j,...) retrieves param-vect
+parvec_tab=cell(n_par_iter);
+for ii=1:nparam
+    this_idx=num2cell(par_tab(ii,:));     % location in table 
+    parvec_tab{this_idx{:}}=params(ii,:);
+end
