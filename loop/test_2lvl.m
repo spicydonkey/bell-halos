@@ -60,14 +60,14 @@ for ii=1:2
 end
 
 
-%% loss to mf=-1
+%% leakage to mf=-1
 
-% loss into -1 state zero-referenced to non-ideal source
-N_loss=cellfun(@(n) n(:,3)-n(1,3),N_mean,'UniformOutput',false);
+% leakage into -1 state zero-referenced to non-ideal source
+N_leak=cellfun(@(n) n(:,3)-n(1,3),N_mean,'UniformOutput',false);
 
 N_tot=cellfun(@(n) sum(n,2),N_mean,'UniformOutput',false);
 
-r_loss=cellfun(@(n1,n2) n1./n2,N_loss,N_tot,'UniformOutput',false);
+r_leak=cellfun(@(n1,n2) n1./n2,N_leak,N_tot,'UniformOutput',false);
 
 
 % plot
@@ -75,19 +75,36 @@ data_name={'0','1'};
 data_linestyle={'-','--'};
 data_color=distinguishable_colors(2);
 
-figure;
+figure('Name','leakage_rate');
 for ii=1:2
     hold on;
-    plot(1e6*traman,r_loss{ii},...
+    plot(1e6*traman,r_leak{ii},...
         'Color',data_color(ii,:),...
         'LineStyle',data_linestyle{ii},...
         'LineWidth',1.5,...
         'DisplayName',data_name{ii});
         
     xlabel('$\tau$ ($\mu$s)');
-    ylabel('$\eta_{loss}$');
+    ylabel('$\eta_{leak}$');
     lgd=legend('show');
     title(lgd,'source $m_F$')
     box on;
 end
 
+
+% total number
+figure('Name','N_tot');
+for ii=1:2
+    hold on;
+    plot(1e6*traman,N_tot{ii}/N_tot{ii}(1),...      % normalise to source
+        'Color',data_color(ii,:),...
+        'LineStyle',data_linestyle{ii},...
+        'LineWidth',1.5,...
+        'DisplayName',data_name{ii});
+    
+    xlabel('$\tau$ ($\mu$s)');
+    ylabel('$\tilde{N}_{tot}$');
+    lgd=legend('show');
+    title(lgd,'source $m_F$')
+    box on;
+end
