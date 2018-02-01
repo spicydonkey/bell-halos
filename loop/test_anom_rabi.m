@@ -25,6 +25,7 @@ idx_el=el_in(1):5:el_in(end);
 
 % Plot oscillations
 % TODO - do for mf=0 data after background subtraction
+this_mf_idx=2;      % 1 for mf=0; 2 for mf=1 
 
 data_color=distinguishable_colors(numel(idx_az));          % thetha
 data_linestyle={'-','--',':','-.'};      % phi
@@ -33,7 +34,7 @@ figure('Name','rabi_cycle');
 for ii=1:numel(idx_az)
     for jj=1:numel(idx_el)
         hold on;
-        plot(1e6*traman,squeeze(P_mf{2}(idx_az(ii),idx_el(jj),:)),...
+        plot(1e6*traman,squeeze(P_mf{this_mf_idx}(idx_az(ii),idx_el(jj),:)),...
             'Color',data_color(ii,:),...
             'LineStyle',data_linestyle{jj},...
             'LineWidth',1.5);
