@@ -1,4 +1,4 @@
-function [g2_bb_00,g2_bb_11,g2_bb_01] = summary_disthalo_g2dist(N,Az,El,verbose)
+function [g2_bb_00,g2_bb_11,g2_bb_01,g2_bb_comb] = summary_disthalo_g2dist(N,Az,El,verbose)
 %Summarise BB-pair g2 across all regions
 %
 %   N: 1x2 cell; count distribution around halo
