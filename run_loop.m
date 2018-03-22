@@ -4,7 +4,8 @@
 % path_config='config_loop2_20171031_1.m';
 % path_config='config_loop2_20171103_1.m';
 % path_config='config_loop2_4ms_20171106_2.m';
-path_config='config_loop2_test.m';
+% path_config='config_loop2_test.m';
+path_config='config_loop_v2_20180119.m';
 
 % vars to save to output
 vars_save={'configs','path_config',...
@@ -20,7 +21,7 @@ vars_save={'configs','path_config',...
     'ct_dth','nster_dth','dTheta',...
     };
 
-%% Main
+%% Set-up script
 t_main_start=tic;
 
 % configure
@@ -59,10 +60,7 @@ dloop=dloop(1:nloop);
 % common spherical momentum zones
 nazim=configs.zone.nazim;
 nelev=configs.zone.nelev;
-az=linspace(-pi,pi,nazim);
-az=az(1:end-1);             % unique angles only
-el=linspace(-pi/2,pi/2,nelev);
-[Az,El]=ndgrid(az,el);
+[Az,El]=sphgrid(nazim,nelev);
 
 % preallocate vars
 mf=NaN(nloop,1);
@@ -115,23 +113,19 @@ for ii=1:nloop
     tnn_halo=cell(1,2);
     for mm=1:2
         tnn_halo{mm}=haloZoneCount(vertcat(halo_k{:,mm}),...
-            configs.zone.nazim,configs.zone.nelev,...
+            Az,El,...
             configs.zone.sig,configs.zone.lim,...
             configs.zone.histtype);     % counts at Az, El ndgrid zones
     end
     
     % pad bad zones with NaN
-    % TODO
-    % - [] package into a function
+    % - [x] package into a function
     % - [x] poles
-    % - [] bright/dark spots: spontaneous halo
+    % - [ ] bright/dark spots: spontaneous halo
     %%% poles - have been removed since it's close to BEC
-    b_poles=cellfun(@(haloS) abs(El)>haloS.elev_max,configs.halo,'UniformOutput',false);
-    
-    % apply NaN padding
-    for mm=1:2
-        tnn_halo{mm}(b_poles{mm})=NaN;
-    end
+    el_pol_max=asin(0.7);
+    el_pol=min([el_pol_max,cellfun(@(s) s.elev_max,configs.halo)]);      % min common pol limit
+    tnn_halo=cellfun(@(c) pad_sphgrid_poles(El,c,el_pol,NaN),tnn_halo,'UniformOutput',false);
     
     %% store results
     mf(ii)=tmf;
@@ -214,8 +208,8 @@ end
 % TODO - Rabi oscillation fitted theta - amplitude
 %
 % Model selection
-% [] simple physical model
-% [] trend fit
+% [ ] simple physical model
+% [ ] trend fit
 
 %%% 1. Simple formula
 % NOTE: wraps rotation angle to [0,pi]
@@ -272,9 +266,9 @@ g1d_sigma=configs.zone.g1d_sigma;
 g1d_filt=gaussFilter(g1d_hsize,g1d_sigma);
 
 nster_dth=cell(1,2);
-dTheta=cell(1,2);
 
 % evaluate relative angular map for each run
+dTheta=cell(1,2);
 for ii=1:2
     this_nloop=nloop_m(ii);    
     
@@ -282,13 +276,6 @@ for ii=1:2
     % NOTE - we assume mf=0 rotates identically to mf=1. mf=0 data has too much background
     % this is a trial dth - assuming mf=0 rotates like mf=1
     dTheta{ii}=th_rabi_m{ii}-flip_bb(th_rabi_m{ii},1);
-    % TODO - test flip_bb code
-    %   - [x] OMFG MAJOR BUG! FLIP_BB flips the wrong dimension because of
-    %   shift from meshgrid to ndgrid! THIS MESSED EVERYTHING UP!
-    %   - [x] flip_bb^2 is equivalent to Identity
-    %       - only when azim dim length is EVEN
-    %   - [x] does flip_bb work on 3D array where 3rd dim is independent
-    %   data: YES!
     
     nster_dth{ii}=zeros(this_nloop,nbin_dth);     % preallocate data
     for jj=1:this_nloop        
@@ -302,6 +289,7 @@ for ii=1:2
     end
 end
 
+
 %% plot
 if configs.flags.graphics
     %% Flat halo density distribution    
@@ -314,12 +302,10 @@ if configs.flags.graphics
             for jj=1:2
                 subplot(1,2,jj);
                 plotFlatMapWrappedRad(Az,El,nn_halo_m{tmf}{jj}(:,:,ii),'eckert4');
-                % TODO
-                % - [x] colormap label
-                %   - [ ] TEST
+                
                 % annotate fig
                 t_cb=colorbar('southoutside');
-                t_cb.Label.String='n';
+                t_cb.Label.String='density [a.u.]';
 
                 strTitle=sprintf('[src $m_F=%d$] $m_F=%d$, $K_R=%0.2g$',tmf-1,jj-1,amp_m{tmf}(ii));
                 title(strTitle);
@@ -468,7 +454,7 @@ if configs.flags.graphics
     
     %% Relative rotation angle map
     % TODO
-    % - [ ] test
+    % [ ] test
         
     t_hfig=figure();
     for tmf=1:2
@@ -482,7 +468,7 @@ if configs.flags.graphics
             t_cb=colorbar('southoutside');
             t_cb.Label.String='\Delta\Theta';
 
-            strTitle=sprintf('[src $m_F=%d$] K_R=%0.2g$',tmf-1,amp_m{tmf}(ii));
+            strTitle=sprintf('[src $m_F=%d$] $K_R=%0.2g$',tmf-1,amp_m{tmf}(ii));
             title(strTitle);
                 
             drawnow

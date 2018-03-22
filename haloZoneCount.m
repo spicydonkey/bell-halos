@@ -1,56 +1,57 @@
-function [nn_halo,z_az,z_el]=haloZoneCount(halo_k,nAz,nEl,sig,lim,histtype)
+function nn_halo=haloZoneCount(halo_k,az,el,sig,lim,histtype)
 % Counts number of vectors around sph-polar zones
 %   a wrapper for testing different zone-types
 %
-% [NN_HALO, Z_AZ, Z_EL] = HALOZONECOUNT(HALO_K, NAZ, NEL, SIG, LIM, HISTTYPE)
+% NN_HALO = HALOZONECOUNT(HALO_K, AZ, EL, SIG, LIM, HISTTYPE)
 %
-%
+% HALO_K: Nx3 array (shot) (TODO - not for latlon)
+% 
 
 % Count each zone
+%
 % TODO
-% [] compare against the lat-lon counting
+% [ ] compare against the lat-lon counting
 % [x] how to handle BAD regions: bad regions are post-processed by NaN-padding
-% [] accept SHOT data (array)
+% [x] ONLY accept SHOT data (array)
 %   [x] gauss
 %       [x] TEST
-%   [] latlon
-% [] document code
+%   [x] simple
+%       [ ] TEST
+% [x] supply latlon zones
+% [ ] document code
 
 
 switch histtype
-    case 'gauss'
-        % define spherical momentum zones
-        az=linspace(-pi,pi,nAz);
-        az=az(1:end-1);             % unique angles only
-        el=linspace(-pi/2,pi/2,nEl);
-        [z_az,z_el]=ndgrid(az,el);      % grid to preserve dimensional ordering in array indexing
+    case 'simple'
+        % simple atom counting in bin: convolution with top-hat/rectangle filter
+        % i.e. counts atoms "in" a defined solid-angle 
+        % TODO - radial
         
-        % % simplify by collating all shots
-        % halo_k_combined=cell(1,2);
-        % for ii=1:2
-        %     halo_k_combined{ii}=vertcat(halo_k{:,ii});
-        % end
-        % 
-        % % Gaussian
-        % nn_halo=cellfun(@(halo) wHaloDensity(halo,nAz,nEl,sig,lim),halo_k_combined,'UniformOutput',false);
-        % 
-
-        nn_halo=wHaloDensity(halo_k,nAz,nEl,sig,lim);
-
-    case 'latlon'
-        % lat-lon
-        az=linspace(-pi,pi,nAz);
-        el=linspace(-pi/2,pi/2,nEl+1);
-        [z_az,z_el]=ndgrid(az,el);      % grid to preserve dimensional ordering in array indexing
-        nn_halo=cell(1,2);
-        for ii=1:2
-            nn_halo{ii}=halo_zone_density(halo_k(:,ii),az,el,NaN,1);
-            nn_halo{ii}=cat(3,nn_halo{ii}{:});  % nazim x nelev x nshot array
+		% get bin widths
+        dpsi_max=sig(1);    % max relative angle from bin-vector
+        
+        % counting atoms in bins
+        k_sph=zxy2sphpol(halo_k);   % cart to sph-polar - more efficient than cart
+        nn_halo=zeros(size(az));  % preallocate bin counts
+        for ii=1:numel(az)
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % performance
+            %   cart: 90 s
+            %   sphpol: 12 s
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            dpsi=diffAngleSph(k_sph(:,1),k_sph(:,2),az(ii),el(ii));
+%             u_ref=sphpol2zxy([az(ii),el(ii),1]);    % cart-vec of this zone
+%             dpsi=diffAngleCart(halo_k,u_ref);
+            nn_halo(ii)=sum(dpsi<dpsi_max);     % number of atoms in this zone
         end
-        nn_halo=cellfun(@(x)mean(x,3)',nn_halo,'UniformOutput',false);
         
+    case 'gauss'
+        warning('gauss mode: grid must be linearly spaced and complete.');
+        [nAz,nEl]=size(az);
+        nn_halo=wHaloDensity(halo_k,nAz,nEl,sig,lim);        % gaussian weighted counting
+            
     otherwise
-        error('unknown histtype. histtype should be either gauss or latlon.');
+        error('unknown histtype. histtype should be either simple or gauss.');
 end
 
 end
