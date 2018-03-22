@@ -5,6 +5,7 @@
 %% CONFIG
 
 dbg=1;
+verbose=1;
 
 % base directory
 dir_base='X:\expdata\spinmom_bell\loop_tscan';
@@ -54,7 +55,7 @@ zxy_samp=vertcat(zxy{:});
 for ii=1:n_mf
     for jj=1:2
         c0=configs.mf{ii}.bec(jj,:);    % estimate
-        cent_bec_avg{ii,jj}=capture_bec(zxy_samp,c0,configs.r_bec_capt);
+        cent_bec_avg{ii,jj}=capture_bec(zxy_samp,c0,configs.r_bec_capt,verbose);
     end
 end
 
@@ -127,6 +128,7 @@ if dbg
         scatter_zxy(vertcat(cent_bec_avg0{ii,:}),1000,colors{ii});
     end
     axis equal;
+    view(3);
 end
 
 
@@ -151,6 +153,7 @@ if dbg
         plot_zxy(zxy_halo(:,ii),1e4,10,colors{ii});
     end
     axis equal;
+    view(3);
 end
 
 % B) radial
@@ -171,6 +174,7 @@ if dbg
         plot_zxy(zxy_halo(:,ii),1e4,10,colors{ii});
     end
     axis equal;
+    view(3);
 end
 
 
@@ -186,8 +190,12 @@ for ii=1:n_mf
 end
 
 if dbg
-    scatter_halo(k_halo);
-end 
+    %     scatter_halo(k_halo);
+    figure;
+    plot_zxy(k_halo,1e4,10);
+    axis equal;
+    view(3);
+end
 
 % %%% A) real-halo local ellipticity
 % % config
@@ -204,7 +212,11 @@ r_lim=[0.9,1.1];
 k_halo=cfilter_norm(k_halo,r_lim(1),r_lim(2));
 
 if dbg
-    scatter_halo(k_halo);
+    %     scatter_halo(k_halo);
+    figure;
+    plot_zxy(k_halo,1e4,10);
+    axis equal;
+    view(3);
 end
 
 

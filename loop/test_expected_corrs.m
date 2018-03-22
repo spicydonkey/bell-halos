@@ -2,11 +2,11 @@
 
 
 %% Load data
-% load('anal_rabi.mat');
+load('anal_rabi.mat');
 
 
 %% config
-tpulse=3.8e-6;    % pulse duration (s)
+tpulse=1000e-6;    % pulse duration (s)
 
 
 %% geometry
@@ -71,7 +71,7 @@ view(3);
 hold off;
 camlight;
 
-
+%%
 % expected correlation
 dotSpair=sum( S_bloch.*(-flip_bb(S_bloch,1)) , 3);      % dot-prod entangled pairs
 dth_bloch=acos(dotSpair);       % relative angle between pair

@@ -6,10 +6,11 @@
 %
 
 
-% Load data
+%% Load data
 load('theta_rabi_20180131.mat');
 
 
+%% main
 % get sph-grid
 n_sphgrid=size(az);
 n_az=n_sphgrid(1);
@@ -24,7 +25,7 @@ idx_az=1:6:n_az;
 idx_el=el_in(1):3:el_in(end);
 
 
-% Plot oscillations
+%% Plot oscillations
 % TODO - do for mf=0 data after background subtraction
 this_mf_idx=2;      % 1 for mf=0; 2 for mf=1 
 
