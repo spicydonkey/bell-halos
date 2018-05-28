@@ -10,6 +10,7 @@ function [g2,dk,h]=summary_disthalo_g2(K,bfastrun,doplot,verbose)
 
 tstart=tic;
 
+
 %% parse inputs
 if ~exist('bfastrun','var')
     bfastrun=false;     % default fully evaluates uncorrelated G2 for normalisation
@@ -42,15 +43,21 @@ filter_type='gaussian';
 filter_size=5;
 filter_sd=1.5;
 
+
 %% g2 analysis
-% preallocate 
-g2=cell(1,3);
-G2s=cell(1,3);
-G2n=cell(1,3);
+% get scattering type
+n_halo=size(K,2);
+n_g2_type=2*n_halo-1;   % in fact all permutations gives n_halo^2 (but symmetry!)
+
+% preallocate
+g2=cell(1,n_g2_type);
+G2s=cell(1,n_g2_type);
+G2n=cell(1,n_g2_type);
+
 counter=1;
 
 %%% Single halo: (0,0)/(1,1)
-for mm=1:2
+for mm=1:n_halo
     if bfastrun
         [g2{counter},G2s{counter},G2n{counter}]=g2_bb_fast(K(:,mm),dk_ed,0.05);
     else
@@ -65,17 +72,20 @@ for mm=1:2
     counter=counter+1;
 end
 
+
 %%% X-species: (0,1)
-if bfastrun
-    [g2{counter},G2s{counter},G2n{counter}]=g2x_bb_fast(K,dk_ed,0.05);
-else
-    [g2{counter},G2s{counter},G2n{counter}]=g2x_bb(K,dk_ed);
-end
-if filter_toggle
-    % filter g2
-    G2s{counter}=smooth3(G2s{counter},filter_type,filter_size,filter_sd);
-    G2n{counter}=smooth3(G2n{counter},filter_type,filter_size,filter_sd);
-    g2{counter}=G2s{counter}./G2n{counter};
+if n_halo==2
+    if bfastrun
+        [g2{counter},G2s{counter},G2n{counter}]=g2x_bb_fast(K,dk_ed,0.05);
+    else
+        [g2{counter},G2s{counter},G2n{counter}]=g2x_bb(K,dk_ed);
+    end
+    if filter_toggle
+        % filter g2
+        G2s{counter}=smooth3(G2s{counter},filter_type,filter_size,filter_sd);
+        G2n{counter}=smooth3(G2n{counter},filter_type,filter_size,filter_sd);
+        g2{counter}=G2s{counter}./G2n{counter};
+    end
 end
 
 
@@ -90,11 +100,10 @@ if doplot
     linestyle={'o-','^-','*-'};
     dispname={'X','Y','Z'};
     
-    % h=NaN(3,1);
     h=figure();
-    for ii=1:3
+    for ii=1:n_g2_type
         %     h(ii)=figure();
-        subplot(1,3,ii);
+        subplot(1,n_g2_type,ii);
         
         temp_g2_perm=g2{ii};    % temporary var to hold dimension permuted g2
         
@@ -119,6 +128,7 @@ if doplot
         grid on;
     end
 end
+
 
 %% DONE
 if verbose>0
