@@ -1,16 +1,17 @@
 % Analysis of global rotation on correlated atom-pair 
 %
-% 2018.04.28: Time evolution of correlation under pi/2 global rotation
+% 2018.04.29: Time evolution of correlation under pi/2 global rotation
 %
 % DKS
 %
 
-%%% configs
-path_src='C:\Users\HE BEC\bell\2018april\exp4_tevo\0.95ms\src';
+
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms7.m';
+
 
 
 %% load config
-run(fullfile(path_src,'config_v1'));
+run(config_name);
 
 
 %% load param log
@@ -397,10 +398,13 @@ E0_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E0_samp);
 E0_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E0_samp);
 
 %%% diplay some output
+
 par_T'
 E_par'
 [E_bootstrap_mean,E_bootstrap_sdev]'
-% [E0_bootstrap_mean,E0_bootstrap_sdev]'
+
+E0_par'
+[E0_bootstrap_mean,E0_bootstrap_sdev]'
 
 
 %% Correlation - data vis

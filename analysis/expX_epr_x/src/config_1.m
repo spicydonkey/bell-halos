@@ -1,4 +1,4 @@
-% Bragg mode occupancy scan
+% EPR experiment (1/2) <JyJy> measurement
 %
 %
 % 2018.05.19: Bragg pulse scan in trap

@@ -1,17 +1,17 @@
 % Analysis of global rotation on correlated atom-pair 
 %
-% 2018.04.13: Experiment with minimal (1.4ms) delays between steps
-%	* exploring various basis (theta)
+% 2018.05.04: raw basis-dependent spin correlation - low mode occupancy
 %
 % DKS
 %
 
-%%% configs
-path_src='C:\Users\HE BEC\bell\2018april\ideal_global_rotation_v3\src';
+
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
+
 
 
 %% load config
-run(fullfile(path_src,'config_v1'));
+run(config_name);
 
 
 %% load param log
@@ -345,7 +345,7 @@ end
 
 %% PRELIM bootstrapping
 %%% CONFIG
-subset_shotsize=900;    % shot-size of bootstrap sampled subset
+subset_shotsize=300;    % shot-size of bootstrap sampled subset
 n_subset=20;            % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
@@ -399,6 +399,7 @@ E0_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E0_samp);
 
 %%% diplay some output
 par_T'
+
 E_par'
 [E_bootstrap_mean,E_bootstrap_sdev]'
 

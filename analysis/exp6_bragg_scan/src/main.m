@@ -7,12 +7,14 @@
 % DKS
 %
 
-%%% configs
-path_src='C:\Users\David\Documents\bell\bell_data_20180527\exp6_bragg_halo_high_number\src';
+
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp6_bragg_scan\src\config_1.m';
+
 
 
 %% load config
-run(fullfile(path_src,'config_v1'));
+run(config_name);
+
 
 
 %% load param log

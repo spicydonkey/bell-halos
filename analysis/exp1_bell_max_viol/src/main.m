@@ -1,16 +1,19 @@
 % Analysis of global rotation on correlated atom-pair 
 %
-% 2018.04.29: Time evolution of correlation under pi/2 global rotation
+% 2018.04.29: maximal violation of Bell inequality with triplet
+%           * low mode occupancy source
+%           * pi/2 global rotation
 %
 % DKS
 %
 
-%%% configs
-path_src='C:\Users\HE BEC\bell\2018april\exp4_tevo\1.7ms\src';
+
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_1.m';
+
 
 
 %% load config
-run(fullfile(path_src,'config_v1'));
+run(config_name);
 
 
 %% load param log
@@ -320,7 +323,6 @@ end
 %       + B-field distortions in halos aren't perfectly filtered
 %
 
-
 g2anti_par=NaN(nparam,1);
 g2corr_par=NaN(nparam,1);
 E_par=NaN(nparam,1);
@@ -330,11 +332,9 @@ for ii=1:nparam
     % get this paramset
     tg2=g2{ii};
     
-    % aproximate g2 amplitude
-%     g2corr_par(ii)=max([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     
+    % aproximate g2 amplitude    
     g2corr_par(ii)=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     
     g2anti_par(ii)=tg2{3}(15,15,15);
-    
     
     % evaluate spin-corr based on g2
     [E_par(ii),E0_par(ii)]=g2toE(g2corr_par(ii),g2anti_par(ii));
@@ -344,7 +344,7 @@ end
 
 %% PRELIM bootstrapping
 %%% CONFIG
-subset_shotsize=150;    % shot-size of bootstrap sampled subset
+subset_shotsize=600;    % shot-size of bootstrap sampled subset
 n_subset=20;            % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
@@ -397,8 +397,8 @@ E0_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E0_samp);
 E0_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E0_samp);
 
 %%% diplay some output
-
 par_T'
+
 E_par'
 [E_bootstrap_mean,E_bootstrap_sdev]'
 
