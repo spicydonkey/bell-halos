@@ -9,7 +9,7 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\David\Documents\bell\bell_data_20180527\expX_epr';
+configs.path.base='C:\Users\HE BEC\bell\2018april\expX_epr_x';
 
 % configs.path.data=fullfile(configs.path.base,'data');
 exp_num=3;

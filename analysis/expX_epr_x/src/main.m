@@ -7,7 +7,7 @@
 % DKS
 %
 
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\expX_epr_x\src\config_1.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\expX_epr_x\src\config_3.m';
 
 
 
@@ -386,7 +386,7 @@ end
 
 %% PRELIM bootstrapping
 %%% CONFIG
-subset_shotsize=800;    % shot-size of bootstrap sampled subset
+subset_shotsize=300;    % shot-size of bootstrap sampled subset
 n_subset=20;            % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
@@ -483,25 +483,24 @@ ylim([-1,1]);
 
 
 %% simple vis of 3D g2
-% %   NOTE: 3d g2 is completely averaged across Y-axis
-% for ii=1:nparam
-%     
-%     tT=1e6*par_T(ii);
-%     tfigname=sprintf('g2_T%0.3g',tT);
-%     
-%     figure('Name',tfigname);
-%     hold on;
-%     for jj=1:3      % 3-types of spin-spin type of mom-correlation
-%         subplot(1,3,jj);
-%         imagesc(mean(g2{ii}{jj},3));        % averaged across Y (3rd dim)
-%         
-%         title(sprintf('TH=%d, G2=%d',ii,jj));
-%         colorbar;
-%         
-%         axis square;
-%     end
-% end
-
+%   NOTE: 3d g2 is completely averaged across Y-axis
+for ii=1:nparam
+    
+    tT=1e6*par_T(ii);
+    tfigname=sprintf('g2_T%0.3g',tT);
+    
+    figure('Name',tfigname);
+    hold on;
+    for jj=1:3      % 3-types of spin-spin type of mom-correlation
+        subplot(1,3,jj);
+        imagesc(mean(g2{ii}{jj},3));        % averaged across Y (3rd dim)
+        
+        title(sprintf('TH=%d, G2=%d',ii,jj));
+        colorbar;
+        
+        axis square;
+    end
+end
 
 
 %% g2 spatial distribution

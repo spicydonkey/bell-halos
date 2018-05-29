@@ -9,9 +9,11 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\HE BEC\bell\2018april\exp5_low_n_theta_v2';
+configs.path.base='C:\Users\HE BEC\bell\2018april\exp5_bell_yrot';
 
-configs.path.data=fullfile(configs.path.base,'data');
+% configs.path.data=fullfile(configs.path.base,'data');
+exp_num=2;
+configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
 
 configs.path.out=fullfile(configs.path.base,'out');
 configs.path.src=fullfile(configs.path.base,'src');
@@ -60,3 +62,7 @@ configs.filt.z_cap=0.8;
 configs.filt2.r_crop=[0.93,1.07];
 configs.filt2.z_cap=0.7;
 
+
+%%% halo centering
+configs.post.Dk{1}=[-0.04,-0.01,-0.025];
+configs.post.Dk{2}=[0.02,0.01,0];
