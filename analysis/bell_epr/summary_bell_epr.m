@@ -106,6 +106,15 @@ C_epr_max=sqrt(2)/4;
 
 
 %% Data vis
+%%% config
+mark_typ='o';
+mark_siz=7;
+line_wid=1.2;
+line_col=[1 0 0];
+face_col=colorspace('HSL->RGB',[1,1,1.7].*colorspace('RGB->HSL',line_col));
+
+
+%%% graphics
 h_epr=figure('Name','epr_steering');
 ax=gca;
 hold on;
@@ -118,26 +127,27 @@ h_epr_expdata=ploterr(theta_n/pi,C_epr,theta_n_err/pi,C_epr_err,'o','hhxy',0);
 
 % annotation
 % NOTE: handle indices (1): marker; (2): X-bar; (3): Y-bar;
-set(h_epr_expdata(1),'Marker','o','MarkerSize',7,...
-    'Color','r','LineWidth',1.2,...
-    'MarkerFaceColor','w',...
+set(h_epr_expdata(1),'Marker',mark_typ,'MarkerSize',mark_siz,...
+    'Color',line_col,'LineWidth',line_wid,...
+    'MarkerFaceColor',face_col,...
     'DisplayName','Experiment');
-set(h_epr_expdata(2),'Color','r','LineWidth',1.2,...
+set(h_epr_expdata(2),'Color',line_col,'LineWidth',line_wid,...
     'DisplayName','');
-set(h_epr_expdata(3),'Color','r','LineWidth',1.2,...
+set(h_epr_expdata(3),'Color',line_col,'LineWidth',line_wid,...
     'DisplayName','');
 
 
 %%% Theory
 p_epr_theory=plot(theta_th/pi,C_epr_th,'k--','LineWidth',1.5,...
     'DisplayName','$\vert\Psi^+\rangle$ Bell triplet');
+uistack(p_epr_theory,'bottom');
 
 
 % EPR-steering Inequality
 p_epr_lim=line(ax.XLim,C_epr_max*ones(1,2),...
     'Color','k','LineStyle','-','LineWidth',1.5,...
     'DisplayName','EPR-steering');
-
+uistack(p_epr_lim,'bottom');
 
 %%% annotation
 title('EPR-steering');
@@ -169,9 +179,11 @@ E_bell_max=1/sqrt(2);
 %%% config
 mark_typ='o';
 mark_siz=7;
-line_col='b';
-face_col='w';
 line_wid=1.2;
+% line_col='b';
+% face_col='w';
+line_col=[0 0 1];
+face_col=colorspace('HSL->RGB',[1,1,1.7].*colorspace('RGB->HSL',line_col));
 
 
 %%% graphics
@@ -196,17 +208,16 @@ set(h_bell_expdata(2),'Color',line_col,'LineWidth',line_wid,...
 set(h_bell_expdata(3),'Color',line_col,'LineWidth',line_wid,...
     'DisplayName','');
 
-
 %%% Theory
 p_bell_theory=plot(theta_bell_th/pi,E_bell_th,'k--','LineWidth',1.5,...
     'DisplayName','$\vert\Psi^+\rangle$ Bell triplet');
-
+uistack(p_bell_theory,'bottom');
 
 % EPR-steering Inequality
 p_bell_lim=line(ax.XLim,E_bell_max*ones(1,2),...
     'Color','k','LineStyle','-','LineWidth',1.5,...
     'DisplayName','Bell inequality');
-
+uistack(p_bell_lim,'bottom');
 
 %%% annotation
 title('Bell correlation');
