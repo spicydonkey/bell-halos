@@ -69,13 +69,16 @@ E0_y=0.926;
 E0_y_err=0.08;
 
 
-%% EPR-steering
-%%% Experiment
-% n to theta
+
+%% Set up n-axis - theta
 theta_n=T_raman_n/Tpi*pi;       % simple linear model
 theta_n_err=theta_frac_unc*theta_n;
 
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% EPR-steering
+%%% Experiment
 % coefficient
 C_epr=1/4*(E_y+E_n);          % ensure vectors are row OR col
 C_epr_err=1/4*sqrt(E_y_err^2+E_n_err.^2);      % simple error estimate
@@ -84,7 +87,7 @@ C0_epr_err=1/4*sqrt(E0_y_err^2+E0_n_err.^2);
 
 
 %%% Theory: Bell+
-theta_th=linspace(0,pi,1e3);
+theta_th=linspace(-pi,2*pi,1e3);
 C_epr_th=0.5*sin(theta_th).^2;
 
 
@@ -101,22 +104,22 @@ xlim([-0.05,1.05]);
 ylim([-0.05,0.5]);
 
 %%% Experiment
-h_expdata=ploterr(theta_n/pi,C_epr,theta_n_err/pi,C_epr_err,'o','hhxy',0);
+h_epr_expdata=ploterr(theta_n/pi,C_epr,theta_n_err/pi,C_epr_err,'o','hhxy',0);
 
 % annotation
 % NOTE: handle indices (1): marker; (2): X-bar; (3): Y-bar;
-set(h_expdata(1),'Marker','o','MarkerSize',7,...
+set(h_epr_expdata(1),'Marker','o','MarkerSize',7,...
     'Color','r','LineWidth',1.2,...
     'MarkerFaceColor','w',...
     'DisplayName','Experiment');
-set(h_expdata(2),'Color','r','LineWidth',1.2,...
+set(h_epr_expdata(2),'Color','r','LineWidth',1.2,...
     'DisplayName','');
-set(h_expdata(3),'Color','r','LineWidth',1.2,...
+set(h_epr_expdata(3),'Color','r','LineWidth',1.2,...
     'DisplayName','');
 
 
 %%% Theory
-p_theory=plot(theta_th/pi,C_epr_th,'k--','LineWidth',1.5,...
+p_epr_theory=plot(theta_th/pi,C_epr_th,'k--','LineWidth',1.5,...
     'DisplayName','$\vert\Psi^+\rangle$ Bell triplet');
 
 
@@ -132,4 +135,73 @@ xlabel('$\theta/\pi$');
 ylabel('$\mathcal{E}$');
 box on;
 
-lgd=legend([h_expdata(1),p_theory,p_epr_lim]);
+lgd=legend([h_epr_expdata(1),p_epr_theory,p_epr_lim]);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Bell correlations
+
+%%% Experiment
+% Bell correlation
+%   same as E_n* values
+
+
+%%% Theory: Bell+
+theta_bell_th=linspace(-pi,2*pi,1e3);
+E_bell_th=-cos(2*theta_bell_th);
+
+
+%%% Bell inequality
+E_bell_max=1/sqrt(2);
+
+
+%% data vis
+%%% config
+mark_typ='o';
+mark_siz=7;
+line_col='b';
+face_col='w';
+line_wid=1.2;
+
+
+%%% graphics
+h_bell=figure('Name','bell_test');
+ax=gca;
+hold on;
+
+xlim([-0.05,1.05]);
+ylim([-1,1]);
+
+%%% Experiment
+h_bell_expdata=ploterr(theta_n/pi,E_n,theta_n_err/pi,E_n_err,'o','hhxy',0);
+
+% annotation
+% NOTE: handle indices (1): marker; (2): X-bar; (3): Y-bar;
+set(h_bell_expdata(1),'Marker',mark_typ,'MarkerSize',mark_siz,...
+    'Color',line_col,'LineWidth',line_wid,...
+    'MarkerFaceColor',face_col,...
+    'DisplayName','Experiment');
+set(h_bell_expdata(2),'Color',line_col,'LineWidth',line_wid,...
+    'DisplayName','');
+set(h_bell_expdata(3),'Color',line_col,'LineWidth',line_wid,...
+    'DisplayName','');
+
+
+%%% Theory
+p_bell_theory=plot(theta_bell_th/pi,E_bell_th,'k--','LineWidth',1.5,...
+    'DisplayName','$\vert\Psi^+\rangle$ Bell triplet');
+
+
+% EPR-steering Inequality
+p_bell_lim=line(ax.XLim,E_bell_max*ones(1,2),...
+    'Color','k','LineStyle','-','LineWidth',1.5,...
+    'DisplayName','Bell inequality');
+
+
+%%% annotation
+title('Bell correlation');
+xlabel('$\theta/\pi$');
+ylabel('$\mathcal{B}$');
+box on;
+
+lgd=legend([h_bell_expdata(1),p_bell_theory,p_bell_lim]);
