@@ -8,7 +8,7 @@
 %   [ ] Update uncertainty in theta estimate
 %   [x] Update with exp data for Ey  
 %   [x] Update with all exp data for En; n in ZX-plane
-%       1,2,3,VIOL
+%       1,2,3,VIOL,ideal_global_rotation_v4 (pi/4)
 
 
 %% Experimental data (as code)
@@ -52,6 +52,16 @@ E_n_cell{idx}=0.85;
 E_n_err_cell{idx}=0.05;
 E0_n_cell{idx}=0.9395;
 E0_n_err_cell{idx}=0.0725;
+
+
+%%%% IDEAL_GLOBAL_ROTATION_V4 (slightly higher mode occupancy)
+% picking out theta~=pi/4 (par_T=2.5us)
+idx=5;
+T_raman_n_cell{idx}=1e-5*[0.2500];
+E_n_cell{idx}=[0.0933];
+E_n_err_cell{idx}=[0.0815];
+E0_n_cell{idx}=[0.1112];
+E0_n_err_cell{idx}=[0.0978];
 
 
 % collate cell-data as array
