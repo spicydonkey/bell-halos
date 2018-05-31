@@ -13,6 +13,7 @@
 *.pdf*
 *.eps*
 *.png*
+*.svg*
 
 # Matlab
 *.asv
