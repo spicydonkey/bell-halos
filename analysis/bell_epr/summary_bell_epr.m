@@ -112,15 +112,22 @@ mark_siz=7;
 line_wid=1.2;
 line_col=[1 0 0];
 face_col=colorspace('HSL->RGB',[1,1,1.7].*colorspace('RGB->HSL',line_col));
-
+ptch_col=0.85;           % some gray to patch violation zone
+ptch_alp=1;             % patch transparency
+x_lim=[-0.05,1.05];     % set to [] for auto
+y_lim=[-0.05,0.5];
 
 %%% graphics
 h_epr=figure('Name','epr_steering');
 ax=gca;
 hold on;
 
-xlim([-0.05,1.05]);
-ylim([-0.05,0.5]);
+if ~isempty(x_lim)
+    xlim(x_lim)
+end
+if ~isempty(y_lim)
+    ylim(y_lim)
+end
 
 %%% Experiment
 h_epr_expdata=ploterr(theta_n/pi,C_epr,theta_n_err/pi,C_epr_err,'o','hhxy',0);
@@ -143,13 +150,22 @@ p_epr_theory=plot(theta_th/pi,C_epr_th,'k--','LineWidth',1.5,...
 uistack(p_epr_theory,'bottom');
 
 
-% EPR-steering Inequality
+%%% EPR-steering Inequality
 p_epr_lim=line(ax.XLim,C_epr_max*ones(1,2),...
     'Color','k','LineStyle','-','LineWidth',1.5,...
     'DisplayName','EPR-steering');
 uistack(p_epr_lim,'bottom');
 
+% patch
+p_epr_viol=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    [C_epr_max,C_epr_max,ax.YLim(2),ax.YLim(2)],...
+    ptch_col*ones(1,3),'FaceAlpha',ptch_alp,...
+    'EdgeColor','none');
+uistack(p_epr_viol,'bottom');
+
+
 %%% annotation
+set(gca,'Layer','Top');     % graphics axes should be always on top
 title('EPR-steering');
 xlabel('$\theta/\pi$');
 ylabel('$\mathcal{E}$');
@@ -180,10 +196,12 @@ E_bell_max=1/sqrt(2);
 mark_typ='o';
 mark_siz=7;
 line_wid=1.2;
-% line_col='b';
-% face_col='w';
 line_col=[0 0 1];
 face_col=colorspace('HSL->RGB',[1,1,1.7].*colorspace('RGB->HSL',line_col));
+ptch_col=0.85;           % some gray to patch violation zone
+ptch_alp=1;             % patch transparency
+x_lim=[-0.05,1.05];     % set to [] for auto
+y_lim=[-1,1];
 
 
 %%% graphics
@@ -191,8 +209,12 @@ h_bell=figure('Name','bell_test');
 ax=gca;
 hold on;
 
-xlim([-0.05,1.05]);
-ylim([-1,1]);
+if ~isempty(x_lim)
+    xlim(x_lim)
+end
+if ~isempty(y_lim)
+    ylim(y_lim)
+end
 
 %%% Experiment
 h_bell_expdata=ploterr(theta_n/pi,E_n,theta_n_err/pi,E_n_err,'o','hhxy',0);
@@ -213,13 +235,22 @@ p_bell_theory=plot(theta_bell_th/pi,E_bell_th,'k--','LineWidth',1.5,...
     'DisplayName','$\vert\Psi^+\rangle$ Bell triplet');
 uistack(p_bell_theory,'bottom');
 
-% EPR-steering Inequality
+%%% Bell Inequality
 p_bell_lim=line(ax.XLim,E_bell_max*ones(1,2),...
     'Color','k','LineStyle','-','LineWidth',1.5,...
     'DisplayName','Bell inequality');
 uistack(p_bell_lim,'bottom');
 
+% patch
+p_bell_viol=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    [E_bell_max,E_bell_max,ax.YLim(2),ax.YLim(2)],...
+    ptch_col*ones(1,3),'FaceAlpha',ptch_alp,...
+    'EdgeColor','none');
+uistack(p_bell_viol,'bottom');
+
+
 %%% annotation
+set(gca,'Layer','Top');     % graphics axes should be always on top
 title('Bell correlation');
 xlabel('$\theta/\pi$');
 ylabel('$\mathcal{B}$');
