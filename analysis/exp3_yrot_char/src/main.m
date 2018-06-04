@@ -5,9 +5,9 @@
 % 2018-05-29
 
 
-config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_1.m';
+% config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_1.m';
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_2.m';
-
+config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
 
 
 %% load config
@@ -313,13 +313,24 @@ end
 
 
 %% number of counts captured in halo
-n_sc_counts_avg=NaN(nparam,n_mf);
-n_sc_counts_std=NaN(nparam,n_mf);
+% number of counts detected in filtered halo region
+n_sc_counts=cellfun(@(v) shotSize(v),k_par,'UniformOutput',false);
 
-for ii=1:nparam
-    n_sc_counts_avg(ii,:)=mean(shotSize(k_par{ii}));
-    n_sc_counts_std(ii,:)=std(shotSize(k_par{ii}));
-end
+% statistics: avg and std for number in each halo
+%   NOTE: Nsc Poissonian and stat analysis needs to be careful
+n_sc_counts_avg=cellfun(@(n) mean(n,1),n_sc_counts,'UniformOutput',false);
+n_sc_counts_avg=cat(1,n_sc_counts_avg{:});
+
+n_sc_counts_std=cellfun(@(n) std(n,[],1),n_sc_counts,'UniformOutput',false);
+n_sc_counts_std=cat(1,n_sc_counts_std{:});
+    
+% pop ratio per shot
+p_shot=cellfun(@(n) n./sum(n,2),n_sc_counts,'UniformOutput',false);
+p_avg=cellfun(@(p) mean(p,1),p_shot,'UniformOutput',false);
+p_avg=cat(1,p_avg{:});
+p_std=cellfun(@(p) std(p,[],1),p_shot,'UniformOutput',false);
+p_std=cat(1,p_std{:});
+
 
 % output
 fprintf('Summary: Counts in halo\n');
@@ -343,9 +354,19 @@ hold on;
 cc=distinguishable_colors(n_mf);
 mkr={'o','^','d'};
 
+% h=NaN(n_mf,1);
+% for ii=1:n_mf
+%     th=ploterr(1e6*par_T,P_rabi(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
+%     set(th(1),'color',cc(ii,:),'Marker',mkr{ii},'MarkerFaceColor','w',...
+%         'DisplayName',num2str(configs.mf(ii).mf));
+%     set(th(2),'color',cc(ii,:));
+%     
+%     h(ii)=th(1);
+% end
+
 h=NaN(n_mf,1);
 for ii=1:n_mf
-    th=ploterr(1e6*par_T,P_rabi(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
+    th=ploterr(1e6*par_T,p_avg(:,ii),[],p_std(:,ii),'o','hhxy',0);
     set(th(1),'color',cc(ii,:),'Marker',mkr{ii},'MarkerFaceColor','w',...
         'DisplayName',num2str(configs.mf(ii).mf));
     set(th(2),'color',cc(ii,:));
@@ -356,7 +377,7 @@ end
 xlabel('Pulse duration [$\mu$s]');
 ylabel('$P(m_F)$');
 
-lgd=legend(h);
+lgd=legend(h,'Location','East');
 title(lgd,'$m_F$');
 
 
