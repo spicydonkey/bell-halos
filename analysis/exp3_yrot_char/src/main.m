@@ -313,24 +313,18 @@ end
 
 
 %% number of counts captured in halo
+%   NOTE: Nsc Poissonian and stat analysis needs to be careful
+
 % number of counts detected in filtered halo region
 n_sc_counts=cellfun(@(v) shotSize(v),k_par,'UniformOutput',false);
 
 % statistics: avg and std for number in each halo
-%   NOTE: Nsc Poissonian and stat analysis needs to be careful
 n_sc_counts_avg=cellfun(@(n) mean(n,1),n_sc_counts,'UniformOutput',false);
 n_sc_counts_avg=cat(1,n_sc_counts_avg{:});
 
 n_sc_counts_std=cellfun(@(n) std(n,[],1),n_sc_counts,'UniformOutput',false);
 n_sc_counts_std=cat(1,n_sc_counts_std{:});
     
-% pop ratio per shot
-p_shot=cellfun(@(n) n./sum(n,2),n_sc_counts,'UniformOutput',false);
-p_avg=cellfun(@(p) mean(p,1),p_shot,'UniformOutput',false);
-p_avg=cat(1,p_avg{:});
-p_std=cellfun(@(p) std(p,[],1),p_shot,'UniformOutput',false);
-p_std=cat(1,p_std{:});
-
 
 % output
 fprintf('Summary: Counts in halo\n');
@@ -344,240 +338,38 @@ end
 
 
 %% number transfer in the triplet
-n_sc_tot=sum(n_sc_counts_avg,2);
+n_sc_tot=cellfun(@(n) sum(n,2),n_sc_counts,'UniformOutput',false);      % total sc counts det'd in each shot
 
-P_rabi=n_sc_counts_avg./n_sc_tot;
-P_rabi_std=n_sc_counts_std./n_sc_tot;
+% state population fraction and Rabi oscillation
+P_rabi_shot=cellfun(@(n,N) n./N,n_sc_counts,n_sc_tot,'UniformOutput',false);
+P_rabi_avg=cellfun(@(p) mean(p,1),P_rabi_shot,'UniformOutput',false);
+P_rabi_avg=cat(1,P_rabi_avg{:});
+P_rabi_std=cellfun(@(p) std(p,[],1),P_rabi_shot,'UniformOutput',false);
+P_rabi_std=cat(1,P_rabi_std{:});
 
+
+%%% vis
 figure('Name','rabi_oscillation');
 hold on;
-cc=distinguishable_colors(n_mf);
+[cc,clight,cdark]=palette(n_mf);
 mkr={'o','^','d'};
 
-% h=NaN(n_mf,1);
-% for ii=1:n_mf
-%     th=ploterr(1e6*par_T,P_rabi(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
-%     set(th(1),'color',cc(ii,:),'Marker',mkr{ii},'MarkerFaceColor','w',...
-%         'DisplayName',num2str(configs.mf(ii).mf));
-%     set(th(2),'color',cc(ii,:));
-%     
-%     h(ii)=th(1);
-% end
 
 h=NaN(n_mf,1);
 for ii=1:n_mf
-    th=ploterr(1e6*par_T,p_avg(:,ii),[],p_std(:,ii),'o','hhxy',0);
-    set(th(1),'color',cc(ii,:),'Marker',mkr{ii},'MarkerFaceColor','w',...
+    th=ploterr(1e6*par_T,P_rabi(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
+    set(th(1),'color',cc(ii,:),'Marker',mkr{ii},...
+        'MarkerFaceColor',clight(ii,:),...
         'DisplayName',num2str(configs.mf(ii).mf));
     set(th(2),'color',cc(ii,:));
     
     h(ii)=th(1);
 end
 
+set(gca,'Layer','Top');     % graphics axes should be always on top
+
 xlabel('Pulse duration [$\mu$s]');
 ylabel('$P(m_F)$');
 
 lgd=legend(h,'Location','East');
 title(lgd,'$m_F$');
-
-
-%% g2 BB
-% % MONEY
-% 
-% % TODO 
-% %   [ ] halo centering
-% %   [ ] improve filtering
-% %
-% 
-% 
-% g2=cell(nparam,1);
-% dk=cell(nparam,1);
-% 
-% % for ii=1
-% for ii=1:nparam
-%     % run full g2
-%     [tg2,tdk]=summary_disthalo_g2(k_par{ii},0,true,0);     
-% %     [tg2,tdk]=summary_disthalo_g2(k_par{ii},1,true,0);      % fast test
-%         
-%     % store
-%     g2{ii}=tg2;
-%     dk{ii}=tdk;
-% end
-%     
-
-%% Correlation coefficient
-% %    Note: may contain systematic error since unverified by Jan
-% %       + B-field distortions in halos aren't perfectly filtered
-% %
-% 
-% 
-% g2anti_par=NaN(nparam,1);
-% g2corr_par=NaN(nparam,1);
-% E_par=NaN(nparam,1);
-% E0_par=NaN(nparam,1);
-% 
-% for ii=1:nparam
-%     % get this paramset
-%     tg2=g2{ii};
-%     
-%     % aproximate g2 amplitude
-% %     g2corr_par(ii)=max([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     
-%     g2corr_par(ii)=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     
-%     g2anti_par(ii)=tg2{3}(15,15,15);
-%     
-%     
-%     % evaluate spin-corr based on g2
-%     [E_par(ii),E0_par(ii)]=g2toE(g2corr_par(ii),g2anti_par(ii));
-% end
-% 
-
-
-%% PRELIM bootstrapping
-% %%% CONFIG
-% n_frac_samp=1/7;
-% n_subset=20;                    % no. of bootstrap repeats
-% %   NOTE: unclear at the moment how config affects analysis
-% 
-% 
-% %%% main
-% nshot_par=shotSize(k_par);    % num. exp shots for each scanned parameter set
-% 
-% subset_shotsize=nshot_par*n_frac_samp;    % shot-size of bootstrap sampled subset
-% 
-% 
-% g2anti_samp=cell(nparam,1);
-% g2corr_samp=cell(nparam,1);
-% E_samp=cell(nparam,1);
-% E0_samp=cell(nparam,1);
-% 
-% for ii=1:nparam
-%     tnshot=nshot_par(ii);
-% %     tn_frac_samp=n_frac_samp(ii);
-%     tn_frac_samp=n_frac_samp;
-%     tk_par=k_par{ii};
-%     
-%     g2anti_samp{ii}=NaN(n_subset,1);
-%     g2corr_samp{ii}=NaN(n_subset,1);
-%     E_samp{ii}=NaN(n_subset,1);
-%     E0_samp{ii}=NaN(n_subset,1);
-%     
-%     for jj=1:n_subset
-%         Isamp=rand(tnshot,1)<tn_frac_samp;       % randomly select subset of shots to sample
-%         k_samp=tk_par(Isamp,:);           % the sampled data
-%         
-%         [tg2,tdk]=summary_disthalo_g2(k_samp,0,0,0);      % evaluate function
-%         
-% %         tg2corr=max([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
-%         tg2corr=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
-%         tg2anti=tg2{3}(15,15,15);
-%         
-%         [tE,tE0]=g2toE(tg2corr,tg2anti);
-%         
-%         % store
-%         g2anti_samp{ii}(jj)=tg2anti;
-%         g2corr_samp{ii}(jj)=tg2corr;
-%         E_samp{ii}(jj)=tE;
-%         E0_samp{ii}(jj)=tE0;
-%     end
-% end
-% 
-% % statistics
-% E_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E_samp);
-% E_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E_samp);
-% 
-% E0_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E0_samp);
-% E0_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E0_samp);
-% 
-% %%% diplay some output
-% par_T'
-% 
-% E_par'
-% [E_bootstrap_mean,E_bootstrap_sdev]'
-% 
-% E0_par'
-% [E0_bootstrap_mean,E0_bootstrap_sdev]'
-
-
-%% Correlation - data vis
-% % Measured correlation
-% figure('Name','E_raw');
-% 
-% hh=ploterr(par_T/10e-6,E_par,...
-%     [],E_bootstrap_sdev,...
-%     'o','hhxy',0);
-% set(hh(1),'Marker','o','MarkerSize',7,...
-%     'Color','b','LineWidth',1.2,...
-%     'MarkerFaceColor','w');
-% set(hh(2),'Color','b','LineWidth',1.2);  % Y-err
-% 
-% % xlim([0,1]);
-% ylim([-1,1]);
-% xlabel('$\theta_0/\pi$');
-% ylabel('$E$');
-% 
-% 
-% % Mode occupancy corrected correlation
-% figure('Name','E_corrected');
-% 
-% hh=ploterr(par_T/10e-6,E0_par,...
-%     [],E0_bootstrap_sdev,...
-%     'o','hhxy',0);
-% set(hh(1),'Marker','o','MarkerSize',7,...
-%     'Color','k','LineWidth',1.2,...
-%     'MarkerFaceColor','w');
-% set(hh(2),'Color','k','LineWidth',1.2);  % Y-err
-% 
-% % xlim([0,1]);
-% ylim([-1,1]);
-% xlabel('$\theta_0/\pi$');
-% ylabel('$\bar{E}$');
-% 
-% ylim([-1,1]);
-
-
-
-%% simple vis of 3D g2
-% %   NOTE: 3d g2 is completely averaged across Y-axis
-% for ii=1:nparam
-%     
-%     tT=1e6*par_T(ii);
-%     tfigname=sprintf('g2_T%0.3g',tT);
-%     
-%     figure('Name',tfigname);
-%     hold on;
-%     for jj=1:3      % 3-types of spin-spin type of mom-correlation
-%         subplot(1,3,jj);
-%         imagesc(mean(g2{ii}{jj},3));        % averaged across Y (3rd dim)
-%         
-%         title(sprintf('TH=%d, G2=%d',ii,jj));
-%         colorbar;
-%         
-%         axis square;
-%     end
-% end
-
-
-%% g2 spatial distribution
-% % data to analyse
-% k=k_par{1};
-% 
-% % config
-% naz=200;
-% nel=100;
-% [az,el]=sphgrid(naz,nel);
-% 
-% b_pole=(abs(el)>asin(0.6));      % bool to bad region around poles
-% 
-% 
-% % count
-% NN=cellfun(@(x) haloZoneCount(x,az,el,0.03,[],'simple'),k,'UniformOutput',false);
-% Nhalo{1}=cat(3,NN{:,1});
-% Nhalo{2}=cat(3,NN{:,2});
-% 
-% Nhalo{1}(repmat(b_pole,[1,1,nshot]))=NaN;
-% Nhalo{2}(repmat(b_pole,[1,1,nshot]))=NaN;
-% 
-% % analysis
-% summary_disthalo_g2dist(Nhalo,az,el,1);
-% 
-% 
