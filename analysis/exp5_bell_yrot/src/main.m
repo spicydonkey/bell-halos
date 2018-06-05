@@ -372,7 +372,6 @@ for ii=1:nparam
     tg2=g2{ii};
     
     % aproximate g2 amplitude
-%     g2corr_par(ii)=max([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     
     g2corr_par(ii)=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     
     g2anti_par(ii)=tg2{3}(15,15,15);
     
@@ -403,7 +402,6 @@ E0_samp=cell(nparam,1);
 
 for ii=1:nparam
     tnshot=nshot_par(ii);
-%     tn_frac_samp=n_frac_samp(ii);
     tn_frac_samp=n_frac_samp;
     tk_par=k_par{ii};
     
