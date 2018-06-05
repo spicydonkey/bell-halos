@@ -13,7 +13,7 @@ exp_param=expparams();
 %% CONFIGS
 configs.path.base='C:\Users\David\Documents\bell\exp1_bell_inequality';
 
-exp_num=5;
+exp_num=8;
 configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
 
 configs.path.out=fullfile(configs.path.base,'out');
@@ -25,8 +25,8 @@ configs.flag.param_scan=0;      % 0 for no scan; 1 for param scan
 configs.path.paramlog=fullfile(configs.path.data,'LOG_parameters.txt');
 
 configs.load.id=[];
-configs.load.mincount=600;
-configs.load.maxcount=1400;     
+configs.load.mincount=700;
+configs.load.maxcount=1500;
 
 configs.load.window{1}=[0.39,0.45];         % T [s]
 configs.load.window{2}=[-35e-3,35e-3];      % X [m]
@@ -39,13 +39,13 @@ configs.mf(1).mf=1;
 configs.mf(1).window={vz*[0.3952,0.4118],35e-3*[-1,1],35e-3*[-1,1]};
 configs.mf(1).p_bec0=[1.6218,  -2.8e-3,    -1.1e-3;
                    1.6730,  -3.5e-3,    -1.0e-3];
-configs.mf(1).r_bec0=6e-3;
+configs.mf(1).r_bec0=5e-3;
 
 configs.mf(2).mf=0;
 configs.mf(2).window={vz*[0.4118,0.429],35e-3*[-1,1],35e-3*[-1,1]};
 configs.mf(2).p_bec0=[1.6867,  0.9e-3,    3.5e-3;
                     1.7407,  1.1e-3,    4.2e-3];
-configs.mf(2).r_bec0=6e-3;
+configs.mf(2).r_bec0=5e-3;
                            
 
 % configs.mf{3}.mf=-1;
@@ -63,7 +63,7 @@ configs.filt.z_cap=0.8;
 configs.filt2.r_crop=[0.9,1.1];
 configs.filt2.z_cap=0.75;
 
-    
+
 %%% halo centering
 configs.post.Dk{1}=[-0.04,-0.015,-0.01];
 configs.post.Dk{2}=[0.01,0.01,0];

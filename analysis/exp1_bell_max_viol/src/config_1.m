@@ -11,9 +11,11 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\HE BEC\bell\2018april\exp1_fight_inequality';
+configs.path.base='C:\Users\David\Documents\bell\exp1_bell_inequality';
 
-configs.path.data=fullfile(configs.path.base,'data');
+% configs.path.data=fullfile(configs.path.base,'data');
+exp_num=1;
+configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
 
 configs.path.out=fullfile(configs.path.base,'out');
 configs.path.src=fullfile(configs.path.base,'src');
@@ -62,3 +64,8 @@ configs.filt.z_cap=0.8;
 configs.filt2.r_crop=[0.9,1.1];
 configs.filt2.z_cap=0.8;
 
+
+%%% halo centering
+configs.post.Dk{1}=[-0.005,-0.013,0];
+configs.post.Dk{2}=[0.018,0.013,0];
+configs.post.Dk{3}=[0,0,0];

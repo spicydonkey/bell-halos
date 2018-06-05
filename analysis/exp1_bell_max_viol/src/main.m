@@ -8,8 +8,10 @@
 %
 
 
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_1.m';
-
+% config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_1.m';
+% config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_3.m';
+% config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_5.m';
+config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_8.m';
 
 
 %% load config
@@ -295,7 +297,26 @@ end
 clear txy zxy zxy0 zxy0_filt tzxy tzxy_mf tp_bec tp_bec0 tp_halo tr_bec0 tr_lim;
 clear h_zxy*;       % clear figs
 
+
 %% ANALYSIS
+
+k_par_orig=k_par;       % save original
+
+
+%% HACK: optimise halo centering
+k_par=k_par_orig;       % to orig
+
+% displace
+for ii=1:nparam
+    tk=k_par{ii};
+    
+    for jj=1:n_mf
+        tk(:,jj)=boost_zxy(tk(:,jj),configs.post.Dk{jj});
+    end
+    
+    k_par{ii}=tk;
+end
+
 
 %% g2 BB
 % MONEY
@@ -311,6 +332,7 @@ dk=cell(nparam,1);
 for ii=1:nparam
     % run full g2
     [tg2,tdk]=summary_disthalo_g2(k_par{ii},0,true,0);     
+%     [tg2,tdk]=summary_disthalo_g2(k_par{ii},1,true,0);      % fast test
     
     % store
     g2{ii}=tg2;
@@ -344,14 +366,16 @@ end
 
 %% PRELIM bootstrapping
 %%% CONFIG
-subset_shotsize=600;    % shot-size of bootstrap sampled subset
-n_subset=20;            % no. of bootstrap repeats
+% subset_shotsize=600;    % shot-size of bootstrap sampled subset
+n_frac_samp=1/7;
+n_subset=20;                    % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
 
 %%% main
 nshot_par=shotSize(k_par);    % num. exp shots for each scanned parameter set
-n_frac_samp=subset_shotsize./nshot_par; 
+% n_frac_samp=subset_shotsize./nshot_par; 
+subset_shotsize=nshot_par*n_frac_samp;    % shot-size of bootstrap sampled subset
 
 
 g2anti_samp=cell(nparam,1);
@@ -361,7 +385,7 @@ E0_samp=cell(nparam,1);
 
 for ii=1:nparam
     tnshot=nshot_par(ii);
-    tn_frac_samp=n_frac_samp(ii);
+    tn_frac_samp=n_frac_samp;
     tk_par=k_par{ii};
     
     g2anti_samp{ii}=NaN(n_subset,1);
@@ -375,7 +399,6 @@ for ii=1:nparam
         
         [tg2,tdk]=summary_disthalo_g2(k_samp,0,0,0);      % evaluate function
         
-%         tg2corr=max([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
         tg2corr=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
         tg2anti=tg2{3}(15,15,15);
         
@@ -465,10 +488,7 @@ for ii=1:nparam
 end
 
 
-
-
-%%
-% %%% g2 spatial distribution
+%% g2 spatial distribution
 % % data to analyse
 % k=k_par{1};
 % 
