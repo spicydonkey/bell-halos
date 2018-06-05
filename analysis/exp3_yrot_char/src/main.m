@@ -7,7 +7,8 @@
 
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_1.m';
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_2.m';
-config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
+% config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
 
 
 %% load config
@@ -348,28 +349,56 @@ P_rabi_std=cellfun(@(p) std(p,[],1),P_rabi_shot,'UniformOutput',false);
 P_rabi_std=cat(1,P_rabi_std{:});
 
 
-%%% vis
+%% non-dimensionalzed time
+T_larmor=0.7e-6;        % Larmor precession period [s]
+tau_rot=par_T/T_larmor;
+
+
+%% Fit Rabi oscillation
+% TODO
+
+
+
+%% DATA VISUALIZATION
+%%% config
+font_siz_reg=12;
+font_siz_sml=10;
+font_siz_lrg=14;
+mark_siz=7;
+line_wid=1.1;
+
+[cc,clight,cdark]=palette(n_mf);
+mark_typ={'o','^','d'};
+
+
+
+%%% plot
 figure('Name','rabi_oscillation');
 hold on;
-[cc,clight,cdark]=palette(n_mf);
-mkr={'o','^','d'};
 
 
 h=NaN(n_mf,1);
 for ii=1:n_mf
-    th=ploterr(1e6*par_T,P_rabi(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
-    set(th(1),'color',cc(ii,:),'Marker',mkr{ii},...
-        'MarkerFaceColor',clight(ii,:),...
+%     th=ploterr(1e6*par_T,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
+    th=ploterr(tau_rot,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
+    set(th(1),'color',cc(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+        'MarkerSize',mark_siz,'MarkerFaceColor',clight(ii,:),...
         'DisplayName',num2str(configs.mf(ii).mf));
-    set(th(2),'color',cc(ii,:));
+    set(th(2),'color',cc(ii,:),'LineWidth',line_wid);
     
     h(ii)=th(1);
 end
 
-set(gca,'Layer','Top');     % graphics axes should be always on top
+set(gca,'FontSize',font_siz_reg);
 
-xlabel('Pulse duration [$\mu$s]');
-ylabel('$P(m_F)$');
+set(gca,'Layer','Top');     % graphics axes should be always on top
+box on;
+
+% xlabel('Pulse duration [$\mu$s]');
+xlabel('Pulse duration, $\tau$');
+ylabel('$P\left(m_F\right)$');
 
 lgd=legend(h,'Location','East');
 title(lgd,'$m_F$');
+set(lgd,'FontSize',font_siz_reg);
+
