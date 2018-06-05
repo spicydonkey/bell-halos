@@ -10,6 +10,17 @@
 %   [x] Update with all exp data for En; n in ZX-plane
 %       1,2,3,VIOL,ideal_global_rotation_v4 (pi/4)
 
+%% VIS config
+font_siz_reg=12;
+font_siz_sml=10;
+font_siz_lrg=14;
+mark_siz=7;
+line_wid=1.1;
+
+% [cc,clight,cdark]=palette(n_mf);
+% mark_typ={'o','^','d'};
+
+
 
 %% Experimental data (as code)
 % linear approximation of Raman pulse duration and rotation angle
@@ -90,31 +101,29 @@ theta_n_err=theta_frac_unc*theta_n;
 %% EPR-steering
 %%% Experiment
 % coefficient
-C_epr=1/4*(E_y+E_n);          % ensure vectors are row OR col
-C_epr_err=1/4*sqrt(E_y_err^2+E_n_err.^2);      % simple error estimate
-C0_epr=1/4*(E0_y+E0_n);
-C0_epr_err=1/4*sqrt(E0_y_err^2+E0_n_err.^2);
+S_epr=1/4*(E_y+E_n);          % ensure vectors are row OR col
+S_epr_err=1/4*sqrt(E_y_err^2+E_n_err.^2);      % simple error estimate
+S0_epr=1/4*(E0_y+E0_n);
+S0_epr_err=1/4*sqrt(E0_y_err^2+E0_n_err.^2);
 
 
 %%% Theory: Bell+
 theta_th=linspace(-pi,2*pi,1e3);
-C_epr_th=0.5*sin(theta_th).^2;
+S_epr_th=0.5*sin(theta_th).^2;
 
 
 %%% Inequality
-C_epr_max=sqrt(2)/4;
+S_epr_max=sqrt(2)/4;
 
 
 %% Data vis
 %%% config
-mark_typ='o';
-mark_siz=7;
-line_wid=1.2;
+mark_typ='d';
 line_col=[1 0 0];
 face_col=colorspace('HSL->RGB',[1,1,1.7].*colorspace('RGB->HSL',line_col));
 ptch_col=0.85;           % some gray to patch violation zone
 ptch_alp=1;             % patch transparency
-x_lim=[-0.05,1.05];     % set to [] for auto
+x_lim=pi*[-0.05,1.05];     % set to [] for auto
 y_lim=[-0.05,0.5];
 
 %%% graphics
@@ -130,7 +139,7 @@ if ~isempty(y_lim)
 end
 
 %%% Experiment
-h_epr_expdata=ploterr(theta_n/pi,C_epr,theta_n_err/pi,C_epr_err,'o','hhxy',0);
+h_epr_expdata=ploterr(theta_n,S_epr,theta_n_err,S_epr_err,mark_typ,'hhxy',0);
 
 % annotation
 % NOTE: handle indices (1): marker; (2): X-bar; (3): Y-bar;
@@ -145,20 +154,20 @@ set(h_epr_expdata(3),'Color',line_col,'LineWidth',line_wid,...
 
 
 %%% Theory
-p_epr_theory=plot(theta_th/pi,C_epr_th,'k--','LineWidth',1.5,...
-    'DisplayName','$\vert\Psi^+\rangle$ Bell triplet');
+p_epr_theory=plot(theta_th,S_epr_th,'k--','LineWidth',1.5,...
+    'DisplayName','$\vert\Psi^+\rangle$');
 uistack(p_epr_theory,'bottom');
 
 
 %%% EPR-steering Inequality
-p_epr_lim=line(ax.XLim,C_epr_max*ones(1,2),...
+p_epr_lim=line(ax.XLim,S_epr_max*ones(1,2),...
     'Color','k','LineStyle','-','LineWidth',1.5,...
-    'DisplayName','EPR-steering');
+    'DisplayName','EPR-steering limit');
 uistack(p_epr_lim,'bottom');
 
 % patch
 p_epr_viol=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-    [C_epr_max,C_epr_max,ax.YLim(2),ax.YLim(2)],...
+    [S_epr_max,S_epr_max,ax.YLim(2),ax.YLim(2)],...
     ptch_col*ones(1,3),'FaceAlpha',ptch_alp,...
     'EdgeColor','none');
 uistack(p_epr_viol,'bottom');
@@ -166,12 +175,20 @@ uistack(p_epr_viol,'bottom');
 
 %%% annotation
 set(gca,'Layer','Top');     % graphics axes should be always on top
-title('EPR-steering');
-xlabel('$\theta/\pi$');
-ylabel('$\mathcal{E}$');
+% title('EPR-steering');
+xlabel('$\theta$');
+ylabel('$\mathcal{S}$');
 box on;
 
-lgd=legend([h_epr_expdata(1),p_epr_theory,p_epr_lim]);
+% lgd=legend([h_epr_expdata(1),p_epr_theory,p_epr_lim]);
+
+% fontsize
+set(gca,'FontSize',font_siz_reg);
+% set(lgd,'FontSize',font_siz_reg);
+
+% X-ticks
+xticks(0:pi/4:pi);
+xticklabels({'$0$','$\pi/4$','$\pi/2$','$3\pi/4$','$\pi$'});
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -194,13 +211,11 @@ E_bell_max=1/sqrt(2);
 %% data vis
 %%% config
 mark_typ='o';
-mark_siz=7;
-line_wid=1.2;
 line_col=[0 0 1];
 face_col=colorspace('HSL->RGB',[1,1,1.7].*colorspace('RGB->HSL',line_col));
 ptch_col=0.85;           % some gray to patch violation zone
 ptch_alp=1;             % patch transparency
-x_lim=[-0.05,1.05];     % set to [] for auto
+x_lim=pi*[-0.05,1.05];     % set to [] for auto
 y_lim=[-1,1];
 
 
@@ -217,7 +232,8 @@ if ~isempty(y_lim)
 end
 
 %%% Experiment
-h_bell_expdata=ploterr(theta_n/pi,E_n,theta_n_err/pi,E_n_err,'o','hhxy',0);
+h_bell_expdata=ploterr(theta_n,E_n,theta_n_err,E_n_err,mark_typ,'hhxy',0);
+
 
 % annotation
 % NOTE: handle indices (1): marker; (2): X-bar; (3): Y-bar;
@@ -231,14 +247,14 @@ set(h_bell_expdata(3),'Color',line_col,'LineWidth',line_wid,...
     'DisplayName','');
 
 %%% Theory
-p_bell_theory=plot(theta_bell_th/pi,E_bell_th,'k--','LineWidth',1.5,...
-    'DisplayName','$\vert\Psi^+\rangle$ Bell triplet');
+p_bell_theory=plot(theta_bell_th,E_bell_th,'k--','LineWidth',1.5,...
+    'DisplayName','$\vert\Psi^+\rangle$');
 uistack(p_bell_theory,'bottom');
 
 %%% Bell Inequality
 p_bell_lim=line(ax.XLim,E_bell_max*ones(1,2),...
     'Color','k','LineStyle','-','LineWidth',1.5,...
-    'DisplayName','Bell inequality');
+    'DisplayName','Bell inequality limit');
 uistack(p_bell_lim,'bottom');
 
 % patch
@@ -251,9 +267,17 @@ uistack(p_bell_viol,'bottom');
 
 %%% annotation
 set(gca,'Layer','Top');     % graphics axes should be always on top
-title('Bell correlation');
-xlabel('$\theta/\pi$');
-ylabel('$\mathcal{B}$');
+% title('Bell correlation');
+xlabel('$\theta$');
+ylabel('$\mathcal{E}$');
 box on;
 
-lgd=legend([h_bell_expdata(1),p_bell_theory,p_bell_lim]);
+% lgd=legend([h_bell_expdata(1),p_bell_theory,p_bell_lim]);
+
+% fontsize
+set(gca,'FontSize',font_siz_reg);
+% set(lgd,'FontSize',font_siz_reg);
+
+% X-ticks
+xticks(0:pi/4:pi);
+xticklabels({'$0$','$\pi/4$','$\pi/2$','$3\pi/4$','$\pi$'});
