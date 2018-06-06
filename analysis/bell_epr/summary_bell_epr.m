@@ -84,6 +84,7 @@ E0_n_err=horzcat(E0_n_err_cell{:});
 
 
 %%% 2. <Jy(A).Jy(B)>/<N(A).N(B)>
+T_raman_y=5e-6;
 E_y=0.835;
 E_y_err=0.06;
 E0_y=0.926;
@@ -92,8 +93,14 @@ E0_y_err=0.08;
 
 
 %% Set up n-axis - theta
-theta_n=T_raman_n/Tpi*pi;       % simple linear model
+%   TODO - using fitted Rabi osc
+
+% simple linear model
+theta_n=T_raman_n/Tpi*pi;
 theta_n_err=theta_frac_unc*theta_n;
+
+theta_y=T_raman_y/Tpi*pi;
+theta_y_err=theta_frac_unc*theta_y;
 
 
 
@@ -101,26 +108,30 @@ theta_n_err=theta_frac_unc*theta_n;
 %% EPR-steering
 %%% Experiment
 % coefficient
-S_epr=1/4*(E_y+E_n);          % ensure vectors are row OR col
-S_epr_err=1/4*sqrt(E_y_err^2+E_n_err.^2);      % simple error estimate
-S0_epr=1/4*(E0_y+E0_n);
-S0_epr_err=1/4*sqrt(E0_y_err^2+E0_n_err.^2);
+E_epr=1/4*(E_y+E_n);          % ensure vectors are row OR col
+E_epr_err=1/4*sqrt(E_y_err^2+E_n_err.^2);      % simple error estimate
+E0_epr=1/4*(E0_y+E0_n);
+E0_epr_err=1/4*sqrt(E0_y_err^2+E0_n_err.^2);
 
 
 %%% Theory: Bell+
 theta_th=linspace(-pi,2*pi,1e3);
-S_epr_th=0.5*sin(theta_th).^2;
+E_epr_th=0.5*sin(theta_th).^2;
 
 
 %%% Inequality
-S_epr_max=sqrt(2)/4;
+E_epr_max=sqrt(2)/4;
 
 
 %% Data vis
 %%% config
 mark_typ='d';
-line_col=[1 0 0];
-face_col=colorspace('HSL->RGB',[1,1,1.7].*colorspace('RGB->HSL',line_col));
+
+id_col=2;           % color selector - for main data
+[col_main,col_light]=palette(10);
+line_col=col_main(id_col,:);
+face_col=col_light(id_col,:);
+
 ptch_col=0.85;           % some gray to patch violation zone
 ptch_alp=1;             % patch transparency
 x_lim=pi*[-0.05,1.05];     % set to [] for auto
@@ -139,7 +150,7 @@ if ~isempty(y_lim)
 end
 
 %%% Experiment
-h_epr_expdata=ploterr(theta_n,S_epr,theta_n_err,S_epr_err,mark_typ,'hhxy',0);
+h_epr_expdata=ploterr(theta_n,E_epr,theta_n_err,E_epr_err,mark_typ,'hhxy',0);
 
 % annotation
 % NOTE: handle indices (1): marker; (2): X-bar; (3): Y-bar;
@@ -154,20 +165,20 @@ set(h_epr_expdata(3),'Color',line_col,'LineWidth',line_wid,...
 
 
 %%% Theory
-p_epr_theory=plot(theta_th,S_epr_th,'k--','LineWidth',1.5,...
+p_epr_theory=plot(theta_th,E_epr_th,'k--','LineWidth',1.5,...
     'DisplayName','$\vert\Psi^+\rangle$');
 uistack(p_epr_theory,'bottom');
 
 
 %%% EPR-steering Inequality
-p_epr_lim=line(ax.XLim,S_epr_max*ones(1,2),...
+p_epr_lim=line(ax.XLim,E_epr_max*ones(1,2),...
     'Color','k','LineStyle','-','LineWidth',1.5,...
     'DisplayName','EPR-steering limit');
 uistack(p_epr_lim,'bottom');
 
 % patch
 p_epr_viol=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-    [S_epr_max,S_epr_max,ax.YLim(2),ax.YLim(2)],...
+    [E_epr_max,E_epr_max,ax.YLim(2),ax.YLim(2)],...
     ptch_col*ones(1,3),'FaceAlpha',ptch_alp,...
     'EdgeColor','none');
 uistack(p_epr_viol,'bottom');
@@ -177,7 +188,7 @@ uistack(p_epr_viol,'bottom');
 set(gca,'Layer','Top');     % graphics axes should be always on top
 % title('EPR-steering');
 xlabel('$\theta$');
-ylabel('$\mathcal{S}$');
+ylabel('$\mathcal{E}$');
 box on;
 
 % lgd=legend([h_epr_expdata(1),p_epr_theory,p_epr_lim]);
@@ -201,22 +212,29 @@ xticklabels({'$0$','$\pi/4$','$\pi/2$','$3\pi/4$','$\pi$'});
 
 %%% Theory: Bell+
 theta_bell_th=linspace(-pi,2*pi,1e3);
-E_bell_th=-cos(2*theta_bell_th);
+B_th=-cos(2*theta_bell_th);
 
 
 %%% Bell inequality
-E_bell_max=1/sqrt(2);
+B_max=1/sqrt(2);
 
 
 %% data vis
 %%% config
 mark_typ='o';
-line_col=[0 0 1];
-face_col=colorspace('HSL->RGB',[1,1,1.7].*colorspace('RGB->HSL',line_col));
+
+id_col=1;           % color selector - for main data
+id_col_y=4;         % for Y-data
+[col_main,col_light]=palette(10);
+line_col=col_main(id_col,:);
+face_col=col_light(id_col,:);
+
 ptch_col=0.85;           % some gray to patch violation zone
 ptch_alp=1;             % patch transparency
 x_lim=pi*[-0.05,1.05];     % set to [] for auto
 y_lim=[-1,1];
+
+
 
 
 %%% graphics
@@ -232,34 +250,48 @@ if ~isempty(y_lim)
 end
 
 %%% Experiment
-h_bell_expdata=ploterr(theta_n,E_n,theta_n_err,E_n_err,mark_typ,'hhxy',0);
+% 1. n_ax (measurement axis) in ZX plane
+h_bell_n=ploterr(theta_n,E_n,theta_n_err,E_n_err,mark_typ,'hhxy',0);
+
+% 2. n_ax = Y
+h_bell_y=ploterr(theta_y,E_y,theta_y_err,E_y_err,mark_typ,'hhxy',0);
 
 
 % annotation
 % NOTE: handle indices (1): marker; (2): X-bar; (3): Y-bar;
-set(h_bell_expdata(1),'Marker',mark_typ,'MarkerSize',mark_siz,...
+set(h_bell_n(1),'Marker',mark_typ,'MarkerSize',mark_siz,...
     'Color',line_col,'LineWidth',line_wid,...
     'MarkerFaceColor',face_col,...
     'DisplayName','Experiment');
-set(h_bell_expdata(2),'Color',line_col,'LineWidth',line_wid,...
+set(h_bell_n(2),'Color',line_col,'LineWidth',line_wid,...
     'DisplayName','');
-set(h_bell_expdata(3),'Color',line_col,'LineWidth',line_wid,...
+set(h_bell_n(3),'Color',line_col,'LineWidth',line_wid,...
     'DisplayName','');
 
+set(h_bell_y(1),'Marker','.','MarkerSize',15,...
+    'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
+    'MarkerFaceColor',col_light(id_col_y,:),...
+    'DisplayName','Experiment');
+set(h_bell_y(2),'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
+    'DisplayName','');
+set(h_bell_y(3),'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
+    'DisplayName','');
+
+
 %%% Theory
-p_bell_theory=plot(theta_bell_th,E_bell_th,'k--','LineWidth',1.5,...
+p_bell_theory=plot(theta_bell_th,B_th,'k--','LineWidth',1.5,...
     'DisplayName','$\vert\Psi^+\rangle$');
 uistack(p_bell_theory,'bottom');
 
 %%% Bell Inequality
-p_bell_lim=line(ax.XLim,E_bell_max*ones(1,2),...
+p_bell_lim=line(ax.XLim,B_max*ones(1,2),...
     'Color','k','LineStyle','-','LineWidth',1.5,...
     'DisplayName','Bell inequality limit');
 uistack(p_bell_lim,'bottom');
 
 % patch
 p_bell_viol=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-    [E_bell_max,E_bell_max,ax.YLim(2),ax.YLim(2)],...
+    [B_max,B_max,ax.YLim(2),ax.YLim(2)],...
     ptch_col*ones(1,3),'FaceAlpha',ptch_alp,...
     'EdgeColor','none');
 uistack(p_bell_viol,'bottom');
@@ -267,9 +299,9 @@ uistack(p_bell_viol,'bottom');
 
 %%% annotation
 set(gca,'Layer','Top');     % graphics axes should be always on top
-% title('Bell correlation');
+% title('Bell signal');
 xlabel('$\theta$');
-ylabel('$\mathcal{E}$');
+ylabel('$\mathcal{B}$');
 box on;
 
 % lgd=legend([h_bell_expdata(1),p_bell_theory,p_bell_lim]);
