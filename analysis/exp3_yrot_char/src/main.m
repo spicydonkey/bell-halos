@@ -4,11 +4,14 @@
 % DKS
 % 2018-05-29
 
-
+%%% David PC
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_1.m';
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_2.m';
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
+
+%%% HE BEC PC
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_1.m';
 
 
 %% load config
@@ -313,6 +316,7 @@ for ii=1:nparam
 end
 
 
+%% Below analysis for mJ-population oscillation is averaged in momentum
 %% number of counts captured in halo
 %   NOTE: Nsc Poissonian and stat analysis needs to be careful
 
@@ -401,4 +405,19 @@ ylabel('$P\left(m_F\right)$');
 lgd=legend(h,'Location','East');
 title(lgd,'$m_F$');
 set(lgd,'FontSize',font_siz_reg);
+
+
+%% Analysis for momentum resolved mJ-oscillation
+%   
+%   1. define momentum "zones" (multiple momentum modes) - e.g. conical section of halo:
+%   orientation-vector and inclusion half-angle
+%   2. for each halo/exp#/expparam get #atoms in each zone
+%   3. compare for each momentum zone/expparam do statistics for n_mJ/n_tot
+%   4. zone resolved Rabi oscillation
+%   5. fit oscillation characteristic per momentum zone --> e.g. resonant freq + detuning model
+%
+%   * uniformity study
+%   * structure around halo?
+%   * extrapolate to momentum mode? dependency on zone size?
+%
 
