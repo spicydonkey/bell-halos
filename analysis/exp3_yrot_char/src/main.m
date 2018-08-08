@@ -438,7 +438,8 @@ end
 nzone_th=4;     % num. zones to equipartition azimuthal (-pi,pi]
 nzone_phi=2;    % for elevation [-pi/2,pi/2]
 momzone_th=linspace(-pi,pi,nzone_th+1);
-momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
+% momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
+momzone_phi=linspace(-0.8,0.8,nzone_phi+1);
 
 % (B) try conical zone (either overlaps or misses)
 
@@ -497,7 +498,7 @@ end
 %%% DATA VIS
 [ccc,ccclight,cccdark]=palette(nzone_th*nzone_phi);
 
-figure('Name','rabi_momzone');
+h_rabi_momzone=figure('Name','rabi_momzone');
 hold on;
 
 h=[];
@@ -505,10 +506,10 @@ for ii=1:n_mf
     % iterate over lat-long grid 2D indices
     for jj=1:nzone_th*nzone_phi
         [mm,nn]=ind2sub([nzone_th,nzone_phi],jj);
-        %     th=ploterr(1e6*par_T,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
-        %         squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
-        th=ploterr(tau_rot,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
+        th=ploterr(1e6*par_T,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
             squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
+%         th=ploterr(tau_rot,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
+%             squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
         set(th(1),'color',ccc(jj,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
             'MarkerSize',mark_siz,'MarkerFaceColor',ccclight(jj,:));      % 'DisplayName',num2str(configs.mf(ii).mf)
         set(th(2),'color',ccc(jj,:),'LineWidth',line_wid);
@@ -522,8 +523,8 @@ set(gca,'FontSize',font_siz_reg);
 set(gca,'Layer','Top');     % graphics axes should be always on top
 box on;
 
-% xlabel('Pulse duration [$\mu$s]');
-xlabel('Pulse duration, $\tau$');
+xlabel('Pulse duration [$\mu$s]');
+% xlabel('Pulse duration, $\tau$');
 ylabel('$P\left(m_F\right)$');
 
 axis tight; 
@@ -553,6 +554,11 @@ for ii=1:numel(momzone_amp)
     [mm,nn]=ind2sub(size(momzone_amp),ii);  % get this zone
     tp=squeeze(P_momzone_0(mm,nn,:));    % pop fraction profile for this zone
     
+    % check if this zone has any atoms
+    if sum(isnan(tp))>0.33*length(tp)     % all NaN (a little too strict)
+        continue
+    end
+        
     % estimate params
     tRabiAmp=max(tp)-min(tp);
     tRabiOmega=2*pi/(20e-5);        % we keep this near const
@@ -579,10 +585,11 @@ for ii=1:numel(momzone_amp)
     pp=feval(tfit_rabi,tt);
     
     % vis
-    htemp=figure(htemp);
+    figure(h_rabi_momzone);
     hold on;
-    plot(1e6*par_T,tp,'o','Color',ccc(ii,:));
-    plot(1e6*tt,pp,'-','Color',ccc(ii,:));
+%     plot(1e6*par_T,tp,'o','Color',ccc(ii,:));
+    tplot=plot(1e6*tt,pp,'-','Color',ccc(ii,:));
+    uistack(tplot,'bottom');
     
     box on;
     
@@ -594,3 +601,78 @@ for ii=1:numel(momzone_amp)
     ylim([0,1]);
     
 end
+
+
+%% Exploded figure of halo by lat-lon zones
+%   could be refactored as a function
+%
+%   1. collate k vecs
+%   2. for each zone find included k
+%   3. translate by zone's center vector q
+%   4. shade/color-coded scatter plot
+%
+
+%%% collate momentum-vecs
+k_collated=cat(1,k_par{:});         % ALL data
+k_collated=cat(1,k_collated{:,2});    % ONLY mJ=0
+
+ks_collated=zxy2sphpol(k_collated);     % sph-polar vecs
+k_th=ks_collated(:,1);
+k_phi=ks_collated(:,2);
+
+%%% sort k-vecs into zones
+% momzone_th=linspace(-pi,pi,nzone_th+1);
+% momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
+k_momzone=cell(nzone_th,nzone_phi);
+for ii=1:numel(k_momzone)
+    [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
+
+    % boolean checks for vec in this zone
+    tth_in=(k_th>momzone_th(mm))&(k_th<momzone_th(mm+1));
+    tphi_in=(k_phi>momzone_phi(nn))&(k_phi<momzone_phi(nn+1));
+    tzone_in=tth_in&tphi_in;
+    
+    k_momzone{ii}=k_collated(tzone_in,:);
+end
+
+%%% explode zones radially
+disp_expl=0.1;      % displacement of explosion
+
+momzone_th_cent=momzone_th(1:end-1)+0.5*diff(momzone_th);
+momzone_phi_cent=momzone_phi(1:end-1)+0.5*diff(momzone_phi);
+
+k_momzone_exp=cell(nzone_th,nzone_phi);
+for ii=1:numel(k_momzone_exp)
+    [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
+    
+    % vector to zone-centre
+    tdk_expl=sphpol2zxy([momzone_th_cent(mm),momzone_phi_cent(nn),disp_expl]);
+    
+    k_momzone_exp{ii}=k_momzone{ii}+tdk_expl;
+end
+
+
+%%% DATA VIS
+plot_scat_size=1;
+
+% colorcoding
+% gray
+plot_scat_col=gray(numel(k_momzone_exp)+2);
+plot_scat_col=plot_scat_col(2:end-1,:);
+
+% colormaps
+% plot_scat_col=palette(numel(k_momzone_exp));
+
+
+h_halo_exp=figure('Name','halo_momzone_exploded');
+hold on;
+for ii=1:numel(k_momzone_exp)
+    [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
+    
+    scatter_zxy(k_momzone_exp{mm,nn},plot_scat_size,ccc(ii,:));
+    % color to match the zonal Rabi plot
+end
+
+view(3);
+axis equal;
+axis off;
