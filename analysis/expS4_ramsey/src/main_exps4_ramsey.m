@@ -5,7 +5,8 @@
 % 2018-06-06
 
 
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\expS4_ramsey\src\config_1.m';
+config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\expS4_ramsey\src\config_1.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\expS4_ramsey\src\config_1.m';
 
 
 %% load config
@@ -397,3 +398,268 @@ xlim([0-2*pi/25,2*pi+2*pi/25]);
 % X-ticks
 xticks(0:pi/2:2*pi);
 xticklabels({'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'});
+
+
+%% Analysis for momentum resolved Ramsey fringe
+%   
+%   1. define momentum "zones" (multiple momentum modes)
+%       e.g.    (A) lat-lon zones
+%               (B) conical section of halo: orientation-vector and inclusion half-angle
+%   2. for each halo/exp#/expparam get #atoms in each zone
+%   3. compare for each momentum zone/expparam do statistics for n_mJ/n_tot
+%   4. zone resolved population fraction
+%   5. fit Ramsey fringe per momentum zone
+%       what's the model to fit?
+%
+%   * uniformity study
+%   * structure around halo?
+%   * extrapolate to momentum mode? dependency on zone size?
+%
+
+%%% Cart-vecs to sph-polar vecs
+%   * ks vectors are [th,phi,norm]
+ks_par=cell(1,nparam);
+for ii=1:nparam
+    ks_par{ii} = cellfun(@(q) zxy2sphpol(q),k_par{ii},'UniformOutput',false);
+end
+
+
+%%% define momentum zones
+% (A) lat-lon grid
+nzone_th=4;     % num. zones to equipartition azimuthal (-pi,pi]
+nzone_phi=2;    % for elevation [-pi/2,pi/2]
+momzone_th=linspace(-pi,pi,nzone_th+1);
+% momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
+momzone_phi=linspace(-0.8,0.8,nzone_phi+1);
+
+% (B) try conical zone (either overlaps or misses)
+
+
+%%% histogram atoms into zones
+% (A) lat-lon grid: 2D histogram
+hist_ed={momzone_th,momzone_phi};
+nsc_zone=cell(1,nparam);
+for ii=1:nparam
+    nsc_zone{ii}=cell(1,n_mf);
+    
+    temp_nsc_zone=cellfun(@(ks) nhist(ks(:,1:2),hist_ed),ks_par{ii},'UniformOutput',false);
+    
+    % tidy form by collapsing independent shots into dim-3
+    for jj=1:n_mf
+        nsc_zone{ii}{jj}=cat(3,temp_nsc_zone{:,jj});
+    end
+end
+
+
+%%% mJ population fraction per mode/shot
+% sum scattered num. in each (zone, mJ) / shot
+nsctot_zone=cellfun(@(n) sum(cat(4,n{:}),4),nsc_zone,'UniformOutput',false);    % total number per mode/shot
+
+% population fraction
+P_mJ_zone=cell(1,nparam);
+for ii=1:nparam
+    temp_nsc_tot=nsctot_zone{ii};       % total scattered num array for this subset
+    for jj=1:n_mf
+        P_mJ_zone{ii}{jj}=nsc_zone{ii}{jj}./temp_nsc_tot;   % eval pop fraction
+    end
+end
+
+% statistics
+temp_P_mJ_zone_avg=cell(1,nparam);
+temp_P_mJ_zone_std=cell(1,nparam);
+for ii=1:nparam
+    temp_P_mJ_zone_avg{ii}=cellfun(@(p) mean(p,3),P_mJ_zone{ii},'UniformOutput',false);
+    temp_P_mJ_zone_std{ii}=cellfun(@(p) std(p,[],3),P_mJ_zone{ii},'UniformOutput',false);
+end
+
+% tidy form
+P_mJ_zone_avg=cell(1,n_mf);
+P_mJ_zone_std=cell(1,n_mf);
+
+temp_P_mJ_zone_avg=cat(1,temp_P_mJ_zone_avg{:});      % collapse param# to cell-array row#
+temp_P_mJ_zone_std=cat(1,temp_P_mJ_zone_std{:});
+
+% collapse param# as dim-3 in 2D histogram for each mJ
+for ii=1:n_mf
+    P_mJ_zone_avg{ii}=cat(3,temp_P_mJ_zone_avg{:,ii});
+    P_mJ_zone_std{ii}=cat(3,temp_P_mJ_zone_std{:,ii});
+end
+
+
+%%% DATA VIS
+[ccc,ccclight,cccdark]=palette(nzone_th*nzone_phi);
+
+h_ramsey_momzone=figure('Name','ramsey_momzone');
+hold on;
+
+h=[];
+for ii=1:n_mf
+    % iterate over lat-long grid 2D indices
+    for jj=1:nzone_th*nzone_phi
+        [mm,nn]=ind2sub([nzone_th,nzone_phi],jj);
+        th=ploterr(par_dphi,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
+            squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
+        set(th(1),'color',ccc(jj,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+            'MarkerSize',mark_siz,'MarkerFaceColor',ccclight(jj,:));      % 'DisplayName',num2str(configs.mf(ii).mf)
+        set(th(2),'color',ccc(jj,:),'LineWidth',line_wid);
+        
+        h=cat(1,h,th(1));
+    end
+end
+
+set(gca,'FontSize',font_siz_reg);
+
+set(gca,'Layer','Top');     % graphics axes should be always on top
+box on;
+
+xlabel('$\phi$');
+% ylabel('$P\left(m_F\right)$');
+ylabel('$P$');
+
+axis tight; 
+
+
+% X-ticks
+xticks(0:pi/2:2*pi);
+xticklabels({'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'});
+
+
+%% Fit Ramsey fringe
+%   Check: a simple model: phi is periodic by definition [0,2*pi]
+%   * amplitude
+%
+%   TODO
+%   [ ] model the control of "rotation axis" by 2nd pulse - we know the first
+%   pulse state.
+
+ramsey_mdl='p~0.5*(1-amp*cos(x1))';
+
+momzone_amp=NaN(nzone_th,nzone_phi);
+
+idx_mJ=1;   % mJ=1
+P_momzone=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for this mJ
+
+
+htemp=100;
+for ii=1:numel(momzone_amp)
+    [mm,nn]=ind2sub(size(momzone_amp),ii);  % get this zone
+    tp=squeeze(P_momzone(mm,nn,:));    % pop fraction profile for this zone
+    
+    % check if this zone has any atoms
+    if sum(isnan(tp))>0.33*length(tp)     % all NaN (a little too strict)
+        continue
+    end
+        
+    % estimate params
+    tAmp=max(tp)-min(tp);
+    
+    tparam0=tAmp;
+    
+    
+    %%% fit model
+    tfopts=statset('Display','off');
+    
+    tfit_ramsey=fitnlm(par_dphi,tp,ramsey_mdl,tparam0,'CoefficientNames',{'amp'},...
+        'Options',tfopts);
+    
+    tparam_fit=tfit_ramsey.Coefficients.Estimate;
+    
+    % get fitted model params
+    momzone_amp(mm,nn)=tparam_fit(1);
+
+    
+    %%% DEBUG
+    % evaluate fitted model
+    tt=linspace(0,max(par_dphi),1e3);
+    pp=feval(tfit_ramsey,tt);
+    
+    % vis
+    figure(h_ramsey_momzone);
+    hold on;
+    tplot=plot(tt,pp,'-','Color',ccc(ii,:));
+    uistack(tplot,'bottom');
+    
+    box on;
+    
+    xlabel('$\phi$');
+    ylabel('$P_1$');
+    
+    axis tight;
+    ylim([0,1]);
+    
+end
+
+
+%% Exploded figure of halo by lat-lon zones
+%   could be refactored as a function
+%
+%   1. collate k vecs
+%   2. for each zone find included k
+%   3. translate by zone's center vector q
+%   4. shade/color-coded scatter plot
+%
+
+%%% collate momentum-vecs
+k_collated=cat(1,k_par{:});         % ALL data
+k_collated=cat(1,k_collated{:,2});    % ONLY mJ=0
+
+ks_collated=zxy2sphpol(k_collated);     % sph-polar vecs
+k_th=ks_collated(:,1);
+k_phi=ks_collated(:,2);
+
+%%% sort k-vecs into zones
+% momzone_th=linspace(-pi,pi,nzone_th+1);
+% momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
+k_momzone=cell(nzone_th,nzone_phi);
+for ii=1:numel(k_momzone)
+    [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
+
+    % boolean checks for vec in this zone
+    tth_in=(k_th>momzone_th(mm))&(k_th<momzone_th(mm+1));
+    tphi_in=(k_phi>momzone_phi(nn))&(k_phi<momzone_phi(nn+1));
+    tzone_in=tth_in&tphi_in;
+    
+    k_momzone{ii}=k_collated(tzone_in,:);
+end
+
+%%% explode zones radially
+disp_expl=0.1;      % displacement of explosion
+
+momzone_th_cent=momzone_th(1:end-1)+0.5*diff(momzone_th);
+momzone_phi_cent=momzone_phi(1:end-1)+0.5*diff(momzone_phi);
+
+k_momzone_exp=cell(nzone_th,nzone_phi);
+for ii=1:numel(k_momzone_exp)
+    [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
+    
+    % vector to zone-centre
+    tdk_expl=sphpol2zxy([momzone_th_cent(mm),momzone_phi_cent(nn),disp_expl]);
+    
+    k_momzone_exp{ii}=k_momzone{ii}+tdk_expl;
+end
+
+
+%%% DATA VIS
+plot_scat_size=1;
+
+% colorcoding
+% gray
+plot_scat_col=gray(numel(k_momzone_exp)+2);
+plot_scat_col=plot_scat_col(2:end-1,:);
+
+% colormaps
+% plot_scat_col=palette(numel(k_momzone_exp));
+
+
+h_halo_exp=figure('Name','halo_momzone_exploded');
+hold on;
+for ii=1:numel(k_momzone_exp)
+    [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
+    
+    scatter_zxy(k_momzone_exp{mm,nn},plot_scat_size,ccc(ii,:));
+    % color to match the zonal Rabi plot
+end
+
+view(3);
+axis equal;
+axis off;
