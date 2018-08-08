@@ -10,7 +10,7 @@
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
 
 %%% HE BEC PC
-config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_s1.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char\src\config_1.m';
 
 
@@ -409,8 +409,9 @@ set(lgd,'FontSize',font_siz_reg);
 
 %% Analysis for momentum resolved mJ-oscillation
 %   
-%   1. define momentum "zones" (multiple momentum modes) - e.g. conical section of halo:
-%   orientation-vector and inclusion half-angle
+%   1. define momentum "zones" (multiple momentum modes)
+%       e.g.    (A) lat-lon zones
+%               (B) conical section of halo: orientation-vector and inclusion half-angle
 %   2. for each halo/exp#/expparam get #atoms in each zone
 %   3. compare for each momentum zone/expparam do statistics for n_mJ/n_tot
 %   4. zone resolved Rabi oscillation
@@ -422,6 +423,7 @@ set(lgd,'FontSize',font_siz_reg);
 %
 
 %%% Cart-vecs to sph-polar vecs
+%   * ks vectors are [th,phi,norm]
 ks_par=cell(1,nparam);
 for ii=1:nparam
     ks_par{ii} = cellfun(@(q) zxy2sphpol(q),k_par{ii},'UniformOutput',false);
@@ -430,8 +432,11 @@ end
 
 %%% define momentum zones
 % (A) lat-lon grid
-nzone_th=4;     % num. zones to equipartition azimuthal
-nzone_phi=2;    % for elevation
+%   TODO
+%   [ ] handle spherical caps by phi limits
+%
+nzone_th=4;     % num. zones to equipartition azimuthal (-pi,pi]
+nzone_phi=2;    % for elevation [-pi/2,pi/2]
 momzone_th=linspace(-pi,pi,nzone_th+1);
 momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
 
@@ -439,13 +444,15 @@ momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
 
 
 %%% histogram atoms into zones
-% (A) lat-lon grid: can be done by 2D histogram
+% (A) lat-lon grid: 2D histogram
 hist_ed={momzone_th,momzone_phi};
 nsc_zone=cell(1,nparam);
 for ii=1:nparam
     nsc_zone{ii}=cell(1,n_mf);
     
     temp_nsc_zone=cellfun(@(ks) nhist(ks(:,1:2),hist_ed),ks_par{ii},'UniformOutput',false);
+    
+    % tidy form by collapsing independent shots into dim-3
     for jj=1:n_mf
         nsc_zone{ii}{jj}=cat(3,temp_nsc_zone{:,jj});
     end
@@ -453,8 +460,10 @@ end
 
 
 %%% mJ population fraction per mode/shot
+% sum scattered num. in each (zone, mJ) / shot
 nsctot_zone=cellfun(@(n) sum(cat(4,n{:}),4),nsc_zone,'UniformOutput',false);    % total number per mode/shot
 
+% population fraction
 P_mJ_zone=cell(1,nparam);
 for ii=1:nparam
     temp_nsc_tot=nsctot_zone{ii};       % total scattered num array for this subset
@@ -477,6 +486,8 @@ P_mJ_zone_std=cell(1,n_mf);
 
 temp_P_mJ_zone_avg=cat(1,temp_P_mJ_zone_avg{:});      % collapse param# to cell-array row#
 temp_P_mJ_zone_std=cat(1,temp_P_mJ_zone_std{:});
+
+% collapse param# as dim-3 in 2D histogram for each mJ
 for ii=1:n_mf
     P_mJ_zone_avg{ii}=cat(3,temp_P_mJ_zone_avg{:,ii});
     P_mJ_zone_std{ii}=cat(3,temp_P_mJ_zone_std{:,ii});
@@ -520,3 +531,66 @@ axis tight;
 % lgd=legend(h,'Location','East');
 % title(lgd,'$m_F$');
 % set(lgd,'FontSize',font_siz_reg);
+
+
+%% Fit Rabi oscillation
+%   General near-resonant Rabi oscillation model for a TLS: text
+%   representation
+
+% (A) simple phenomenological (2-param): 
+%   * amplitude (pkpk) [1]
+%   * Rabi frequency [rad/s]
+rabi_mdl='p~0.5*amp*(1-cos(om*x1))';    % for the initially unpopulated state mJ=0
+
+momzone_amp=NaN(nzone_th,nzone_phi);
+momzone_om=NaN(nzone_th,nzone_phi);
+
+idx_mJ=2;    % mJ=0
+P_momzone_0=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for mJ=0
+
+htemp=100;
+for ii=1:numel(momzone_amp)
+    [mm,nn]=ind2sub(size(momzone_amp),ii);  % get this zone
+    tp=squeeze(P_momzone_0(mm,nn,:));    % pop fraction profile for this zone
+    
+    % estimate params
+    tRabiAmp=max(tp)-min(tp);
+    tRabiOmega=2*pi/(20e-5);        % we keep this near const
+    
+    tparam0=[tRabiAmp,tRabiOmega];
+    
+    
+    %%% fit model
+    tfopts=statset('Display','off');
+    
+    tfit_rabi=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
+        'Options',tfopts);
+    
+    tparam_fit=tfit_rabi.Coefficients.Estimate;
+    
+    % get fitted model params
+    momzone_amp(mm,nn)=tparam_fit(1);
+    momzone_om(mm,nn)=tparam_fit(2);
+    
+    
+    %%% DEBUG
+    % evaluate fitted model
+    tt=linspace(0,max(par_T),1e3);
+    pp=feval(tfit_rabi,tt);
+    
+    % vis
+    htemp=figure(htemp);
+    hold on;
+    plot(1e6*par_T,tp,'o','Color',ccc(ii,:));
+    plot(1e6*tt,pp,'-','Color',ccc(ii,:));
+    
+    box on;
+    
+    xlabel('Pulse duration [$\mu$s]');
+%     xlabel('Pulse duration, $\tau$');
+    ylabel('$P_0$');
+    
+    axis tight;
+    ylim([0,1]);
+    
+end
