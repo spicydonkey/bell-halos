@@ -341,8 +341,12 @@ end
 %
 
 % g2 rel-vec bins
-dk_ed_vec=linspace(-0.2,0.2,29);
+n_bins=15;      % original: 29
+dk_ed_vec=linspace(-0.2,0.2,n_bins+1);
+dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
+[~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
 dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
+dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
 
 g2=cell(nparam,1);
 dk=cell(nparam,1);
@@ -359,6 +363,24 @@ for ii=1:nparam
     g2mdl{ii}=tg2mdl;
 end
     
+%%% Evaluate fitted function
+n_bins_fit=101;
+dk_fit_vec=linspace(min(dk_cent_vec),max(dk_cent_vec),n_bins_fit);
+[~,idx_dk0_fit]=min(abs(dk_fit_vec));
+dk_fit={dk_fit_vec,dk_fit_vec,dk_fit_vec};
+[dk_fit_grid{1},dk_fit_grid{2},dk_fit_grid{3}]=ndgrid(dk_fit{:});
+
+dk_fit_sq=cellfun(@(k) k(:),dk_fit_grid,'UniformOutput',false);
+dk_fit_sq=cat(2,dk_fit_sq{:});
+
+g2_fit=cell(1,nparam);
+for ii=1:nparam
+    for jj=1:3
+        tg2_fit_sq=feval(g2mdl{ii}{jj},dk_fit_sq);
+        g2_fit{ii}{jj}=reshape(tg2_fit_sq,n_bins_fit*[1,1,1]);
+    end
+end
+
 
 %% Correlation coefficient
 %    Note: may contain systematic error since unverified by Jan
@@ -401,27 +423,36 @@ n_subset=20;                    % no. of bootstrap repeats
 nshot_par=shotSize(k_par);    % num. exp shots for each scanned parameter set
 subset_shotsize=round(nshot_par*n_frac_samp);    % shot-size of bootstrap sampled subset
 
+g2_bootstrap=cell(nparam,1);
 g2anti_samp=cell(nparam,1);
 g2corr_samp=cell(nparam,1);
 E_samp=cell(nparam,1);
 E0_samp=cell(nparam,1);
 
 for ii=1:nparam
-    tnshot=nshot_par(ii);
-    tn_frac_samp=n_frac_samp;
-    tk_par=k_par{ii};
+    tk_par=k_par{ii};   % the population-representative data set
     
+    % random sub-sample sel with replacement
+    Isamp=randi(nshot_par(ii),[n_subset,subset_shotsize(ii)]);
+    
+    % initialise
+    g2_bootstrap{ii}=cell(1,3);
+    for jj=1:3
+        g2_bootstrap{ii}{jj}=NaN([dk_grid_size,n_subset]);
+    end
     g2anti_samp{ii}=NaN(n_subset,1);
     g2corr_samp{ii}=NaN(n_subset,1);
     E_samp{ii}=NaN(n_subset,1);
     E0_samp{ii}=NaN(n_subset,1);
     
     for jj=1:n_subset
-        Isamp=rand(tnshot,1)<tn_frac_samp;       % randomly select subset of shots to sample
-        k_samp=tk_par(Isamp,:);           % the sampled data
+        k_samp=tk_par(Isamp(jj,:),:);           % the sampled data
         
         tg2=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
         
+        for kk=1:3
+            g2_bootstrap{ii}{kk}(:,:,:,jj)=tg2{kk};
+        end
 %         tg2corr=max([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
         tg2corr=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
         tg2anti=tg2{3}(15,15,15);
@@ -436,7 +467,14 @@ for ii=1:nparam
     end
 end
 
-% statistics
+%%% statistics
+g2_mean=cell(size(g2_bootstrap));
+g2_sdev=cell(size(g2_bootstrap));
+for ii=1:nparam
+    g2_mean{ii}=cellfun(@(x) mean(x,4,'omitnan'),g2_bootstrap{ii},'UniformOutput',false);
+    g2_sdev{ii}=cellfun(@(x) std(x,[],4,'omitnan'),g2_bootstrap{ii},'UniformOutput',false);
+end
+
 E_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E_samp);
 E_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E_samp);
 
@@ -451,6 +489,52 @@ E_par'
 
 E0_par'
 [E0_bootstrap_mean,E0_bootstrap_sdev]'
+
+
+%% PLOT: g2 visualisation
+[cc,clight,cdark]=palette(3);   % colors
+mark_typ={'o','^','d'};        % markers for each axis
+mark_siz=7;
+line_wid=1.1;
+
+
+hg2_3d=[];
+for ii=1:nparam
+    hg2_3d(ii)=figure('Name',sprintf('g2_3d_T%0.3g',par_T(ii)));
+    
+    %%% spin-permutations as subplots
+    perm_ord=[2,3,1];
+    for jj=1:3
+        subplot(1,3,jj);
+        
+        % permute 1D-slice through each Cart axis
+        temp_ord=[1,2,3];
+        temp_g2_perm=g2{ii}{jj};    % temporary var to hold dimension permuted g2
+        temp_g2_sdev_perm=g2_sdev{ii}{jj};
+        temp_g2_fit_perm=g2_fit{ii}{jj};
+        
+        for kk=1:3
+            hold on;
+            temp_ord=temp_ord(perm_ord);
+            temp_g2_perm=permute(temp_g2_perm,perm_ord);
+            temp_g2_sdev_perm=permute(temp_g2_sdev_perm,perm_ord);
+            temp_g2_fit_perm=permute(temp_g2_fit_perm,perm_ord);
+            
+            % data
+            th=ploterr(dk_cent_vec,temp_g2_perm(:,idx_dk0,idx_dk0),...
+                [],temp_g2_sdev_perm(:,idx_dk0,idx_dk0),...
+                mark_type{kk},'hhxy',0);
+            set(th(1),'color',cc(kk,:),'Marker',mark_typ{kk},'LineWidth',line_wid,...
+                'MarkerSize',mark_siz,'MarkerFaceColor',clight(kk,:));
+            set(th(2),'color',cc(kk,:),'LineWidth',line_wid);
+            
+            % fitted model
+            th=plot(dk_fit_vec,temp_g2_fit_perm(:,idx_dk0_fit,idx_dk0_fit),...
+                'Color',clight(kk,:),'LineWidth',line_wid);
+            uistack(th,'bottom');
+        end
+    end
+end
 
 
 %% Correlation - data vis
