@@ -106,54 +106,57 @@ end
 
 
 %% Fit g2 - gaussian model
-%   3D gaussian model
-g2_gauss3_mdl='y~1+amp*exp(-0.5*(((x1-mu1)/sig1)^2+((x2-mu2)/sig2)^2+((x3-mu3)/sig3)^2))';
-g2_gauss3_mdl_param={'amp','mu1','mu2','mu3','sig1','sig2','sig3'};
-
-g2mdl=cell(1,n_g2_type);
-
-% rel-vec centers as 1D list of vectors
-X=cellfun(@(d) d(:),dk,'UniformOutput',false);
-X=cat(2,X{:});
-
-for ii=1:n_g2_type
-    % get evaluated g2
-    Y=g2{ii}(:);
+g2_fit=cell(1,n_g2_type);
+if dofit
+    %   3D gaussian model
+    g2_gauss3_mdl='y~1+amp*exp(-0.5*(((x1-mu1)/sig1)^2+((x2-mu2)/sig2)^2+((x3-mu3)/sig3)^2))';
+    g2_gauss3_mdl_param={'amp','mu1','mu2','mu3','sig1','sig2','sig3'};
     
-    % estimate params
-    tamp0=g2{ii}(idx_dk0(1),idx_dk0(2),idx_dk0(3));
-    tmu0=[0,0,0];
-    tsig0=[0.03,0.03,0.03];
-    tparam0=[tamp0,tmu0,tsig0];
+    g2mdl=cell(1,n_g2_type);
     
-    %%% fit model
-    tfopts=statset('Display','off');
-    tg2mdl=fitnlm(X,Y,g2_gauss3_mdl,tparam0,'CoefficientNames',g2_gauss3_mdl_param,...
-        'Options',tfopts);
-    tparam_fit=tg2mdl.Coefficients.Estimate;
+    % rel-vec centers as 1D list of vectors
+    X=cellfun(@(d) d(:),dk,'UniformOutput',false);
+    X=cat(2,X{:});
     
-    g2mdl{ii}=tg2mdl;
+    for ii=1:n_g2_type
+        % get evaluated g2
+        Y=g2{ii}(:);
+        
+        % estimate params
+        tamp0=g2{ii}(idx_dk0(1),idx_dk0(2),idx_dk0(3));
+        tmu0=[0,0,0];
+        tsig0=[0.03,0.03,0.03];
+        tparam0=[tamp0,tmu0,tsig0];
+        
+        %%% fit model
+        tfopts=statset('Display','off');
+        tg2mdl=fitnlm(X,Y,g2_gauss3_mdl,tparam0,'CoefficientNames',g2_gauss3_mdl_param,...
+            'Options',tfopts);
+        tparam_fit=tg2mdl.Coefficients.Estimate;
+        
+        g2mdl{ii}=tg2mdl;
+    end
+    
+    % evaluate fitted model
+    n_bins_fit=100;
+    kk_1d=cellfun(@(c) linspace(min(c),max(c),n_bins_fit),dk_cent,'UniformOutput',false);
+    [~,idx_dk0_fit]=cellfun(@(c) min(abs(c)),kk_1d);      % idx bin nearest zero
+    [kk{1},kk{2},kk{3}]=ndgrid(kk_1d{:});
+    
+    ksqueezed=cellfun(@(k) k(:),kk,'UniformOutput',false);
+    ksqueezed=cat(2,ksqueezed{:});
+    % how to go back from 1D flattened to 3D-grid?
+    
+    for ii=1:n_g2_type
+        tg2_squeezed=feval(g2mdl{ii},ksqueezed);
+        g2_fit{ii}=reshape(tg2_squeezed,size(kk{1}));     % form as 3D grid;
+    end
 end
 
-% evaluate fitted model
-kk_1d=cellfun(@(c) linspace(min(c),max(c),1e2),dk_cent,'UniformOutput',false);
-kk=ndgrid(kk_1d{:});
-gg=cell(1,n_g2_type);
 
-ksqueezed=cellfun(@(k) k(:),kk,'UniformOutput',false);
-ksqueezed=cat(2,ksqueezed{:});
-% how to go back from 1D flattened to 3D-grid?
+%% Plot
+[cc,clight,cdark]=palette(3);
 
-for ii=1:n_g2_type
-    tg2_squeezed=feval(g2mdl{ii},ksqueezed);
-    
-    gg{ii}=tg2_squeezed;
-    % form as 3D grid
-end
-
-
-
-%% plot
 h=[];       % initialise fig handle
 if doplot
     
@@ -161,29 +164,40 @@ if doplot
         '(1,1)',...
         '(0,1)',...
         };
-%     linestyle={'o-','^-','*-'};
+
     dispname={'$x$','$y$','$z$'};     % axis
     mark_type={'o','^','d'};    % markers for each axis
     
     
     h=figure();
     for ii=1:n_g2_type
-        %     h(ii)=figure();
         subplot(1,n_g2_type,ii);
         
+        perm_ord=[2,3,1];
         temp_ord=[1,2,3];
         temp_g2_perm=g2{ii};    % temporary var to hold dimension permuted g2
+        temp_gfit_perm=g2_fit{ii};  % fitted g2 model
         
         p=NaN(3,1);     % fig objects
+        pfit=NaN(3,1);
         for jj=1:3
             hold on;
             % permute dims
             %   NOTE: first permutation turns ZXY --> XYZ
-            temp_ord=temp_ord([2,3,1]);
-            temp_g2_perm=permute(temp_g2_perm,[2,3,1]);
+            temp_ord=temp_ord(perm_ord);
+            temp_g2_perm=permute(temp_g2_perm,perm_ord);
             
             p(jj)=plot(dk_cent{temp_ord(1)},temp_g2_perm(:,idx_dk0(temp_ord(2)),idx_dk0(temp_ord(3))),...
+                'MarkerEdgeColor',cc(jj,:),'MarkerFaceColor',clight(jj,:),...
                 'LineStyle','none','Marker',mark_type{jj},'DisplayName',dispname{jj});
+            
+            % plot fitted
+            if dofit
+                temp_gfit_perm=permute(temp_gfit_perm,perm_ord);
+                pfit(jj)=plot(kk_1d{ii},temp_gfit_perm(:,idx_dk0_fit(temp_ord(2)),idx_dk0_fit(temp_ord(3))),...
+                    'Color',cc(jj,:),'LineStyle','-');
+                uistack(pfit(jj),'bottom');
+            end
         end
         hold off;
         
