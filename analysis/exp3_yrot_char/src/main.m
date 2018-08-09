@@ -358,9 +358,46 @@ T_larmor=0.7e-6;        % Larmor precession period [s]
 tau_rot=par_T/T_larmor;
 
 
-%% Fit Rabi oscillation
-% TODO
+%% Fit Rabi oscillation (momentum-modes unresolved)
+%   General near-resonant Rabi oscillation model for a TLS: text
+%   representation
 
+% (A) simple phenomenological (2-param): 
+%   * amplitude (pkpk) [1]
+%   * Rabi frequency [rad/s]
+rabi_mdl='p~0.5*amp*(1-cos(om*x1))';    % for the initially unpopulated state mJ=0
+
+halo_amp=NaN;
+halo_om=NaN;
+
+idx_mJ=2;    % mJ=0
+tp=P_rabi_avg(:,idx_mJ);
+
+% estimate params
+tRabiAmp=max(tp)-min(tp);
+tRabiOmega=2*pi/20e-5;      % we keep this near const
+tparam0=[tRabiAmp,tRabiOmega];
+
+%%% fit model
+tfopts=statset('Display','off');
+
+tfit_rabi=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
+    'Options',tfopts);
+
+tparam_fit=tfit_rabi.Coefficients.Estimate;
+
+% get fitted model params
+halo_amp=tparam_fit(1);
+halo_om=tparam_fit(2);
+
+% evaluate fitted model
+tt=linspace(0,max(par_T),1e3);
+pp=feval(tfit_rabi,tt);
+
+
+%%% Uncertainty model
+%   Constant error fraction
+P_errfrac=harmmean(P_rabi_std(:,idx_mJ)./P_rabi_avg(:,idx_mJ));      % gives a reasonal fit to ~pi/2
 
 
 %% DATA VISUALIZATION
@@ -375,16 +412,18 @@ line_wid=1.1;
 mark_typ={'o','^','d'};
 
 
-
 %%% plot
 figure('Name','rabi_oscillation');
 hold on;
 
+% Fitted model (a composite graphics object) - plotted first to be in bottom
+lineProps.col={clight(idx_mJ,:)};
+tfitted=mseb(1e6*tt,pp,P_errfrac.*pp,lineProps,1);
 
 h=NaN(n_mf,1);
 for ii=1:n_mf
-%     th=ploterr(1e6*par_T,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
-    th=ploterr(tau_rot,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
+    th=ploterr(1e6*par_T,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
+%     th=ploterr(tau_rot,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
     set(th(1),'color',cc(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
         'MarkerSize',mark_siz,'MarkerFaceColor',clight(ii,:),...
         'DisplayName',num2str(configs.mf(ii).mf));
@@ -393,14 +432,20 @@ for ii=1:n_mf
     h(ii)=th(1);
 end
 
-set(gca,'FontSize',font_siz_reg);
-
-set(gca,'Layer','Top');     % graphics axes should be always on top
+% annotations
+ax=gca;
+set(ax,'FontSize',font_siz_reg);
+set(ax,'Layer','Top');     % graphics axes should be always on top
+axis tight;
 box on;
 
-% xlabel('Pulse duration [$\mu$s]');
-xlabel('Pulse duration, $\tau$');
-ylabel('$P\left(m_F\right)$');
+ylim([0,1]);
+ax.YTick=0:0.2:1;
+
+xlabel('Pulse duration [$\mu$s]');
+% xlabel('Pulse duration, $\tau$');
+ylabel('$P$');
+
 
 lgd=legend(h,'Location','East');
 title(lgd,'$m_F$');
@@ -432,14 +477,11 @@ end
 
 %%% define momentum zones
 % (A) lat-lon grid
-%   TODO
-%   [ ] handle spherical caps by phi limits
-%
 nzone_th=4;     % num. zones to equipartition azimuthal (-pi,pi]
 nzone_phi=2;    % for elevation [-pi/2,pi/2]
 momzone_th=linspace(-pi,pi,nzone_th+1);
 % momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
-momzone_phi=linspace(-0.8,0.8,nzone_phi+1);
+momzone_phi=linspace(-0.8,0.8,nzone_phi+1);     % elev limits to BEC caps
 
 % (B) try conical zone (either overlaps or misses)
 
@@ -518,31 +560,23 @@ for ii=1:n_mf
     end
 end
 
-set(gca,'FontSize',font_siz_reg);
-
-set(gca,'Layer','Top');     % graphics axes should be always on top
+% annotations
+ax=gca;
+set(ax,'FontSize',font_siz_reg);
+set(ax,'Layer','Top');     % graphics axes should be always on top
+axis tight;
 box on;
+
+ax.YTick=0:0.2:1;
 
 xlabel('Pulse duration [$\mu$s]');
 % xlabel('Pulse duration, $\tau$');
-ylabel('$P\left(m_F\right)$');
+ylabel('$P$');
 
-axis tight; 
+axis tight;
+ylim([0,1]);
 
-% lgd=legend(h,'Location','East');
-% title(lgd,'$m_F$');
-% set(lgd,'FontSize',font_siz_reg);
-
-
-%% Fit Rabi oscillation
-%   General near-resonant Rabi oscillation model for a TLS: text
-%   representation
-
-% (A) simple phenomenological (2-param): 
-%   * amplitude (pkpk) [1]
-%   * Rabi frequency [rad/s]
-rabi_mdl='p~0.5*amp*(1-cos(om*x1))';    % for the initially unpopulated state mJ=0
-
+%% Rabi oscillation (Momentum-zone resolved fit)
 momzone_amp=NaN(nzone_th,nzone_phi);
 momzone_om=NaN(nzone_th,nzone_phi);
 
@@ -588,18 +622,8 @@ for ii=1:numel(momzone_amp)
     figure(h_rabi_momzone);
     hold on;
 %     plot(1e6*par_T,tp,'o','Color',ccc(ii,:));
-    tplot=plot(1e6*tt,pp,'-','Color',ccc(ii,:));
-    uistack(tplot,'bottom');
-    
-    box on;
-    
-    xlabel('Pulse duration [$\mu$s]');
-%     xlabel('Pulse duration, $\tau$');
-    ylabel('$P_0$');
-    
-    axis tight;
-    ylim([0,1]);
-    
+    tfitted=plot(1e6*tt,pp,'-','Color',ccc(ii,:));
+    uistack(tfitted,'bottom');    
 end
 
 
