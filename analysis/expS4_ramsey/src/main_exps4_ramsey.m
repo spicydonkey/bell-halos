@@ -5,8 +5,8 @@
 % 2018-06-06
 
 
-config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\expS4_ramsey\src\config_1.m';
-% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\expS4_ramsey\src\config_1.m';
+% config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\expS4_ramsey\src\config_1.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\expS4_ramsey\src\config_1.m';
 
 
 %% load config
@@ -430,7 +430,7 @@ nzone_th=4;     % num. zones to equipartition azimuthal (-pi,pi]
 nzone_phi=2;    % for elevation [-pi/2,pi/2]
 momzone_th=linspace(-pi,pi,nzone_th+1);
 % momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
-momzone_phi=linspace(-0.8,0.8,nzone_phi+1);
+momzone_phi=linspace(-0.8,0.8,nzone_phi+1);     % elev limits to BEC caps
 
 % (B) try conical zone (either overlaps or misses)
 
@@ -582,7 +582,7 @@ for ii=1:numel(momzone_amp)
     box on;
     
     xlabel('$\phi$');
-    ylabel('$P_1$');
+    ylabel('$P$');
     
     axis tight;
     ylim([0,1]);

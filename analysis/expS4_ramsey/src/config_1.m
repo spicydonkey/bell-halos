@@ -8,7 +8,7 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\HE BEC\bell\2018april\expS4_ramsey';
+configs.path.base='C:\Users\HE BEC\bell_data\expS4_ramsey';
 
 configs.path.data=fullfile(configs.path.base,'data');
 
