@@ -1,17 +1,23 @@
-function [g2,dk,h]=summary_disthalo_g2(K,bfastrun,doplot,verbose)
+function [g2,dk,g2mdl,h]=summary_disthalo_g2(K,dk_ed,bfastrun,doplot,dofit,verbose)
 % Summarise distinguishable (2-species) halos with various g2 corrleation
 % functions
 % Useful diagnostic to check how well halos were processed
 %
-% [g2,dk,h]=summary_disthalo_g2(K,bfastrun)
+%   Simplest usage:
+%       [g2,dk,h]=summary_disthalo_g2(K)
 %
 % TODO
 % [ ] documentation
+%
 
 tstart=tic;
 
 
 %% parse inputs
+if ~exist('dk_ed','var')
+    dk_ed={};           % default rel-vector bin edges
+end
+
 if ~exist('bfastrun','var')
     bfastrun=false;     % default fully evaluates uncorrelated G2 for normalisation
 end
@@ -20,22 +26,32 @@ if ~exist('doplot','var')
     doplot=true;        % default is to plot
 end
 
+if ~exist('dofit','var')
+    dofit=true;         % default is to fit with gaussian
+end
+
 if ~exist('verbose','var')
     verbose=1;          % default is verbose
 end
 
 
 %% configs
-%%% g2
-nbin_g2=30;
-dk_lim=[-0.2,0.2];
-dk_ed_vec=linspace(dk_lim(1),dk_lim(2),nbin_g2);
-dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
-[~,idx_dk0]=min(abs(dk_cent_vec));
-dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};      % symmetric in cart axis
-dk_cent={dk_cent_vec,dk_cent_vec,dk_cent_vec};
-% dk=ndgrid(dk_cent{:});      % grid of dk centers
-[dk{1},dk{2},dk{3}]=ndgrid(dk_cent{:});      % grid of dk centers
+%%% set-up g2 histogramming bins
+if isempty(dk_ed)
+    % set up default domain (symmetric in Cart axes)
+    nbin_g2=29;             % num. bins
+    dk_lim=[-0.2,0.2];      % dim limits
+    dk_ed_vec=linspace(dk_lim(1),dk_lim(2),nbin_g2+1);  % bin edges per dim
+    
+    % set up default 3D bins
+    dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
+end
+
+%%% parse bin edges
+dk_cent=cellfun(@(ed) ed(1:end-1)+0.5*diff(ed),dk_ed,'UniformOutput',false);    % bin centers
+[~,idx_dk0]=cellfun(@(c) min(abs(c)),dk_cent);      % idx bin nearest zero
+[dk{1},dk{2},dk{3}]=ndgrid(dk_cent{:});             % grid of dk centers
+
 
 %%% G2 smoothing
 filter_toggle=true;       % turn filter on/off
@@ -89,6 +105,54 @@ if n_halo==2
 end
 
 
+%% Fit g2 - gaussian model
+%   3D gaussian model
+g2_gauss3_mdl='y~1+amp*exp(-0.5*(((x1-mu1)/sig1)^2+((x2-mu2)/sig2)^2+((x3-mu3)/sig3)^2))';
+g2_gauss3_mdl_param={'amp','mu1','mu2','mu3','sig1','sig2','sig3'};
+
+g2mdl=cell(1,n_g2_type);
+
+% rel-vec centers as 1D list of vectors
+X=cellfun(@(d) d(:),dk,'UniformOutput',false);
+X=cat(2,X{:});
+
+for ii=1:n_g2_type
+    % get evaluated g2
+    Y=g2{ii}(:);
+    
+    % estimate params
+    tamp0=g2{ii}(idx_dk0(1),idx_dk0(2),idx_dk0(3));
+    tmu0=[0,0,0];
+    tsig0=[0.03,0.03,0.03];
+    tparam0=[tamp0,tmu0,tsig0];
+    
+    %%% fit model
+    tfopts=statset('Display','off');
+    tg2mdl=fitnlm(X,Y,g2_gauss3_mdl,tparam0,'CoefficientNames',g2_gauss3_mdl_param,...
+        'Options',tfopts);
+    tparam_fit=tg2mdl.Coefficients.Estimate;
+    
+    g2mdl{ii}=tg2mdl;
+end
+
+% evaluate fitted model
+kk_1d=cellfun(@(c) linspace(min(c),max(c),1e2),dk_cent,'UniformOutput',false);
+kk=ndgrid(kk_1d{:});
+gg=cell(1,n_g2_type);
+
+ksqueezed=cellfun(@(k) k(:),kk,'UniformOutput',false);
+ksqueezed=cat(2,ksqueezed{:});
+% how to go back from 1D flattened to 3D-grid?
+
+for ii=1:n_g2_type
+    tg2_squeezed=feval(g2mdl{ii},ksqueezed);
+    
+    gg{ii}=tg2_squeezed;
+    % form as 3D grid
+end
+
+
+
 %% plot
 h=[];       % initialise fig handle
 if doplot
@@ -97,25 +161,29 @@ if doplot
         '(1,1)',...
         '(0,1)',...
         };
-    linestyle={'o-','^-','*-'};
-    dispname={'X','Y','Z'};
+%     linestyle={'o-','^-','*-'};
+    dispname={'$x$','$y$','$z$'};     % axis
+    mark_type={'o','^','d'};    % markers for each axis
+    
     
     h=figure();
     for ii=1:n_g2_type
         %     h(ii)=figure();
         subplot(1,n_g2_type,ii);
         
+        temp_ord=[1,2,3];
         temp_g2_perm=g2{ii};    % temporary var to hold dimension permuted g2
         
         p=NaN(3,1);     % fig objects
         for jj=1:3
             hold on;
+            % permute dims
+            %   NOTE: first permutation turns ZXY --> XYZ
+            temp_ord=temp_ord([2,3,1]);
             temp_g2_perm=permute(temp_g2_perm,[2,3,1]);
             
-            p(jj)=plot(dk_cent_vec,temp_g2_perm(:,idx_dk0,idx_dk0),...
-                linestyle{jj},'DisplayName',dispname{jj});
-            % NOTE: dk_cent_vec needs to be symmetric in cart-dims otherwise
-            % need to permute this too to match against g2 dim
+            p(jj)=plot(dk_cent{temp_ord(1)},temp_g2_perm(:,idx_dk0(temp_ord(2)),idx_dk0(temp_ord(3))),...
+                'LineStyle','none','Marker',mark_type{jj},'DisplayName',dispname{jj});
         end
         hold off;
         
