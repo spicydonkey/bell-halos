@@ -8,12 +8,13 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\David\Documents\bell\exp3_yrot_char';
+% configs.path.base='C:\Users\David\Documents\bell\exp3_yrot_char';
+configs.path.base='C:\Users\HE BEC\bell_data\exp3_theta_characterisation';
 
+configs.path.data=configs.path.base;
 % configs.path.data=fullfile(configs.path.base,'data');
-exp_num=1;
-configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
-
+% exp_num=1;
+% configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
 
 configs.path.out=fullfile(configs.path.base,'out');
 configs.path.src=fullfile(configs.path.base,'src');

@@ -8,9 +8,11 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\David\Documents\bell\expS1_theta_characterisation';
+% configs.path.base='C:\Users\David\Documents\bell\expS1_theta_characterisation';
+configs.path.base='C:\Users\HE BEC\bell_data\expS1_theta_characterisation';
 
-configs.path.data=fullfile(configs.path.base,'data');
+configs.path.data=configs.path.base;
+% configs.path.data=fullfile(configs.path.base,'data');
 % exp_num=2;
 % configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
 
