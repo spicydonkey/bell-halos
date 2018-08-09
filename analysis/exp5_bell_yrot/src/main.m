@@ -8,7 +8,9 @@
 
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
+
+config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
 
 %% load config
 run(config_name);
@@ -333,26 +335,28 @@ end
 
 
 %% g2 BB
-% MONEY
-
 % TODO 
 %   [ ] halo centering
 %   [ ] improve filtering
 %
 
+% g2 rel-vec bins
+dk_ed_vec=linspace(-0.2,0.2,29);
+dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
 
 g2=cell(nparam,1);
 dk=cell(nparam,1);
+g2mdl=cell(nparam,1);
 
-% for ii=1
 for ii=1:nparam
     % run full g2
-    [tg2,tdk]=summary_disthalo_g2(k_par{ii},0,true,0);     
-%     [tg2,tdk]=summary_disthalo_g2(k_par{ii},1,true,0);      % fast test
+    [tg2,tdk,tg2mdl]=summary_disthalo_g2(k_par{ii},dk_ed,0,1,1,0);     
+%     [tg2,tdk]=summary_disthalo_g2(k_par{ii},[],1,true,0,0);      % fast test
         
     % store
     g2{ii}=tg2;
     dk{ii}=tdk;
+    g2mdl{ii}=tg2mdl;
 end
     
 
@@ -383,17 +387,19 @@ end
 
 
 %% PRELIM bootstrapping
+%   TODO
+%   [ ] with replacement
+%   [ ] convergence?
+%
+
 %%% CONFIG
 n_frac_samp=1/7;
 n_subset=20;                    % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
-
-%%% main
+% dataset and subset
 nshot_par=shotSize(k_par);    % num. exp shots for each scanned parameter set
-
-subset_shotsize=nshot_par*n_frac_samp;    % shot-size of bootstrap sampled subset
-
+subset_shotsize=round(nshot_par*n_frac_samp);    % shot-size of bootstrap sampled subset
 
 g2anti_samp=cell(nparam,1);
 g2corr_samp=cell(nparam,1);
@@ -414,7 +420,7 @@ for ii=1:nparam
         Isamp=rand(tnshot,1)<tn_frac_samp;       % randomly select subset of shots to sample
         k_samp=tk_par(Isamp,:);           % the sampled data
         
-        [tg2,tdk]=summary_disthalo_g2(k_samp,0,0,0);      % evaluate function
+        tg2=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
         
 %         tg2corr=max([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
         tg2corr=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
