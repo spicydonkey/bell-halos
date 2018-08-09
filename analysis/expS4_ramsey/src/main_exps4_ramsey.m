@@ -347,8 +347,40 @@ P_rabi_std=cellfun(@(p) std(p,[],1),P_rabi_shot,'UniformOutput',false);
 P_rabi_std=cat(1,P_rabi_std{:});
 
 
-%% Fit Rabi oscillation
-% TODO
+%% Fit Ramsey fringe (momentum-integrated)
+%   simple model: phi is periodic by definition [0,2*pi]
+%   * amplitude
+%
+%   TODO
+%   [ ] model the control of "rotation axis" by 2nd pulse - we know the first
+%   pulse state.
+%
+
+ramsey_mdl='p~0.5*(1-amp*cos(x1))';
+
+halo_amp=NaN;
+
+idx_mJ=1;   % mJ=1
+
+tp=P_rabi_avg(:,idx_mJ);
+
+% estimate params
+tAmp=max(tp)-min(tp);
+tparam0=tAmp;
+
+%%% fit model
+tfopts=statset('Display','off');
+tfit_ramsey=fitnlm(par_dphi,tp,ramsey_mdl,tparam0,'CoefficientNames',{'amp'},...
+    'Options',tfopts);
+tparam_fit=tfit_ramsey.Coefficients.Estimate;
+
+% get fitted model params
+halo_amp=tparam_fit(1);
+
+% evaluate fitted model
+tt=linspace(-pi,3*pi,1e4);
+pp=feval(tfit_ramsey,tt);
+
 
 
 %% DATA VISUALIZATION
@@ -367,7 +399,10 @@ mark_typ={'o','^','d'};
 figure('Name','ramsey_fringe');
 hold on;
 
+% Fitted model
+pfit=plot(tt,pp,'Color',clight(idx_mJ,:),'LineWidth',2,'LineStyle','-');
 
+% DATA
 h=NaN(n_mf,1);
 for ii=1:n_mf
     th=ploterr(par_dphi,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
@@ -385,19 +420,18 @@ set(gca,'Layer','Top');     % graphics axes should be always on top
 box on;
 
 xlabel('$\phi$');
-% ylabel('$P\left(m_F\right)$');
 ylabel('$P$');
-
 
 lgd=legend(h,'Location','East');
 title(lgd,'$m_F$');
 set(lgd,'FontSize',font_siz_reg);
 
 xlim([0-2*pi/25,2*pi+2*pi/25]);
-
-% X-ticks
 xticks(0:pi/2:2*pi);
 xticklabels({'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'});
+
+ylim([0,1]);
+yticks(0:0.2:1);
 
 
 %% Analysis for momentum resolved Ramsey fringe
@@ -507,36 +541,26 @@ for ii=1:n_mf
     end
 end
 
-set(gca,'FontSize',font_siz_reg);
-
-set(gca,'Layer','Top');     % graphics axes should be always on top
+% annotatations
+ax=gca;
+set(ax,'FontSize',font_siz_reg);
+set(ax,'Layer','Top');     % graphics axes should be always on top
 box on;
 
+axis tight;
+ax.XTick=0:pi/2:2*pi;
+ax.XTickLabel={'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'};
+ax.YTick=0:0.2:1;
+ylim([0,1]);
+
 xlabel('$\phi$');
-% ylabel('$P\left(m_F\right)$');
 ylabel('$P$');
 
-axis tight; 
 
 
-% X-ticks
-xticks(0:pi/2:2*pi);
-xticklabels({'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'});
-
-
-%% Fit Ramsey fringe
-%   Check: a simple model: phi is periodic by definition [0,2*pi]
-%   * amplitude
-%
-%   TODO
-%   [ ] model the control of "rotation axis" by 2nd pulse - we know the first
-%   pulse state.
-
-ramsey_mdl='p~0.5*(1-amp*cos(x1))';
-
+%% Fit Ramsey fringe (momentum-zone resolved fit)
 momzone_amp=NaN(nzone_th,nzone_phi);
 
-idx_mJ=1;   % mJ=1
 P_momzone=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for this mJ
 
 
@@ -552,9 +576,7 @@ for ii=1:numel(momzone_amp)
         
     % estimate params
     tAmp=max(tp)-min(tp);
-    
     tparam0=tAmp;
-    
     
     %%% fit model
     tfopts=statset('Display','off');
@@ -566,9 +588,7 @@ for ii=1:numel(momzone_amp)
     
     % get fitted model params
     momzone_amp(mm,nn)=tparam_fit(1);
-
     
-    %%% DEBUG
     % evaluate fitted model
     tt=linspace(0,max(par_dphi),1e3);
     pp=feval(tfit_ramsey,tt);
@@ -578,15 +598,6 @@ for ii=1:numel(momzone_amp)
     hold on;
     tplot=plot(tt,pp,'-','Color',ccc(ii,:));
     uistack(tplot,'bottom');
-    
-    box on;
-    
-    xlabel('$\phi$');
-    ylabel('$P$');
-    
-    axis tight;
-    ylim([0,1]);
-    
 end
 
 
