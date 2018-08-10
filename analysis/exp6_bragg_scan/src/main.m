@@ -17,23 +17,12 @@ run(config_name);
 
 
 
-%% load param log
+%% Get experimental params
 if configs.flag.param_scan
-    param_log=load_logfile(configs.path.paramlog);
-    param_array = paramlog2array(param_log);
-    
-    % get unique param-vecs and tag each shot with param-ID
-    [params,~,Ipar] = unique(param_array(:,2:end),'rows');
-    
-    param_id=param_array(:,1);
+    % load wfmgen log
+    [params,id_in_param,param_id,Ipar]=wfmgen_log_parser(configs.path.paramlog);
     nparam=size(params,1);      % number of unique param-set
-    
-    % group shot-ids by exp-param
-    id_in_param=cell(1,nparam);
-    for ii=1:nparam
-        id_in_param{ii}=param_id(Ipar==ii);
-    end
-    
+            
     % get searched param
     par_T=params;       % scanned pulse duration [s]
 else

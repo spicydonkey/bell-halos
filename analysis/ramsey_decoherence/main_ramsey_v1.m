@@ -18,26 +18,15 @@
 %% load raw data
 run('config_v1');
 
-%%%% load param log
-param_log=load_logfile(configs.path.paramlog);
-param_array = paramlog2array(param_log);
 
-% get unique param-vecs and tag each shot with param-ID
-[params,~,Ipar] = unique(param_array(:,2:end),'rows');
-
-param_id=param_array(:,1);
+%% Get experimental params
+% load wfmgen log
+[params,id_in_param,param_id,Ipar]=wfmgen_log_parser(configs.path.paramlog);
 nparam=size(params,1);      % number of unique param-set
 
-% group shot-ids by exp-param
-id_in_param=cell(1,nparam);
-for ii=1:nparam
-    id_in_param{ii}=param_id(Ipar==ii);
-end
+% get searched param
+Tdelay=params;
 
-%% START debug - param search manual
-%%% get searched param
-% unique params
-upar_dt=unique(params(:,1));
 
 %% END debug - param search manual
 
@@ -287,9 +276,6 @@ end
 %%% END OF PREPROCESSING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% ANALYSIS
-dt=upar_dt;
-
 
 %% Rabi oscillation
 Nmf=cellfun(@(x) shotSize(x),k_par,'UniformOutput',false);
@@ -308,8 +294,8 @@ Nmf_se=Nmf_std./sqrt(cellfun(@(x)size(x,1),Nmf))';
 figure('Name','2-pulse_Rabi_osc');
 hold on;
 
-p1=ploterr(1e6*dt,Nmf_avg(:,1),[],Nmf_se(:,1),'ro');
-p2=ploterr(1e6*dt,Nmf_avg(:,2),[],Nmf_se(:,2),'bo');
+p1=ploterr(1e6*Tdelay,Nmf_avg(:,1),[],Nmf_se(:,1),'ro');
+p2=ploterr(1e6*Tdelay,Nmf_avg(:,2),[],Nmf_se(:,2),'bo');
 
 p1(1).DisplayName='1';
 p2(1).DisplayName='0';
@@ -331,7 +317,7 @@ lgd.Title.String='$m_F$';
 % f_larmor=
 T_larmor=0.65e-6;       % larmor precession period (s)
 
-dtau=dt/T_larmor;
+dtau=Tdelay/T_larmor;
 
 figure('Name','ramsey_decay');
 hold on;

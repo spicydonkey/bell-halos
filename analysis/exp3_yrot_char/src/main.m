@@ -18,25 +18,15 @@ config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp3_yrot_char
 run(config_name);
 
 
-%% load param log
+%% Get experimental params
 if configs.flag.param_scan
-    param_log=load_logfile(configs.path.paramlog);
-    param_array = paramlog2array(param_log);
-    
-    % get unique param-vecs and tag each shot with param-ID
-    [params,~,Ipar] = unique(param_array(:,2:end),'rows');
-    
-    param_id=param_array(:,1);
+    % load wfmgen log
+    [params,id_in_param,param_id,Ipar]=wfmgen_log_parser(configs.path.paramlog);
     nparam=size(params,1);      % number of unique param-set
-    
-    % group shot-ids by exp-param
-    id_in_param=cell(1,nparam);
-    for ii=1:nparam
-        id_in_param{ii}=param_id(Ipar==ii);
-    end
-    
+        
     % get searched param
     par_T=params;       % scanned pulse duration [s]
+    
 else
     % TODO
     %   do I need to set some things to default? or re-code analysis?
@@ -380,10 +370,8 @@ tparam0=[tRabiAmp,tRabiOmega];
 
 %%% fit model
 tfopts=statset('Display','off');
-
 tfit_rabi=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
     'Options',tfopts);
-
 tparam_fit=tfit_rabi.Coefficients.Estimate;
 
 % get fitted model params
@@ -420,6 +408,7 @@ hold on;
 lineProps.col={clight(idx_mJ,:)};
 tfitted=mseb(1e6*tt,pp,P_errfrac.*pp,lineProps,1);
 
+% DATA
 h=NaN(n_mf,1);
 for ii=1:n_mf
     th=ploterr(1e6*par_T,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
@@ -564,23 +553,22 @@ end
 ax=gca;
 set(ax,'FontSize',font_siz_reg);
 set(ax,'Layer','Top');     % graphics axes should be always on top
-axis tight;
 box on;
 
+axis tight;
 ax.YTick=0:0.2:1;
+ylim([0,1]);
 
 xlabel('Pulse duration [$\mu$s]');
 % xlabel('Pulse duration, $\tau$');
 ylabel('$P$');
 
-axis tight;
-ylim([0,1]);
 
-%% Rabi oscillation (Momentum-zone resolved fit)
+
+%% Rabi oscillation (momentum-zone resolved fit)
 momzone_amp=NaN(nzone_th,nzone_phi);
 momzone_om=NaN(nzone_th,nzone_phi);
 
-idx_mJ=2;    % mJ=0
 P_momzone_0=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for mJ=0
 
 htemp=100;
@@ -612,8 +600,6 @@ for ii=1:numel(momzone_amp)
     momzone_amp(mm,nn)=tparam_fit(1);
     momzone_om(mm,nn)=tparam_fit(2);
     
-    
-    %%% DEBUG
     % evaluate fitted model
     tt=linspace(0,max(par_T),1e3);
     pp=feval(tfit_rabi,tt);
