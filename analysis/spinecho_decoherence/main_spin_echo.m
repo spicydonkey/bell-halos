@@ -41,21 +41,21 @@ b_paramset=horzcat(b_paramset{:});
 
 
 % DEBUG
-h_txy_raw=figure;
-plot_zxy(txy,1e5);
-axis equal;
-xlabel('x');
-ylabel('y');
-zlabel('t');
-view([0,0]);
-
-% h_zxy_raw=figure;
-% plot_zxy(zxy,1e5);
+% h_txy_raw=figure;
+% plot_zxy(txy,1e5);
 % axis equal;
 % xlabel('x');
 % ylabel('y');
-% zlabel('z');
+% zlabel('t');
 % view([0,0]);
+
+h_zxy_raw=figure;
+plot_zxy(zxy,1e5);
+axis equal;
+xlabel('x');
+ylabel('y');
+zlabel('z');
+view([0,0]);
 
 
 %% distinguish mF and capture halo
@@ -92,7 +92,7 @@ for ii=1:n_shot
 end
 
 % DEBUG
-h_zxy_raw=figure();
+figure(h_zxy_raw);
 hold on;
 plot_zxy(p_halo,[],50,'mkg');
 
@@ -345,48 +345,6 @@ for ii=1:n_mf
 end
 P_mJ_halo_avg=cat(2,P_mJ_halo_avg{:});
 P_mJ_halo_std=cat(2,P_mJ_halo_std{:});
-
-
-% %% Number counting
-% Nmf=cellfun(@(x) shotSize(x),k_par,'UniformOutput',false);
-% 
-% % statistics
-% Nmf_avg=cellfun(@(n) mean(n,1),Nmf,'UniformOutput',false);
-% Nmf_avg=vertcat(Nmf_avg{:});
-% 
-% Nmf_std=cellfun(@(n) std(n,0,1),Nmf,'UniformOutput',false);
-% Nmf_std=vertcat(Nmf_std{:});
-% 
-% Nmf_se=Nmf_std./sqrt(cellfun(@(x)size(x,1),Nmf))';
-
-
-% % population fraction
-% Nmf_tot=sum(Nmf_avg,2);         % total number in all spin-state
-% 
-% P=Nmf_avg./Nmf_tot;
-% P_err=(vnorm(Nmf_se,2)./Nmf_tot);      % simple estimate of error
-% 
-% % vis
-% figure('Name','population_fraction');
-% hold on;
-% 
-% p1=ploterr(dtau,P(:,1),[],P_err,'ro');
-% p2=ploterr(dtau,P(:,2),[],P_err,'bo');
-% 
-% p1(1).DisplayName='1';
-% p2(1).DisplayName='0';
-% 
-% titlestr=sprintf('spin-echo P-fraction');
-% title(titlestr);
-% xlabel('$\tau$');
-% ylabel('P');
-% box on;
-% ax=gca;
-% xlim([0,ax.XLim(2)]);
-% ylim([0,ax.YLim(2)]);
-% 
-% lgd=legend([p1(1),p2(1)]);
-% lgd.Title.String='$m_F$';
 
 
 %% DATA VISUALIZATION
