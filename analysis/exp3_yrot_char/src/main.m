@@ -305,47 +305,66 @@ for ii=1:nparam
     k_par{ii}=tk;
 end
 
-
-%% Below analysis for mJ-population oscillation is averaged in momentum
-%% number of counts captured in halo
-%   NOTE: Nsc Poissonian and stat analysis needs to be careful
-
-% number of counts detected in filtered halo region
-n_sc_counts=cellfun(@(v) shotSize(v),k_par,'UniformOutput',false);
-
-% statistics: avg and std for number in each halo
-n_sc_counts_avg=cellfun(@(n) mean(n,1),n_sc_counts,'UniformOutput',false);
-n_sc_counts_avg=cat(1,n_sc_counts_avg{:});
-
-n_sc_counts_std=cellfun(@(n) std(n,[],1),n_sc_counts,'UniformOutput',false);
-n_sc_counts_std=cat(1,n_sc_counts_std{:});
-    
-
-% output
-fprintf('Summary: Counts in halo\n');
-for ii=1:nparam
-    fprintf('par %d',ii);
-    for jj=1:n_mf
-        fprintf('\t:\t%5.3g(%2.2g)',[n_sc_counts_avg(ii,jj),n_sc_counts_std(ii,jj)]);
-    end
-    fprintf('\n');
-end
-
-
-%% number transfer in the triplet
-n_sc_tot=cellfun(@(n) sum(n,2),n_sc_counts,'UniformOutput',false);      % total sc counts det'd in each shot
-
-% state population fraction and Rabi oscillation
-P_rabi_shot=cellfun(@(n,N) n./N,n_sc_counts,n_sc_tot,'UniformOutput',false);
-P_rabi_avg=cellfun(@(p) mean(p,1),P_rabi_shot,'UniformOutput',false);
-P_rabi_avg=cat(1,P_rabi_avg{:});
-P_rabi_std=cellfun(@(p) std(p,[],1),P_rabi_shot,'UniformOutput',false);
-P_rabi_std=cat(1,P_rabi_std{:});
-
-
 %% non-dimensionalzed time
 T_larmor=0.7e-6;        % Larmor precession period [s]
 tau_rot=par_T/T_larmor;
+
+
+%% Number counting - momentum-unresolved
+%   NOTE: Nsc Poissonian and stat analysis needs to be careful
+
+latlon_halo_ed={[-pi,pi],[-pi/2,pi/2]};     % momentum integrated
+nsc_halo=cell(1,nparam);
+for ii=1:nparam
+    nsc_halo{ii}=cell(1,n_mf);
+    temp_nsc_halo=cellfun(@(k) histlatlon_halo(k,latlon_halo_ed),k_par{ii},'UniformOutput',false);
+    
+    % tidy form by collapsing independent shots into dim-3
+    for jj=1:n_mf
+        nsc_halo{ii}{jj}=cat(3,temp_nsc_halo{:,jj});
+    end
+end
+
+%%% mJ population fraction per mode/shot
+%   NOTE: this mode is the whole halo
+% sum scattered num. in each (zone, mJ) / shot
+nsctot_halo=cellfun(@(n) sum(cat(4,n{:}),4),nsc_halo,'UniformOutput',false);    % total number per mode/shot
+
+% population fraction
+P_mJ_halo=cell(1,nparam);
+for ii=1:nparam
+    temp_nsc_tot=nsctot_halo{ii};       % total scattered num array for this subset
+    for jj=1:n_mf
+        P_mJ_halo{ii}{jj}=nsc_halo{ii}{jj}./temp_nsc_tot;   % eval pop fraction
+    end
+end
+
+% statistics
+temp_P_mJ_halo_avg=cell(1,nparam);
+temp_P_mJ_halo_std=cell(1,nparam);
+for ii=1:nparam
+    temp_P_mJ_halo_avg{ii}=cellfun(@(p) mean(p,3),P_mJ_halo{ii},'UniformOutput',false);
+    temp_P_mJ_halo_std{ii}=cellfun(@(p) std(p,[],3),P_mJ_halo{ii},'UniformOutput',false);
+end
+% tidy form
+P_mJ_halo_avg=cell(1,n_mf);
+P_mJ_halo_std=cell(1,n_mf);
+temp_P_mJ_halo_avg=cat(1,temp_P_mJ_halo_avg{:});      % collapse param# to cell-array row#
+temp_P_mJ_halo_std=cat(1,temp_P_mJ_halo_std{:});
+
+% collapse param# as dim-3 in 2D histogram for each mJ
+for ii=1:n_mf
+    P_mJ_halo_avg{ii}=cat(3,temp_P_mJ_halo_avg{:,ii});
+    P_mJ_halo_std{ii}=cat(3,temp_P_mJ_halo_std{:,ii});
+end
+
+% 1x1 grid to squeeze into array
+for ii=1:n_mf
+    P_mJ_halo_avg{ii}=squeeze(P_mJ_halo_avg{ii});
+    P_mJ_halo_std{ii}=squeeze(P_mJ_halo_std{ii});
+end
+P_mJ_halo_avg=cat(2,P_mJ_halo_avg{:});
+P_mJ_halo_std=cat(2,P_mJ_halo_std{:});
 
 
 %% Fit Rabi oscillation (momentum-modes unresolved)
@@ -361,7 +380,7 @@ halo_amp=NaN;
 halo_om=NaN;
 
 idx_mJ=2;    % mJ=0
-tp=P_rabi_avg(:,idx_mJ);
+tp=P_mJ_halo_avg(:,idx_mJ);
 
 % estimate params
 tRabiAmp=max(tp)-min(tp);
@@ -385,38 +404,36 @@ pp=feval(tfit_rabi,tt);
 
 %%% Uncertainty model
 %   Constant error fraction
-P_errfrac=harmmean(P_rabi_std(:,idx_mJ)./P_rabi_avg(:,idx_mJ));      % gives a reasonal fit to ~pi/2
+P_errfrac=harmmean(P_mJ_halo_std(:,idx_mJ)./P_mJ_halo_avg(:,idx_mJ));      % gives a reasonal fit to ~pi/2
 
 
 %% DATA VISUALIZATION
-%%% config
+% config
 font_siz_reg=12;
 font_siz_sml=10;
 font_siz_lrg=14;
 mark_siz=7;
 line_wid=1.1;
-
-[cc,clight,cdark]=palette(n_mf);
+[c0,clight,cdark]=palette(n_mf);
 mark_typ={'o','^','d'};
 
-
 %%% plot
-figure('Name','rabi_oscillation');
+hf=figure('Name','rabi_halo');
 hold on;
 
 % Fitted model (a composite graphics object) - plotted first to be in bottom
 lineProps.col={clight(idx_mJ,:)};
 tfitted=mseb(1e6*tt,pp,P_errfrac.*pp,lineProps,1);
 
-% DATA
+% data
 h=NaN(n_mf,1);
 for ii=1:n_mf
-    th=ploterr(1e6*par_T,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
-%     th=ploterr(tau_rot,P_rabi_avg(:,ii),[],P_rabi_std(:,ii),'o','hhxy',0);
-    set(th(1),'color',cc(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+    th=ploterr(1e6*par_T,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+%     th=ploterr(tau_rot,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+    set(th(1),'color',c0(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
         'MarkerSize',mark_siz,'MarkerFaceColor',clight(ii,:),...
         'DisplayName',num2str(configs.mf(ii).mf));
-    set(th(2),'color',cc(ii,:),'LineWidth',line_wid);
+    set(th(2),'color',c0(ii,:),'LineWidth',line_wid);
     
     h(ii)=th(1);
 end
@@ -435,13 +452,12 @@ xlabel('Pulse duration [$\mu$s]');
 % xlabel('Pulse duration, $\tau$');
 ylabel('$P$');
 
-
 lgd=legend(h,'Location','East');
 title(lgd,'$m_F$');
 set(lgd,'FontSize',font_siz_reg);
 
 
-%% Analysis for momentum resolved mJ-oscillation
+%% MOMENTUM-RESOLVED: mJ-oscillation
 %   
 %   1. define momentum "zones" (multiple momentum modes)
 %       e.g.    (A) lat-lon zones
@@ -456,14 +472,6 @@ set(lgd,'FontSize',font_siz_reg);
 %   * extrapolate to momentum mode? dependency on zone size?
 %
 
-%%% Cart-vecs to sph-polar vecs
-%   * ks vectors are [th,phi,norm]
-ks_par=cell(1,nparam);
-for ii=1:nparam
-    ks_par{ii} = cellfun(@(q) zxy2sphpol(q),k_par{ii},'UniformOutput',false);
-end
-
-
 %%% define momentum zones
 % (A) lat-lon grid
 nzone_th=4;     % num. zones to equipartition azimuthal (-pi,pi]
@@ -472,18 +480,18 @@ momzone_th=linspace(-pi,pi,nzone_th+1);
 % momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
 momzone_phi=linspace(-0.8,0.8,nzone_phi+1);     % elev limits to BEC caps
 
-% (B) try conical zone (either overlaps or misses)
+% TODO
+% (B) conical zone (either overlaps or misses)
 
 
 %%% histogram atoms into zones
 % (A) lat-lon grid: 2D histogram
-hist_ed={momzone_th,momzone_phi};
+latlon_zone_ed={momzone_th,momzone_phi};
 nsc_zone=cell(1,nparam);
 for ii=1:nparam
     nsc_zone{ii}=cell(1,n_mf);
-    
-    temp_nsc_zone=cellfun(@(ks) nhist(ks(:,1:2),hist_ed),ks_par{ii},'UniformOutput',false);
-    
+    temp_nsc_zone=cellfun(@(k) histlatlon_halo(k,latlon_zone_ed),k_par{ii},'UniformOutput',false);
+
     % tidy form by collapsing independent shots into dim-3
     for jj=1:n_mf
         nsc_zone{ii}{jj}=cat(3,temp_nsc_zone{:,jj});
@@ -526,7 +534,7 @@ for ii=1:n_mf
 end
 
 
-%%% DATA VIS
+%% DATA VIS
 [ccc,ccclight,cccdark]=palette(nzone_th*nzone_phi);
 
 h_rabi_momzone=figure('Name','rabi_momzone');
@@ -631,8 +639,6 @@ k_th=ks_collated(:,1);
 k_phi=ks_collated(:,2);
 
 %%% sort k-vecs into zones
-% momzone_th=linspace(-pi,pi,nzone_th+1);
-% momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
 k_momzone=cell(nzone_th,nzone_phi);
 for ii=1:numel(k_momzone)
     [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
