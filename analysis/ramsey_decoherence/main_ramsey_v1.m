@@ -43,13 +43,13 @@ b_paramset=horzcat(b_paramset{:});
 
 
 % DEBUG
-h_txy_raw=figure;
-plot_zxy(txy,1e5);
-axis equal;
-xlabel('x');
-ylabel('y');
-zlabel('t');
-view([0,0]);
+% h_txy_raw=figure;
+% plot_zxy(txy,1e5);
+% axis equal;
+% xlabel('x');
+% ylabel('y');
+% zlabel('t');
+% view([0,0]);
 
 h_zxy_raw=figure;
 plot_zxy(zxy,1e5);
@@ -259,6 +259,8 @@ for ii=1:nparam
     %from this param-set and store
 end
 
+
+% NOTE: generates a lot of subplots!
 % % DEBUG
 % figure;
 % for ii=1:nparam
@@ -276,170 +278,329 @@ end
 %%% END OF PREPROCESSING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-%% Rabi oscillation
-Nmf=cellfun(@(x) shotSize(x),k_par,'UniformOutput',false);
-
-% statistics
-Nmf_avg=cellfun(@(n) mean(n,1),Nmf,'UniformOutput',false);
-Nmf_avg=vertcat(Nmf_avg{:});
-
-Nmf_std=cellfun(@(n) std(n,0,1),Nmf,'UniformOutput',false);
-Nmf_std=vertcat(Nmf_std{:});
-
-Nmf_se=Nmf_std./sqrt(cellfun(@(x)size(x,1),Nmf))';
+%% clean workspace
+clear txy zxy zxy0 zxy0_filt tzxy tzxy_mf tp_bec tp_bec0 tp_halo tr_bec0 tr_lim;
+clear h_zxy*;       % clear figs
 
 
-%% data vis
-figure('Name','2-pulse_Rabi_osc');
-hold on;
-
-p1=ploterr(1e6*Tdelay,Nmf_avg(:,1),[],Nmf_se(:,1),'ro');
-p2=ploterr(1e6*Tdelay,Nmf_avg(:,2),[],Nmf_se(:,2),'bo');
-
-p1(1).DisplayName='1';
-p2(1).DisplayName='0';
-
-titlestr=sprintf('2-pulse Raman: pi/2 with delay');
-title(titlestr);
-xlabel('Pulse delay (us)');
-ylabel('Number in ROI');
-box on;
-ax=gca;
-xlim([0,ax.XLim(2)]);
-ylim([0,ax.YLim(2)]);
-
-lgd=legend([p1(1),p2(1)]);
-lgd.Title.String='$m_F$';
-
-
-%% non-dimensionalised time: Larmor period
-% f_larmor=
+%% ANALYSIS
+% non-dimensionalised time: Larmor period
 T_larmor=0.65e-6;       % larmor precession period (s)
-
 dtau=Tdelay/T_larmor;
 
-figure('Name','ramsey_decay');
+
+%% Number counting - momentum-unresolved
+%   NOTE: Nsc Poissonian and stat analysis needs to be careful
+
+latlon_halo_ed={[-pi,pi],[-pi/2,pi/2]};     % momentum integrated
+nsc_halo=cell(1,nparam);
+for ii=1:nparam
+    nsc_halo{ii}=cell(1,n_mf);
+    temp_nsc_halo=cellfun(@(k) histlatlon_halo(k,latlon_halo_ed),k_par{ii},'UniformOutput',false);
+    
+    % tidy form by collapsing independent shots into dim-3
+    for jj=1:n_mf
+        nsc_halo{ii}{jj}=cat(3,temp_nsc_halo{:,jj});
+    end
+end
+
+%%% mJ population fraction per mode/shot
+%   NOTE: this mode is the whole halo
+% sum scattered num. in each (zone, mJ) / shot
+nsctot_halo=cellfun(@(n) sum(cat(4,n{:}),4),nsc_halo,'UniformOutput',false);    % total number per mode/shot
+
+% population fraction
+P_mJ_halo=cell(1,nparam);
+for ii=1:nparam
+    temp_nsc_tot=nsctot_halo{ii};       % total scattered num array for this subset
+    for jj=1:n_mf
+        P_mJ_halo{ii}{jj}=nsc_halo{ii}{jj}./temp_nsc_tot;   % eval pop fraction
+    end
+end
+
+% statistics
+temp_P_mJ_halo_avg=cell(1,nparam);
+temp_P_mJ_halo_std=cell(1,nparam);
+for ii=1:nparam
+    temp_P_mJ_halo_avg{ii}=cellfun(@(p) mean(p,3),P_mJ_halo{ii},'UniformOutput',false);
+    temp_P_mJ_halo_std{ii}=cellfun(@(p) std(p,[],3),P_mJ_halo{ii},'UniformOutput',false);
+end
+% tidy form
+P_mJ_halo_avg=cell(1,n_mf);
+P_mJ_halo_std=cell(1,n_mf);
+temp_P_mJ_halo_avg=cat(1,temp_P_mJ_halo_avg{:});      % collapse param# to cell-array row#
+temp_P_mJ_halo_std=cat(1,temp_P_mJ_halo_std{:});
+
+% collapse param# as dim-3 in 2D histogram for each mJ
+for ii=1:n_mf
+    P_mJ_halo_avg{ii}=cat(3,temp_P_mJ_halo_avg{:,ii});
+    P_mJ_halo_std{ii}=cat(3,temp_P_mJ_halo_std{:,ii});
+end
+
+% 1x1 grid to squeeze into array
+for ii=1:n_mf
+    P_mJ_halo_avg{ii}=squeeze(P_mJ_halo_avg{ii});
+    P_mJ_halo_std{ii}=squeeze(P_mJ_halo_std{ii});
+end
+P_mJ_halo_avg=cat(2,P_mJ_halo_avg{:});
+P_mJ_halo_std=cat(2,P_mJ_halo_std{:});
+
+
+%% DATA VISUALIZATION
+% config
+font_siz_reg=12;
+font_siz_sml=10;
+font_siz_lrg=14;
+mark_siz=7;
+line_wid=1.1;
+[c0,clight,cdark]=palette(n_mf);
+mark_typ={'o','^','d'};
+
+%%% plot
+hf=figure('Name','ramsey_halo');
 hold on;
 
-p1=ploterr(dtau,Nmf_avg(:,1),[],Nmf_se(:,1),'ro');
-p2=ploterr(dtau,Nmf_avg(:,2),[],Nmf_se(:,2),'bo');
 
-p1(1).DisplayName='1';
-p2(1).DisplayName='0';
+% data
+h=NaN(n_mf,1);
+for ii=1:n_mf
+    th=ploterr(1e6*Tdelay,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+%     th=ploterr(tau_rot,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+    set(th(1),'color',c0(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+        'MarkerSize',mark_siz,'MarkerFaceColor',clight(ii,:),...
+        'DisplayName',num2str(configs.mf(ii).mf));
+    set(th(2),'color',c0(ii,:),'LineWidth',line_wid);
+    
+    h(ii)=th(1);
+end
 
-titlestr=sprintf('2-pulse Raman: pi/2 with delay');
-title(titlestr);
-xlabel('$\tau$');
-ylabel('Number in ROI');
-box on;
+% annotations
 ax=gca;
-xlim([0,ax.XLim(2)]);
-ylim([0,ax.YLim(2)]);
+set(ax,'FontSize',font_siz_reg);
+set(ax,'Layer','Top');     % graphics axes should be always on top
+axis tight;
+box on;
 
-lgd=legend([p1(1),p2(1)]);
-lgd.Title.String='$m_F$';
+ylim([0,1]);
+ax.YTick=0:0.2:1;
+
+xlabel('Pulse delay [$\mu$s]');
+% xlabel('Pulse delay, $\tau$');
+ylabel('$P$');
+
+lgd=legend(h,'Location','NorthEast');
+title(lgd,'$m_F$');
+set(lgd,'FontSize',font_siz_reg);
 
 
-%% Analysis of decoherence
-Nmf_max=max(Nmf_avg,[],1);      % max number for normalisation
+%% MOMENTUM-RESOLVED: mJ-oscillation
+%%% define momentum zones
+% (A) lat-lon grid
+nzone_th=4;     % num. zones to equipartition azimuthal (-pi,pi]
+nzone_phi=2;    % for elevation [-pi/2,pi/2]
+momzone_th=linspace(-pi,pi,nzone_th+1);
+% momzone_phi=linspace(-pi/2,pi/2,nzone_phi+1);
+momzone_phi=linspace(-0.8,0.8,nzone_phi+1);     % elev limits to BEC caps
 
-% normalise number s.t. max = 1
-nmf_avg=Nmf_avg./Nmf_max;
-nmf_se=Nmf_se./Nmf_max;
-
-nmf_tot=sum(nmf_avg,2);
+% TODO
+% (B) conical zone (either overlaps or misses)
 
 
-% vis
-figure('Name','normalised_number');
+%%% histogram atoms into zones
+% (A) lat-lon grid: 2D histogram
+latlon_zone_ed={momzone_th,momzone_phi};
+nsc_zone=cell(1,nparam);
+for ii=1:nparam
+    nsc_zone{ii}=cell(1,n_mf);
+    temp_nsc_zone=cellfun(@(k) histlatlon_halo(k,latlon_zone_ed),k_par{ii},'UniformOutput',false);
+
+    % tidy form by collapsing independent shots into dim-3
+    for jj=1:n_mf
+        nsc_zone{ii}{jj}=cat(3,temp_nsc_zone{:,jj});
+    end
+end
+
+
+%%% mJ population fraction per mode/shot
+% sum scattered num. in each (zone, mJ) / shot
+nsctot_zone=cellfun(@(n) sum(cat(4,n{:}),4),nsc_zone,'UniformOutput',false);    % total number per mode/shot
+
+% population fraction
+P_mJ_zone=cell(1,nparam);
+for ii=1:nparam
+    temp_nsc_tot=nsctot_zone{ii};       % total scattered num array for this subset
+    for jj=1:n_mf
+        P_mJ_zone{ii}{jj}=nsc_zone{ii}{jj}./temp_nsc_tot;   % eval pop fraction
+    end
+end
+
+% statistics
+temp_P_mJ_zone_avg=cell(1,nparam);
+temp_P_mJ_zone_std=cell(1,nparam);
+for ii=1:nparam
+    temp_P_mJ_zone_avg{ii}=cellfun(@(p) mean(p,3),P_mJ_zone{ii},'UniformOutput',false);
+    temp_P_mJ_zone_std{ii}=cellfun(@(p) std(p,[],3),P_mJ_zone{ii},'UniformOutput',false);
+end
+
+% tidy form
+P_mJ_zone_avg=cell(1,n_mf);
+P_mJ_zone_std=cell(1,n_mf);
+
+temp_P_mJ_zone_avg=cat(1,temp_P_mJ_zone_avg{:});      % collapse param# to cell-array row#
+temp_P_mJ_zone_std=cat(1,temp_P_mJ_zone_std{:});
+
+% collapse param# as dim-3 in 2D histogram for each mJ
+for ii=1:n_mf
+    P_mJ_zone_avg{ii}=cat(3,temp_P_mJ_zone_avg{:,ii});
+    P_mJ_zone_std{ii}=cat(3,temp_P_mJ_zone_std{:,ii});
+end
+
+%% DATA VIS
+[cc0,cclight,ccdark]=palette(nzone_th*nzone_phi);
+
+h_spinecho_momzone=figure('Name','ramsey_momzone');
 hold on;
 
-p1=ploterr(dtau,nmf_avg(:,1),[],nmf_se(:,1),'ro');
-p2=ploterr(dtau,nmf_avg(:,2),[],nmf_se(:,2),'bo');
+h=[];
 
-p1(1).DisplayName='1';
-p2(1).DisplayName='0';
+idx_mJ=1;       % plotting all mJ gets messy here
+for ii=idx_mJ
+% for ii=1:n_mf
+    % iterate over lat-long grid 2D indices
+    for jj=1:nzone_th*nzone_phi
+        [mm,nn]=ind2sub([nzone_th,nzone_phi],jj);
+        th=ploterr(1e6*Tdelay,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
+            squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
+%         th=ploterr(dtau,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
+%             squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
+        set(th(1),'color',cc0(jj,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+            'MarkerSize',mark_siz,'MarkerFaceColor',cclight(jj,:));      % 'DisplayName',num2str(configs.mf(ii).mf)
+        set(th(2),'color',cc0(jj,:),'LineWidth',line_wid);
+        
+        h=cat(1,h,th(1));
+    end
+end
 
-titlestr=sprintf('number normalised');
-title(titlestr);
-xlabel('$\tau$');
-ylabel('n');
-box on;
+% annotations
 ax=gca;
-xlim([0,ax.XLim(2)]);
-ylim([0,ax.YLim(2)]);
+set(ax,'FontSize',font_siz_reg);
+set(ax,'Layer','Top');     % graphics axes should be always on top
+box on;
 
-lgd=legend([p1(1),p2(1)]);
-lgd.Title.String='$m_F$';
+axis tight;
+ax.YTick=0:0.2:1;
+ylim([0,1]);
+
+xlabel('Pulse delay [$\mu$s]');
+% xlabel('Pulse delay, $\tau$');
+ylabel('$P$');
 
 
-%% population fraction
-P=nmf_avg./nmf_tot;
-P_err=(vnorm(nmf_se,2)./nmf_tot);      % simple estimate of error
+%% Model: Ramsey signal and decay
+%   TODO
+% pp=P(:,1);
+% 
+% 
+% % v1
+% % modelfun = @(b,x) b(1)*exp(-b(2)*x).*cos(b(3)*(2*pi)*x) + b(4);
+% % beta0 = [1,1e-2,1,0.5];
+% 
+% % v2
+% modelfun = @(b,x) 0.5*exp(-b(1)*x).*cos(b(2)*(2*pi)*x) + 0.5;
+% beta0=[1e-2,1];
+% 
+% mdl = fitnlm(dtau,pp,modelfun,beta0);
+% 
+% %%% eval fit
+% beta_fit=mdl.Coefficients.Estimate;
+% 
+% tfit=linspace(0,1200,1e5);
+% pfit=modelfun(beta_fit,tfit);
+% 
+% 
+% % vis
+% figure('Name','population_fraction');
+% hold on;
+% 
+% p1=ploterr(dtau,P(:,1),[],P_err(:,1),'ro');
+% p1(1).DisplayName='data';
+% 
+% titlestr=sprintf('Rabi oscillation decay');
+% title(titlestr);
+% xlabel('$\tau$');
+% ylabel('$P_1$');
+% box on;
+% ax=gca;
+% xlim([0,ax.XLim(2)]);
+% ylim([0,ax.YLim(2)]);
+% 
+% p_mdl=plot(tfit,pfit,'-','Color',0.85*[1,1,1],'DisplayName','fit');
+% uistack(p_mdl,'bottom')
+% 
+% lgd=legend([p1(1),p_mdl]);
+% % lgd.Title.String='$m_F$';
 
-% vis
-figure('Name','population_fraction');
+
+%% Exploded figure of halo by lat-lon zones
+%%% collate momentum-vecs
+k_collated=cat(1,k_par{:});         % ALL data
+k_collated=cat(1,k_collated{:,2});    % ONLY mJ=0
+
+ks_collated=zxy2sphpol(k_collated);     % sph-polar vecs
+k_th=ks_collated(:,1);
+k_phi=ks_collated(:,2);
+
+%%% sort k-vecs into zones
+k_momzone=cell(nzone_th,nzone_phi);
+for ii=1:numel(k_momzone)
+    [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
+
+    % boolean checks for vec in this zone
+    tth_in=(k_th>momzone_th(mm))&(k_th<momzone_th(mm+1));
+    tphi_in=(k_phi>momzone_phi(nn))&(k_phi<momzone_phi(nn+1));
+    tzone_in=tth_in&tphi_in;
+    
+    k_momzone{ii}=k_collated(tzone_in,:);
+end
+
+%%% explode zones radially
+disp_expl=0.1;      % displacement of explosion
+
+momzone_th_cent=momzone_th(1:end-1)+0.5*diff(momzone_th);
+momzone_phi_cent=momzone_phi(1:end-1)+0.5*diff(momzone_phi);
+
+k_momzone_exp=cell(nzone_th,nzone_phi);
+for ii=1:numel(k_momzone_exp)
+    [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
+    
+    % vector to zone-centre
+    tdk_expl=sphpol2zxy([momzone_th_cent(mm),momzone_phi_cent(nn),disp_expl]);
+    
+    k_momzone_exp{ii}=k_momzone{ii}+tdk_expl;
+end
+
+
+%%% DATA VIS
+plot_scat_size=1;
+
+% colorcoding
+% gray
+plot_scat_col=gray(numel(k_momzone_exp)+2);
+plot_scat_col=plot_scat_col(2:end-1,:);
+
+% colormaps
+% plot_scat_col=palette(numel(k_momzone_exp));
+
+
+h_halo_exp=figure('Name','halo_momzone_exploded');
 hold on;
+for ii=1:numel(k_momzone_exp)
+    [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
+    
+    scatter_zxy(k_momzone_exp{mm,nn},plot_scat_size,cc0(ii,:));
+    % color to match the zonal Rabi plot
+end
 
-p1=ploterr(dtau,P(:,1),[],P_err,'ro');
-p2=ploterr(dtau,P(:,2),[],P_err,'bo');
-
-p1(1).DisplayName='1';
-p2(1).DisplayName='0';
-
-titlestr=sprintf('Rabi oscillation decay');
-title(titlestr);
-xlabel('$\tau$');
-ylabel('P');
-box on;
-ax=gca;
-xlim([0,ax.XLim(2)]);
-ylim([0,ax.YLim(2)]);
-
-lgd=legend([p1(1),p2(1)]);
-lgd.Title.String='$m_F$';
-
-
-%% decay model
-pp=P(:,1);
-
-
-% v1
-% modelfun = @(b,x) b(1)*exp(-b(2)*x).*cos(b(3)*(2*pi)*x) + b(4);
-% beta0 = [1,1e-2,1,0.5];
-
-% v2
-modelfun = @(b,x) 0.5*exp(-b(1)*x).*cos(b(2)*(2*pi)*x) + 0.5;
-beta0=[1e-2,1];
-
-mdl = fitnlm(dtau,pp,modelfun,beta0);
-
-%%% eval fit
-beta_fit=mdl.Coefficients.Estimate;
-
-tfit=linspace(0,1200,1e5);
-pfit=modelfun(beta_fit,tfit);
-
-
-% vis
-figure('Name','population_fraction');
-hold on;
-
-p1=ploterr(dtau,P(:,1),[],P_err(:,1),'ro');
-p1(1).DisplayName='data';
-
-titlestr=sprintf('Rabi oscillation decay');
-title(titlestr);
-xlabel('$\tau$');
-ylabel('$P_1$');
-box on;
-ax=gca;
-xlim([0,ax.XLim(2)]);
-ylim([0,ax.YLim(2)]);
-
-p_mdl=plot(tfit,pfit,'-','Color',0.85*[1,1,1],'DisplayName','fit');
-uistack(p_mdl,'bottom')
-
-lgd=legend([p1(1),p_mdl]);
-% lgd.Title.String='$m_F$';
+view(3);
+axis equal;
+axis off;
