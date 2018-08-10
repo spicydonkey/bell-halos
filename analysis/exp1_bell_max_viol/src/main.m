@@ -315,13 +315,20 @@ end
 %   [ ] improve filtering
 %
 
+% g2 rel-vec bins
+n_bins=29;      % original: 29
+dk_ed_vec=linspace(-0.2,0.2,n_bins+1);      % original: [-0.2,0.2]
+dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
+[~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
+dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
+dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
 
 g2=cell(nparam,1);
 dk=cell(nparam,1);
+
 for ii=1:nparam
-    % run full g2
-    [tg2,tdk]=summary_disthalo_g2(k_par{ii},0,true,0);     
-%     [tg2,tdk]=summary_disthalo_g2(k_par{ii},1,true,0);      % fast test
+    % run full g2    
+    [tg2,tdk]=summary_disthalo_g2(k_par{ii},dk_ed,0,1,1,0);     
     
     % store
     g2{ii}=tg2;
@@ -386,7 +393,7 @@ for ii=1:nparam
         Isamp=rand(tnshot,1)<tn_frac_samp;       % randomly select subset of shots to sample
         k_samp=tk_par(Isamp,:);           % the sampled data
         
-        [tg2,tdk]=summary_disthalo_g2(k_samp,0,0,0);      % evaluate function
+        tg2=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
         
         tg2corr=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
         tg2anti=tg2{3}(15,15,15);

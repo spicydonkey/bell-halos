@@ -8,9 +8,9 @@
 
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
-% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
 
-config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
+% config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
 
 %% load config
 run(config_name);
@@ -330,8 +330,8 @@ end
 %
 
 % g2 rel-vec bins
-n_bins=15;      % original: 29
-dk_ed_vec=linspace(-0.2,0.2,n_bins+1);
+n_bins=29;      % original: 29
+dk_ed_vec=linspace(-0.2,0.2,n_bins+1);      % original: [-0.2,0.2]
 dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
 [~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
 dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
@@ -344,7 +344,7 @@ g2mdl=cell(nparam,1);
 for ii=1:nparam
     % run full g2
     [tg2,tdk,tg2mdl]=summary_disthalo_g2(k_par{ii},dk_ed,0,1,1,0);     
-%     [tg2,tdk]=summary_disthalo_g2(k_par{ii},[],1,true,0,0);      % fast test
+%     [tg2,tdk,tg2mdl]=summary_disthalo_g2(k_par{ii},dk_ed,1,1,1,0);    % fast test
         
     % store
     g2{ii}=tg2;
@@ -372,10 +372,6 @@ end
 
 
 %% Correlation coefficient
-%    Note: may contain systematic error since unverified by Jan
-%       + B-field distortions in halos aren't perfectly filtered
-%
-
 
 g2anti_par=NaN(nparam,1);
 g2corr_par=NaN(nparam,1);
@@ -396,16 +392,15 @@ for ii=1:nparam
 end
 
 
-
 %% PRELIM bootstrapping
 %   TODO
-%   [ ] with replacement
+%   [x] with replacement
 %   [ ] convergence?
 %
 
 %%% CONFIG
-n_frac_samp=1/7;
-n_subset=20;                    % no. of bootstrap repeats
+n_frac_samp=1/5;
+n_subset=250;                    % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
 % dataset and subset
@@ -482,8 +477,8 @@ E0_par'
 
 %% PLOT: g2 visualisation
 [cc,clight,cdark]=palette(3);   % colors
-mark_typ={'o','^','d'};        % markers for each axis
-mark_siz=7;
+mark_type={'o','^','d'};        % markers for each axis
+mark_size=7;
 line_wid=1.1;
 
 
@@ -513,8 +508,8 @@ for ii=1:nparam
             th=ploterr(dk_cent_vec,temp_g2_perm(:,idx_dk0,idx_dk0),...
                 [],temp_g2_sdev_perm(:,idx_dk0,idx_dk0),...
                 mark_type{kk},'hhxy',0);
-            set(th(1),'color',cc(kk,:),'Marker',mark_typ{kk},'LineWidth',line_wid,...
-                'MarkerSize',mark_siz,'MarkerFaceColor',clight(kk,:));
+            set(th(1),'color',cc(kk,:),'Marker',mark_type{kk},'LineWidth',line_wid,...
+                'MarkerSize',mark_size,'MarkerFaceColor',clight(kk,:));
             set(th(2),'color',cc(kk,:),'LineWidth',line_wid);
             
             % fitted model
@@ -522,6 +517,15 @@ for ii=1:nparam
                 'Color',clight(kk,:),'LineWidth',line_wid);
             uistack(th,'bottom');
         end
+        
+        % annotate
+        ax=gca;
+        ylim0=ax.YLim;
+        ylim([0,ylim0(2)]);
+        
+        xlabel('$\Delta k$');
+        ylabel('$g^{(2)}$');
+        box on;
     end
 end
 
