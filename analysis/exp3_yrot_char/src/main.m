@@ -535,7 +535,7 @@ end
 
 
 %% DATA VIS
-[ccc,ccclight,cccdark]=palette(nzone_th*nzone_phi);
+[cc0,cclight,ccdark]=palette(nzone_th*nzone_phi);
 
 h_rabi_momzone=figure('Name','rabi_momzone');
 hold on;
@@ -549,9 +549,9 @@ for ii=1:n_mf
             squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
 %         th=ploterr(tau_rot,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
 %             squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
-        set(th(1),'color',ccc(jj,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
-            'MarkerSize',mark_siz,'MarkerFaceColor',ccclight(jj,:));      % 'DisplayName',num2str(configs.mf(ii).mf)
-        set(th(2),'color',ccc(jj,:),'LineWidth',line_wid);
+        set(th(1),'color',cc0(jj,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+            'MarkerSize',mark_siz,'MarkerFaceColor',cclight(jj,:));      % 'DisplayName',num2str(configs.mf(ii).mf)
+        set(th(2),'color',cc0(jj,:),'LineWidth',line_wid);
         
         h=cat(1,h,th(1));
     end
@@ -616,7 +616,7 @@ for ii=1:numel(momzone_amp)
     figure(h_rabi_momzone);
     hold on;
 %     plot(1e6*par_T,tp,'o','Color',ccc(ii,:));
-    tfitted=plot(1e6*tt,pp,'-','Color',ccc(ii,:));
+    tfitted=plot(1e6*tt,pp,'-','Color',cc0(ii,:));
     uistack(tfitted,'bottom');    
 end
 
@@ -685,7 +685,7 @@ hold on;
 for ii=1:numel(k_momzone_exp)
     [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
     
-    scatter_zxy(k_momzone_exp{mm,nn},plot_scat_size,ccc(ii,:));
+    scatter_zxy(k_momzone_exp{mm,nn},plot_scat_size,cc0(ii,:));
     % color to match the zonal Rabi plot
 end
 
