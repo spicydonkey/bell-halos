@@ -383,7 +383,7 @@ for ii=1:nparam
         
         tg2=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
         
-        g2_0_samp{ii}(jj)=tg2{1}(15,15,15);        
+        g2_0_samp{ii}(jj)=tg2{1}(idx_dk0,idx_dk0,idx_dk0);        
     end
 end
 
@@ -393,7 +393,7 @@ g2_0_bootstrap_std=cellfun(@(x) std(x,'omitnan'),g2_0_samp);
 
 
 %% analysis
-g2_0=cellfun(@(g) g{1}(15,15,15),g2);
+g2_0=cellfun(@(g) g{1}(idx_dk0,idx_dk0,idx_dk0),g2);
 
 Nm=n_sc_counts_avg(1)*(g2_0(1)-1);      % Note: fix number of modes to be theory
 

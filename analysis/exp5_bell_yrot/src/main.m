@@ -382,10 +382,9 @@ for ii=1:nparam
     % get this paramset
     tg2=g2{ii};
     
-    % aproximate g2 amplitude
-    g2corr_par(ii)=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     
-    g2anti_par(ii)=tg2{3}(15,15,15);
-    
+    % *aproximate* g2 amplitude at evaluated value at dk=0
+    g2corr_par(ii)=mean([tg2{1}(idx_dk0,idx_dk0,idx_dk0),tg2{2}(idx_dk0,idx_dk0,idx_dk0)]);
+    g2anti_par(ii)=tg2{3}(idx_dk0,idx_dk0,idx_dk0);
     
     % evaluate spin-corr based on g2
     [E_par(ii),E0_par(ii)]=g2toE(g2corr_par(ii),g2anti_par(ii));
@@ -395,12 +394,12 @@ end
 %% PRELIM bootstrapping
 %   TODO
 %   [x] with replacement
-%   [ ] convergence?
+%   [ ] convergence
 %
 
 %%% CONFIG
 n_frac_samp=1/5;
-n_subset=250;                    % no. of bootstrap repeats
+n_subset=100;                    % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
 % dataset and subset
@@ -437,9 +436,10 @@ for ii=1:nparam
         for kk=1:3
             g2_bootstrap{ii}{kk}(:,:,:,jj)=tg2{kk};
         end
-%         tg2corr=max([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
-        tg2corr=mean([tg2{1}(15,15,15),tg2{2}(15,15,15)]);     % get results
-        tg2anti=tg2{3}(15,15,15);
+        
+        % *aproximate* g2 amplitude at evaluated value at dk=0
+        tg2corr=mean([tg2{1}(idx_dk0,idx_dk0,idx_dk0),tg2{2}(idx_dk0,idx_dk0,idx_dk0)]);     % get results
+        tg2anti=tg2{3}(idx_dk0,idx_dk0,idx_dk0);
         
         [tE,tE0]=g2toE(tg2corr,tg2anti);
         
