@@ -210,9 +210,28 @@ xticklabels({'$0$','$\pi/4$','$\pi/2$','$3\pi/4$','$\pi$'});
 %   same as E_n* values
 
 
-%%% Theory: Bell+
+%%% Theory: Bell+: Ideal rotation
 theta_bell_th=linspace(-pi,2*pi,1e3);
 B_th=-cos(2*theta_bell_th);
+
+
+%%% Theory: Bell+: imperfect rotation fit
+% model
+model_psiplus_tiltrot='E ~ (1 - 2*(cos(x1)*sin(beta)^2 + cos(beta)^2)^2)';
+cname_psiplus_tiltrot={'beta'};
+
+% estimate params
+beta0=deg2rad(89);        % ideal around equator (tangent of {angle+pi/2})
+param0=[beta0];
+
+% fit model
+fopts=statset('Display','off');
+fit_psiplus_tiltrot=fitnlm(theta_n,E_n,model_psiplus_tiltrot,param0,'CoefficientNames',cname_psiplus_tiltrot,...
+    'Options',fopts);
+paramfit_psiplus_tiltrot=fit_psiplus_tiltrot.Coefficients.Estimate;
+
+% model prediction
+B_th_tiltrot=feval(fit_psiplus_tiltrot,theta_bell_th);
 
 
 %%% Bell inequality
@@ -233,8 +252,6 @@ ptch_col=0.85;           % some gray to patch violation zone
 ptch_alp=1;             % patch transparency
 x_lim=pi*[-0.05,1.05];     % set to [] for auto
 y_lim=[-1,1];
-
-
 
 
 %%% graphics
@@ -279,15 +296,21 @@ set(h_bell_y(3),'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
 
 
 %%% Theory
+% Ideal Psi+
 p_bell_theory=plot(theta_bell_th,B_th,'k--','LineWidth',1.5,...
     'DisplayName','$\vert\Psi^+\rangle$');
 uistack(p_bell_theory,'bottom');
 
+% tilted rotation axis
+p_tiltrot=plot(theta_bell_th,B_th_tiltrot,'k-','LineWidth',1.5,...
+    'DisplayName','$\vert\Psi^+\rangle$');
+uistack(p_tiltrot,'bottom');
+
 %%% Bell Inequality
-p_bell_lim=line(ax.XLim,B_max*ones(1,2),...
-    'Color','k','LineStyle','-','LineWidth',1.5,...
-    'DisplayName','Bell inequality limit');
-uistack(p_bell_lim,'bottom');
+% p_bell_lim=line(ax.XLim,B_max*ones(1,2),...
+%     'Color','k','LineStyle','-','LineWidth',1.5,...
+%     'DisplayName','Bell inequality limit');
+% uistack(p_bell_lim,'bottom');
 
 % patch
 p_bell_viol=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
