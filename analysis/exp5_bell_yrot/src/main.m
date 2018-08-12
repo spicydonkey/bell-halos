@@ -8,9 +8,10 @@
 
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
 
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
+config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
 
 %% load config
 run(config_name);
@@ -351,7 +352,17 @@ for ii=1:nparam
     dk{ii}=tdk;
     g2mdl{ii}=tg2mdl;
 end
+
+
+%% Fitted g2 model
+%%% Get params
+%   NOTE: fit can be poor at the extrema of correlations
+%   TODO: is there g2 - 1 corrector to apply here?
+%         tg2mdl_params=cellfun(@(m) m.Coefficients.Estimate,tg2mdl,'UniformOutput',false);
+%         tg2corr=0.5*(tg2mdl_params{1}(1)+tg2mdl_params{2}(1));
+%         tg2anti=tg2mdl_params{3}(1);
     
+
 %%% Evaluate fitted function
 n_bins_fit=101;
 dk_fit_vec=linspace(min(dk_cent_vec),max(dk_cent_vec),n_bins_fit);
@@ -398,8 +409,8 @@ end
 %
 
 %%% CONFIG
-n_frac_samp=1/5;
-n_subset=100;                    % no. of bootstrap repeats
+n_frac_samp=0.1;       % 1/5
+n_subset=20;                    % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
 % dataset and subset
@@ -431,7 +442,7 @@ for ii=1:nparam
     for jj=1:n_subset
         k_samp=tk_par(Isamp(jj,:),:);           % the sampled data
         
-        tg2=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
+        [tg2,~,tg2mdl]=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
         
         for kk=1:3
             g2_bootstrap{ii}{kk}(:,:,:,jj)=tg2{kk};
@@ -440,6 +451,13 @@ for ii=1:nparam
         % *aproximate* g2 amplitude at evaluated value at dk=0
         tg2corr=mean([tg2{1}(idx_dk0,idx_dk0,idx_dk0),tg2{2}(idx_dk0,idx_dk0,idx_dk0)]);     % get results
         tg2anti=tg2{3}(idx_dk0,idx_dk0,idx_dk0);
+        
+        % from fitted profile
+        %   NOTE: fit can be poor at the extrema of correlations
+        %   TODO: is there g2 - 1 corrector to apply here?
+%         tg2mdl_params=cellfun(@(m) m.Coefficients.Estimate,tg2mdl,'UniformOutput',false);
+%         tg2corr=0.5*(tg2mdl_params{1}(1)+tg2mdl_params{2}(1));
+%         tg2anti=tg2mdl_params{3}(1);
         
         [tE,tE0]=g2toE(tg2corr,tg2anti);
         
