@@ -390,7 +390,7 @@ xlabel('Pulse delay [$\mu$s]');
 ylabel('$P$');
 
 lgd=legend(h,'Location','East');
-title(lgd,'$m_F$');
+title(lgd,'$m_J$');
 set(lgd,'FontSize',font_siz_reg);
 
 
@@ -441,7 +441,7 @@ set(lgd,'FontSize',font_siz_reg);
 % % uistack(p_mdl,'bottom')
 % 
 % lgd=legend([p1(1),p_mdl]);
-% % lgd.Title.String='$m_F$';
+% % lgd.Title.String='$m_J$';
 % 
 % ax=gca;
 % xlim([0,ax.XLim(2)]);

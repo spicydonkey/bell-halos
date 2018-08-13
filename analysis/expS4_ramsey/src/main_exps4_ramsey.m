@@ -431,7 +431,7 @@ xlabel('$\phi$');
 ylabel('$P$');
 
 lgd=legend(h,'Location','East');
-title(lgd,'$m_F$');
+title(lgd,'$m_J$');
 set(lgd,'FontSize',font_siz_reg);
 
 xlim([0-2*pi/25,2*pi+2*pi/25]);

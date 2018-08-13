@@ -61,7 +61,7 @@ view([0,0]);
 
 
 
-%% distinguish mF and capture halo
+%% distinguish mJ and capture halo
 n_shot=size(zxy,1);
 n_mf=numel(configs.mf);
 
@@ -453,7 +453,7 @@ xlabel('Pulse duration [$\mu$s]');
 ylabel('$P$');
 
 lgd=legend(h,'Location','East');
-title(lgd,'$m_F$');
+title(lgd,'$m_J$');
 set(lgd,'FontSize',font_siz_reg);
 
 
