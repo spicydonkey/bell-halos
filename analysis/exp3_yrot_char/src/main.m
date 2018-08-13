@@ -389,9 +389,9 @@ tparam0=[tRabiAmp,tRabiOmega];
 
 %%% fit model
 tfopts=statset('Display','off');
-tfit_rabi=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
+fit_rabi_halo=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
     'Options',tfopts);
-tparam_fit=tfit_rabi.Coefficients.Estimate;
+tparam_fit=fit_rabi_halo.Coefficients.Estimate;
 
 % get fitted model params
 halo_amp=tparam_fit(1);
@@ -399,7 +399,7 @@ halo_om=tparam_fit(2);
 
 % evaluate fitted model
 tt=linspace(0,max(par_T),1e3);
-pp=feval(tfit_rabi,tt);
+pp=feval(fit_rabi_halo,tt);
 
 
 %%% Uncertainty model
@@ -455,6 +455,63 @@ ylabel('$P$');
 lgd=legend(h,'Location','East');
 title(lgd,'$m_F$');
 set(lgd,'FontSize',font_siz_reg);
+
+
+%% raw data (non-averaged)
+%%% collate all the data
+% pulse duration
+% T_collate=cellfun(@(x) ones(size(k,1),1),k_par,'UniformOutput',false);
+T_collate=cell(nparam,1);
+for ii=1:nparam
+    T_collate{ii}=par_T(ii)*ones(size(k_par{ii},1),1);
+end
+T_collate=cat(1,T_collate{:});
+
+% mJ=0 pop fraction
+P_collate=cellfun(@(p) squeeze(p{2}),P_mJ_halo,'UniformOutput',false);
+P_collate=cat(1,P_collate{:});
+
+
+%%% FIT - same as for avgs
+% estimate params
+tRabiAmp=max(P_collate)-min(P_collate);
+tRabiOmega=2*pi/20e-5;      % we keep this near const
+tparam0=[tRabiAmp,tRabiOmega];
+
+%%% fit model
+tfopts=statset('Display','off');
+fit_rabi_halo_raw=fitnlm(T_collate,P_collate,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
+    'Options',tfopts);
+
+% evaluate fitted model
+tt=linspace(0,max(par_T),1e3);
+pp=feval(fit_rabi_halo_raw,tt);
+
+
+%%% Data vis
+h=figure('Name','rabi_halo_raw');
+
+% raw data
+plot(T_collate*1e6,P_collate,'r.');
+% fit
+hold on;
+plot(tt*1e6,pp,'r-');
+
+% annotation
+ax=gca;
+axis tight;
+box on;
+
+ylim([0,1]);
+ax.YTick=0:0.2:1;
+
+xlabel('Pulse duration [$\mu$s]');
+% xlabel('Pulse duration, $\tau$');
+ylabel('$P$');
+
+
+
+
 
 
 %% MOMENTUM-RESOLVED: mJ-oscillation
@@ -579,6 +636,8 @@ momzone_om=NaN(nzone_th,nzone_phi);
 
 P_momzone_0=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for mJ=0
 
+fit_rabi_zone=cell(nzone_th,nzone_phi);
+
 htemp=100;
 for ii=1:numel(momzone_amp)
     [mm,nn]=ind2sub(size(momzone_amp),ii);  % get this zone
@@ -599,10 +658,11 @@ for ii=1:numel(momzone_amp)
     %%% fit model
     tfopts=statset('Display','off');
     
-    tfit_rabi=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
+    tfit_rabi_zone=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
         'Options',tfopts);
+    fit_rabi_zone{mm,nn}=tfit_rabi_zone;
     
-    tparam_fit=tfit_rabi.Coefficients.Estimate;
+    tparam_fit=tfit_rabi_zone.Coefficients.Estimate;
     
     % get fitted model params
     momzone_amp(mm,nn)=tparam_fit(1);
@@ -610,7 +670,7 @@ for ii=1:numel(momzone_amp)
     
     % evaluate fitted model
     tt=linspace(0,max(par_T),1e3);
-    pp=feval(tfit_rabi,tt);
+    pp=feval(tfit_rabi_zone,tt);
     
     % vis
     figure(h_rabi_momzone);
