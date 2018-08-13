@@ -221,7 +221,7 @@ model_psiplus_tiltrot='E ~ (1 - 2*(cos(x1)*sin(beta)^2 + cos(beta)^2)^2)';
 cname_psiplus_tiltrot={'beta'};
 
 % estimate params
-beta0=deg2rad(89);        % ideal around equator (tangent of {angle+pi/2})
+beta0=deg2rad(89);        % ideal around equator
 param0=[beta0];
 
 % fit model
@@ -232,6 +232,17 @@ paramfit_psiplus_tiltrot=fit_psiplus_tiltrot.Coefficients.Estimate;
 
 % model prediction
 B_th_tiltrot=feval(fit_psiplus_tiltrot,theta_bell_th);
+
+
+%%% Theory: Bell+: Prediction from Rabi osc
+rabi_amp=0.85;      % fitted from Rabi oscillation
+beta_rabi=pi/2-acos(sqrt(rabi_amp));         % polar angle from z-axis
+
+% model
+B_fun_tiltrot=@(theta,beta) (1 - 2*(cos(theta)*sin(beta)^2 + cos(beta)^2).^2);
+
+% eval
+B_pred_tiltrot=B_fun_tiltrot(theta_bell_th,beta_rabi);
 
 
 %%% Bell inequality
@@ -270,12 +281,6 @@ end
 % 1. n_ax (measurement axis) in ZX plane
 h_bell_n=ploterr(theta_n,E_n,theta_n_err,E_n_err,mark_typ,'hhxy',0);
 
-% 2. n_ax = Y
-h_bell_y=ploterr(theta_y,E_y,theta_y_err,E_y_err,mark_typ,'hhxy',0);
-
-
-% annotation
-% NOTE: handle indices (1): marker; (2): X-bar; (3): Y-bar;
 set(h_bell_n(1),'Marker',mark_typ,'MarkerSize',mark_siz,...
     'Color',line_col,'LineWidth',line_wid,...
     'MarkerFaceColor',face_col,...
@@ -285,26 +290,34 @@ set(h_bell_n(2),'Color',line_col,'LineWidth',line_wid,...
 set(h_bell_n(3),'Color',line_col,'LineWidth',line_wid,...
     'DisplayName','');
 
-set(h_bell_y(1),'Marker','.','MarkerSize',15,...
-    'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
-    'MarkerFaceColor',col_light(id_col_y,:),...
-    'DisplayName','Experiment');
-set(h_bell_y(2),'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
-    'DisplayName','');
-set(h_bell_y(3),'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
-    'DisplayName','');
+% % 2. n_ax = Y
+% h_bell_y=ploterr(theta_y,E_y,theta_y_err,E_y_err,mark_typ,'hhxy',0);
+%
+% set(h_bell_y(1),'Marker','.','MarkerSize',15,...
+%     'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
+%     'MarkerFaceColor',col_light(id_col_y,:),...
+%     'DisplayName','Experiment');
+% set(h_bell_y(2),'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
+%     'DisplayName','');
+% set(h_bell_y(3),'Color',col_main(id_col_y,:),'LineWidth',line_wid,...
+%     'DisplayName','');
 
 
 %%% Theory
 % Ideal Psi+
 p_bell_theory=plot(theta_bell_th,B_th,'k--','LineWidth',1.5,...
-    'DisplayName','$\vert\Psi^+\rangle$');
+    'DisplayName','ideal $\vert\Psi^+\rangle$');
 uistack(p_bell_theory,'bottom');
 
-% tilted rotation axis
-p_tiltrot=plot(theta_bell_th,B_th_tiltrot,'k-','LineWidth',1.5,...
-    'DisplayName','$\vert\Psi^+\rangle$');
-uistack(p_tiltrot,'bottom');
+% % tilted rotation axis
+% p_tiltrot=plot(theta_bell_th,B_th_tiltrot,'k-','LineWidth',1.5,...
+%     'DisplayName','tilted-axis $\vert\Psi^+\rangle$');
+% uistack(p_tiltrot,'bottom');
+
+% % predicted
+% p_tiltrot_pred=plot(theta_bell_th,B_pred_tiltrot,'k:','LineWidth',1.5,...
+%     'DisplayName','predicted $\vert\Psi^+\rangle$');
+% uistack(p_tiltrot,'bottom');
 
 %%% Bell Inequality
 % p_bell_lim=line(ax.XLim,B_max*ones(1,2),...
