@@ -9,8 +9,8 @@
 exp_param=expparams();
 
 %% CONFIGS
-% configs.path.base='C:\Users\HE BEC\bell\2018april\exp5_low_n_theta_v1';
-configs.path.base='C:\Users\David\Documents\bell\exp5_bell_yrot\1';
+configs.path.base='C:\Users\HE BEC\bell_data\exp5_bell_yrot\1';
+% configs.path.base='C:\Users\David\Documents\bell\exp5_bell_yrot\1';
 configs.path.data=configs.path.base;
 % configs.path.data=fullfile(configs.path.base,'data');
 

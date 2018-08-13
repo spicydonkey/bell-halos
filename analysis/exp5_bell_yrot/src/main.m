@@ -8,10 +8,10 @@
 
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
-% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
 
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
-config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
+% config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
 
 %% load config
 run(config_name);
@@ -409,7 +409,7 @@ end
 %
 
 %%% CONFIG
-n_frac_samp=0.1;       % 1/5
+n_frac_samp=0.2;       % 1/5
 n_subset=20;                    % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
@@ -442,7 +442,8 @@ for ii=1:nparam
     for jj=1:n_subset
         k_samp=tk_par(Isamp(jj,:),:);           % the sampled data
         
-        [tg2,~,tg2mdl]=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
+        [tg2,~,~]=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
+%         [tg2,~,tg2mdl]=summary_disthalo_g2(k_samp,dk_ed,0,0,1,0);      % evaluate and fit
         
         for kk=1:3
             g2_bootstrap{ii}{kk}(:,:,:,jj)=tg2{kk};
