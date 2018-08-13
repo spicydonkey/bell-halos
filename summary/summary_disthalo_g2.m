@@ -107,12 +107,11 @@ end
 
 %% Fit g2 - gaussian model
 g2_fit=cell(1,n_g2_type);
+g2mdl=cell(1,n_g2_type);
 if dofit
     %   3D gaussian model
     g2_gauss3_mdl='y~1+amp*exp(-0.5*(((x1-mu1)/sig1)^2+((x2-mu2)/sig2)^2+((x3-mu3)/sig3)^2))';
     g2_gauss3_mdl_param={'amp','mu1','mu2','mu3','sig1','sig2','sig3'};
-    
-    g2mdl=cell(1,n_g2_type);
     
     % rel-vec centers as 1D list of vectors
     X=cellfun(@(d) d(:),dk,'UniformOutput',false);
@@ -175,7 +174,7 @@ if doplot
         
         perm_ord=[2,3,1];
         temp_ord=[1,2,3];
-        temp_g2_perm=g2{ii};    % temporary var to hold dimension permuted g2
+        temp_g2_perm=g2{ii};        % temporary var to hold dimension permuted g2
         temp_gfit_perm=g2_fit{ii};  % fitted g2 model
         
         p=NaN(3,1);     % fig objects
