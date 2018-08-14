@@ -72,7 +72,8 @@ G2n=cell(1,n_g2_type);
 
 counter=1;
 
-%%% Single halo: (0,0)/(1,1)
+%%% Single halo: (#1,#1)/(#2,#2)
+%   NOTE: #N indicates the Nth mJ state as identified in K (data)
 for mm=1:n_halo
     if bfastrun
         [g2{counter},G2s{counter},G2n{counter}]=g2_bb_fast(K(:,mm),dk_ed,0.05);
@@ -89,7 +90,7 @@ for mm=1:n_halo
 end
 
 
-%%% X-species: (0,1)
+%%% X-species: (#1,#2)
 if n_halo==2
     if bfastrun
         [g2{counter},G2s{counter},G2n{counter}]=g2x_bb_fast(K,dk_ed,0.05);
@@ -159,9 +160,9 @@ end
 h=[];       % initialise fig handle
 if doplot
     
-    titlestr={'(0,0)',...
-        '(1,1)',...
-        '(0,1)',...
+    titlestr={'(#1,#1)',...
+        '(#2,#2)',...
+        '(#1,#2)',...
         };
 
     dispname={'$x$','$y$','$z$'};     % axis
