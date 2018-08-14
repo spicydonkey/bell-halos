@@ -8,7 +8,8 @@
 
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ideal_global_rotation_v4\src\config_1.m';
 
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
@@ -301,6 +302,19 @@ for ii=1:nparam
     end
     
     k_par{ii}=tk;
+end
+
+
+%% PARAM SELECTOR
+%   NOTE: selects a single parameter from all scanned
+%   useful when data from a single parameter from a scan needs to be extracted
+if isfield(configs,'param_select')
+    warning(strcat('Post-selecting parameters: ',num2str(configs.param_select)));
+    
+    % select the data for required params
+    nparam=length(configs.param_select);    % for updating new num param
+    k_par=k_par(configs.param_select);     
+    par_T=par_T(configs.param_select);
 end
 
 
