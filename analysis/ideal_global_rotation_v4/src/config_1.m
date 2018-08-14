@@ -10,9 +10,11 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\David\Documents\bell\ideal_global_rotation_v4';
+% configs.path.base='C:\Users\David\Documents\bell\ideal_global_rotation_v4';
+configs.path.base='C:\Users\HE BEC\bell_data\ideal_global_rotation_v4';
+configs.path.data=configs.path.base;
 
-configs.path.data=fullfile(configs.path.base,'data');
+% configs.path.data=fullfile(configs.path.base,'data');
 
 configs.path.out=fullfile(configs.path.base,'out');
 configs.path.src=fullfile(configs.path.base,'src');
