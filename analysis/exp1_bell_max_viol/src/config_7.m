@@ -11,10 +11,8 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\HE BEC\bell\2018april\exp1_7';
-
-% configs.path.data=fullfile(configs.path.base,'data');
-configs.path.data='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output';
+configs.path.base='C:\Users\HE BEC\bell_data\exp1_attack_inequality\7';
+configs.path.data=configs.path.base;
 
 configs.path.out=fullfile(configs.path.base,'out');
 configs.path.src=fullfile(configs.path.base,'src');
@@ -22,6 +20,7 @@ configs.path.src=fullfile(configs.path.base,'src');
 configs.load.path=fullfile(configs.path.data,'d');
 
 configs.flag.param_scan=0;      % 0 for no scan; 1 for param scan
+configs.misc.param=5e-6;        % T_mix (pi/2) for this experiment (see wfmgen)
 configs.path.paramlog=fullfile(configs.path.data,'LOG_parameters.txt');
 
 configs.load.id=[];
@@ -63,3 +62,8 @@ configs.filt.z_cap=0.8;
 configs.filt2.r_crop=[0.9,1.1];
 configs.filt2.z_cap=0.8;
 
+
+%%% halo centering
+configs.post.Dk{1}=[0,0,0];
+configs.post.Dk{2}=[0,0,0];
+% configs.post.Dk{3}=[0,0,0];

@@ -11,11 +11,13 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\David\Documents\bell\exp1_bell_inequality';
-
+% configs.path.base='C:\Users\David\Documents\bell\exp1_bell_inequality';
+% configs.path.base='\\AMPLPC29\He BEC Archive\EXPERIMENT-DATA\BELL_MF\20180122_bell-mf-global\bell_global\201805\exp1_attack_inequality\1';
+configs.path.base='C:\Users\HE BEC\bell_data\exp1_attack_inequality\1';
+configs.path.data=configs.path.base;
 % configs.path.data=fullfile(configs.path.base,'data');
-exp_num=1;
-configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
+% exp_num=1;
+% configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
 
 configs.path.out=fullfile(configs.path.base,'out');
 configs.path.src=fullfile(configs.path.base,'src');
@@ -23,6 +25,7 @@ configs.path.src=fullfile(configs.path.base,'src');
 configs.load.path=fullfile(configs.path.data,'d');
 
 configs.flag.param_scan=0;      % 0 for no scan; 1 for param scan
+configs.misc.param=5e-6;        % T_mix (pi/2) for this experiment (see wfmgen)
 configs.path.paramlog=fullfile(configs.path.data,'LOG_parameters.txt');
 
 configs.load.id=[];
@@ -68,4 +71,4 @@ configs.filt2.z_cap=0.8;
 %%% halo centering
 configs.post.Dk{1}=[-0.005,-0.013,0];
 configs.post.Dk{2}=[0.018,0.013,0];
-configs.post.Dk{3}=[0,0,0];
+% configs.post.Dk{3}=[0,0,0];
