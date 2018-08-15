@@ -5,11 +5,21 @@
 % DKS
 %
 
+%%% EXP1 pi/2 rotation
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_1.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_3.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_5.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_7.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_8.m';
 
+%%% EXP5 Bell Y-rotation
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_3.m';
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ideal_global_rotation_v4\src\config_1.m';
+
+%%% pi/4 Y-rotation (higher mocc)
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ideal_global_rotation_v4\src\config_1.m';
+
 
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_1.m';
@@ -26,15 +36,13 @@ if configs.flag.param_scan
     
     % get searched param
     par_T=params;       % scanned pulse duration [s]
-else
-    % TODO
-    %   do I need to set some things to default? or re-code analysis?
-    
+else    
     % defaults autoscan-related vars
     nparam=1;       % 1- since we don't search any params
     id_in_param={configs.load.id};    % all IDS to load
     
-    par_T=NaN;      % default param to NaN
+%     par_T=NaN;      % default param to NaN
+    par_T=configs.misc.param;       % const param hardcoded in configs
 end
 
 %% load txy
@@ -208,8 +216,6 @@ ylabel('y');
 zlabel('z');
 view([0,0]);
 
-
-
 %% k-space and distortion cancellation
 %%% unit spherise
 k_halo=zxy0_filt;       % initialise atoms in k-space (i.e. atoms lie on unit-sphere)
@@ -225,8 +231,6 @@ end
     
 % DEBUG
 scatter_halo(k_halo);
-
-
 
 %% filter post-processed data
 %%% radial
@@ -261,6 +265,7 @@ if nparam>1
         %from this param-set and store
     end
 else
+    % nparam is 1 --> no scan. collate all shots
     k_par{1}=k_halo_filt;
 end
 
