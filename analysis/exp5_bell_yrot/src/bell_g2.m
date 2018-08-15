@@ -120,6 +120,8 @@ xlim(lim_th);
 xticks(0:pi/4:pi);
 xticklabels({'$0$','$\pi/4$','$\pi/2$','$3\pi/4$','$\pi$'});
 
+set(gca,'FontSize',font_siz_reg);
+
 
 %% VIS: Bell corr vs theta
 h=figure('Name','B_vs_theta');
