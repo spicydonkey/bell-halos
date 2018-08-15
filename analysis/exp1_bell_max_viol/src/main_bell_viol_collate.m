@@ -1,69 +1,46 @@
-% Statistical analysis on collated dataset
+%% Collate all runs at maximal Bell signal
 %
 % DKS
-% 20180605
-
-
-%% CONFIG
-% path to postprocessed data
-path_data='C:\Users\David\Documents\bell\exp1_bell_inequality\postproc';
+% 20180815
 
 
 %% load data
-%%% parse data directory
-dir_data=dir(path_data);
-fname_all={dir_data.name}';
+% path to pre-processed data
+path_proc='C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp1_bell_max_viol';
 
-% get mat data
-b_file=cellfun(@(s) is_file(fullfile(path_data,s)),fname_all);
-fname_mat=fname_all(b_file);
+% vars to load
+vars2load={'par_T','k_par','nparam','n_mf','configs'};
+%     'g2','dk','g2mdl','idx_dk0',...
+%     'g2anti_par','g2corr_par','E_par',...
+%     'g2_sdev','E_bootstrap_sdev'};
 
-b_mat=cellfun(@(s) strcmp(s(end-2:end),'mat'),fname_mat);
-fname_mat=fname_mat(b_mat);
-ndata=numel(fname_mat);
+% parse directory
+dirlist=dir(path_proc);     
+dirnames={dirlist.name};    
+isfiles=cellfun(@(s) is_file(fullfile(path_proc,s)),dirnames);
+flist=dirnames(isfiles);        % files in directory (only have .mat files in proc dir)
+nfiles=numel(flist);
 
-% get file id
-f_id=cellfun(@(s) str2num(strtok(extractAfter(s,'_'),'_')),fname_mat);
-[f_id_sort,Is]=sort(f_id);
-fname_mat_sort=fname_mat(Is);
-
-
-%%% load
-S_data=cell(ndata,1);
-
-% loads everthing in the mat file (only ~40 MB total)
-for ii=1:ndata
-    S_data{ii}=load(fullfile(path_data,fname_mat_sort{ii}));
+% load data
+% Sdata=cell(nfiles,1);   % preallocate
+for ii=1:nfiles
+    S_collated(ii)=load(fullfile(path_proc,flist{ii}),vars2load{:});
 end
 
 
-%% Preprocess
-% get scattered atoms k-vectors from all and collate
-nshot_run=cellfun(@(s) size(s.k_par{1},1),S_data);
-cumsum_nshot_run=[0,cumsum(nshot_run)'];
-
-k_col=cell(sum(nshot_run),2);       % prellocate; mf=-1 is irrelevant
-
-for ii=1:ndata
-    k_col(cumsum_nshot_run(ii)+1:cumsum_nshot_run(ii+1),:)=S_data{ii}.k_par{1}(:,1:2);
+%% Collate data
+% k_par
+k_par={};
+for ii=1:nfiles
+    k_par=vertcat(k_par,S_collated(ii).k_par{1});
 end
+k_par={k_par};      % format k_par as a 1-by-nparam cell-array
 
-% some stats
-Nsc_counts=shotSize(k_col);     % tot number of detected counts
+% par_T
+par_T=S_collated(1).par_T;   % all par_T in each run should be identical (5us)
 
-figure;
-hold on;
-histogram(Nsc_counts(:,1));
-histogram(Nsc_counts(:,2));
-xlabel('Tot sc counts detected');
-ylabel('num of shots');
+% nparam
+nparam=S_collated(1).nparam; % same as above and should be 1
 
-
-%% Analysis
-%% 1. g2 for all data
-
-
-%% 2. Uncert from bootstrapping
-
-
-%% 3. Correlation coefficient
+% n_mf
+n_mf=S_collated(1).n_mf;     % same as above
