@@ -8,7 +8,7 @@
 Tpi=10e-6;        % pi-pulse duration [s]
 om_rabi=2*pi*50.3e3;    % Rabi frequency [rad/s]
 
-% Bell inequality
+% Bell inequality (TODO: check with Jan)
 B_max=1/sqrt(2);
 
 % vis
@@ -20,6 +20,8 @@ line_wid=1.1;
 
 ptch_col=0.85;         	% some gray to patch violation zone
 ptch_alp=1;       		% patch transparency
+
+lim_th=[-pi/20,pi+pi/20];   % theta-axis limits
 
 
 %% load collated data
@@ -114,7 +116,7 @@ box on;
 xlabel('$\theta$');
 ylabel('$\mathcal{G}$');
 
-xlim([-pi/20,pi+pi/20]);
+xlim(lim_th);
 xticks(0:pi/4:pi);
 xticklabels({'$0$','$\pi/4$','$\pi/2$','$3\pi/4$','$\pi$'});
 
@@ -139,6 +141,16 @@ for ii=1:ndatasets
 %         'DisplayName','');
 end
 
+%%% Theory
+% Bell+: Ideal rotation
+th=linspace(lim_th(1),lim_th(2),1e3);
+B_th_ideal=-cos(2*th);
+
+p_B_th_ideal=plot(th,B_th_ideal,'k--','LineWidth',1.5,...
+    'DisplayName','Ideal $\vert\Psi^+\rangle$');
+uistack(p_B_th_ideal,'bottom');
+
+
 % annotation
 % lgd=legend(p);
 ax=gca;
@@ -146,17 +158,18 @@ box on;
 xlabel('$\theta$');
 ylabel('$\mathcal{B}$');
 
-xlim([-pi/20,pi+pi/20]);
+xlim(lim_th);
 xticks(0:pi/4:pi);
 xticklabels({'$0$','$\pi/4$','$\pi/2$','$3\pi/4$','$\pi$'});
 ylim([-1,1]);
 yticks(-1:0.5:1);
 
+set(gca,'FontSize',font_siz_reg);
 
 %%% inequality region
 p_bell_viol=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
     [B_max,B_max,ax.YLim(2),ax.YLim(2)],...
     ptch_col*ones(1,3),'FaceAlpha',ptch_alp,...
     'EdgeColor','none');
-uistack(p_bell_viol,'bottom');
+uistack(p_bell_viol,'bottom');      % this should REALLY be bottom - to not cover any other graphics
 set(gca,'Layer','Top');     % graphics axes should be always on top
