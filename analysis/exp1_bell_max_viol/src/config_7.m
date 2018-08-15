@@ -64,6 +64,6 @@ configs.filt2.z_cap=0.8;
 
 
 %%% halo centering
-configs.post.Dk{1}=[0,0,0];
-configs.post.Dk{2}=[0,0,0];
+configs.post.Dk{1}=[-0.03,-0.01,-0.015];
+configs.post.Dk{2}=[0.013,0.01,0];
 % configs.post.Dk{3}=[0,0,0];
