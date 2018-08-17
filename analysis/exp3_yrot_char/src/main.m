@@ -407,22 +407,27 @@ pp=feval(fit_rabi_halo,tt);
 P_errfrac=harmmean(P_mJ_halo_std(:,idx_mJ)./P_mJ_halo_avg(:,idx_mJ));      % gives a reasonal fit to ~pi/2
 
 
-%% DATA VISUALIZATION
+%% DATA VISUALIZATION (unresolved)
 % config
 font_siz_reg=12;
 font_siz_sml=10;
 font_siz_lrg=14;
 mark_siz=7;
 line_wid=1.1;
-[c0,clight,cdark]=palette(n_mf);
 mark_typ={'o','^','d'};
+
+% better colors
+[c0_mf,clight_mf,cdark_mf]=palette(n_mf);
+gray_val=0.8;
+c0_mf(3,:)=[0,0,0]; clight_mf(3,:)=gray_val*[1,1,1]; cdark_mf(3,:)=[0,0,0];   % third color to black and grays
+
 
 %%% plot
 hf=figure('Name','rabi_halo');
 hold on;
 
 % Fitted model (a composite graphics object) - plotted first to be in bottom
-lineProps.col={clight(idx_mJ,:)};
+lineProps.col={clight_mf(idx_mJ,:)};
 tfitted=mseb(1e6*tt,pp,P_errfrac.*pp,lineProps,1);
 
 % data
@@ -430,10 +435,10 @@ h=NaN(n_mf,1);
 for ii=1:n_mf
     th=ploterr(1e6*par_T,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
 %     th=ploterr(tau_rot,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
-    set(th(1),'color',c0(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
-        'MarkerSize',mark_siz,'MarkerFaceColor',clight(ii,:),...
+    set(th(1),'color',c0_mf(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+        'MarkerSize',mark_siz,'MarkerFaceColor',clight_mf(ii,:),...
         'DisplayName',num2str(configs.mf(ii).mf));
-    set(th(2),'color',c0(ii,:),'LineWidth',line_wid);
+    set(th(2),'color',c0_mf(ii,:),'LineWidth',line_wid);
     
     h(ii)=th(1);
 end
@@ -446,7 +451,7 @@ axis tight;
 box on;
 
 ylim([0,1]);
-ax.YTick=0:0.2:1;
+% ax.YTick=0:0.2:1;
 
 xlabel('Pulse duration [$\mu$s]');
 % xlabel('Pulse duration, $\tau$');
@@ -592,7 +597,22 @@ end
 
 
 %% DATA VIS
-[cc0,cclight,ccdark]=palette(nzone_th*nzone_phi);
+%%% COLORSPACES for many lines
+% 1. max. distinguishable
+% [c0_zone,clight_zone,cdark_zone]=palette(nzone_th*nzone_phi);
+
+% 2. smooth colormaps
+% 2.1. parula (dark) - seems best
+clight_zone=parula(nzone_th*nzone_phi);
+[~,c0_zone]=colshades(clight_zone);
+
+% 2.2. viridis (dark)
+% clight_zone=viridis(nzone_th*nzone_phi);
+% [~,c0_zone]=colshades(clight_zone);
+
+% 2.3. plasma (dark) - looks like magma
+% clight_zone=plasma(nzone_th*nzone_phi);
+% [~,c0_zone]=colshades(clight_zone);
 
 h_rabi_momzone=figure('Name','rabi_momzone');
 hold on;
@@ -606,9 +626,9 @@ for ii=1:n_mf
             squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
 %         th=ploterr(tau_rot,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
 %             squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
-        set(th(1),'color',cc0(jj,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
-            'MarkerSize',mark_siz,'MarkerFaceColor',cclight(jj,:));      % 'DisplayName',num2str(configs.mf(ii).mf)
-        set(th(2),'color',cc0(jj,:),'LineWidth',line_wid);
+        set(th(1),'color',c0_zone(jj,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+            'MarkerSize',mark_siz,'MarkerFaceColor',clight_zone(jj,:));      % 'DisplayName',num2str(configs.mf(ii).mf)
+        set(th(2),'color',c0_zone(jj,:),'LineWidth',line_wid);
         
         h=cat(1,h,th(1));
     end
@@ -621,7 +641,7 @@ set(ax,'Layer','Top');     % graphics axes should be always on top
 box on;
 
 axis tight;
-ax.YTick=0:0.2:1;
+% ax.YTick=0:0.2:1;
 ylim([0,1]);
 
 xlabel('Pulse duration [$\mu$s]');
@@ -676,7 +696,7 @@ for ii=1:numel(momzone_amp)
     figure(h_rabi_momzone);
     hold on;
 %     plot(1e6*par_T,tp,'o','Color',ccc(ii,:));
-    tfitted=plot(1e6*tt,pp,'-','Color',cc0(ii,:));
+    tfitted=plot(1e6*tt,pp,'-','Color',c0_zone(ii,:));
     uistack(tfitted,'bottom');    
 end
 
@@ -745,7 +765,7 @@ hold on;
 for ii=1:numel(k_momzone_exp)
     [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
     
-    scatter_zxy(k_momzone_exp{mm,nn},plot_scat_size,cc0(ii,:));
+    scatter_zxy(k_momzone_exp{mm,nn},plot_scat_size,c0_zone(ii,:));
     % color to match the zonal Rabi plot
 end
 

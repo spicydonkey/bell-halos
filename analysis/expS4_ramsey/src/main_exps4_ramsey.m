@@ -400,24 +400,29 @@ font_siz_sml=10;
 font_siz_lrg=14;
 mark_siz=7;
 line_wid=1.1;
-[c0,clight,cdark]=palette(n_mf);
 mark_typ={'o','^','d'};
+
+% better colors
+[c0_mf,clight_mf,cdark_mf]=palette(n_mf);
+gray_val=0.8;
+c0_mf(3,:)=[0,0,0]; clight_mf(3,:)=gray_val*[1,1,1]; cdark_mf(3,:)=[0,0,0];   % third color to black and grays
+
 
 %%% plot
 figure('Name','ramsey_fringe');
 hold on;
 
 % Fitted model
-pfit=plot(tt,pp,'Color',clight(idx_mJ,:),'LineWidth',2,'LineStyle','-');
+pfit=plot(tt,pp,'Color',clight_mf(idx_mJ,:),'LineWidth',2,'LineStyle','-');
 
 % DATA
 h=NaN(n_mf,1);
 for ii=1:n_mf
     th=ploterr(par_dphi,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
-    set(th(1),'color',c0(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
-        'MarkerSize',mark_siz,'MarkerFaceColor',clight(ii,:),...
+    set(th(1),'color',c0_mf(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+        'MarkerSize',mark_siz,'MarkerFaceColor',clight_mf(ii,:),...
         'DisplayName',num2str(configs.mf(ii).mf));
-    set(th(2),'color',c0(ii,:),'LineWidth',line_wid);
+    set(th(2),'color',c0_mf(ii,:),'LineWidth',line_wid);
     
     h(ii)=th(1);
 end
@@ -427,7 +432,8 @@ set(gca,'FontSize',font_siz_reg);
 set(gca,'Layer','Top');     % graphics axes should be always on top
 box on;
 
-xlabel('$\phi$');
+% xlabel('$\phi$');
+xlabel('Relative phase $\phi$');
 ylabel('$P$');
 
 lgd=legend(h,'Location','East');
@@ -439,7 +445,7 @@ xticks(0:pi/2:2*pi);
 xticklabels({'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'});
 
 ylim([0,1]);
-yticks(0:0.2:1);
+% yticks(0:0.2:1);
 
 
 %% MOMENTUM-RESOLVED: Ramsey fringe
@@ -520,7 +526,25 @@ end
 
 
 %% DATA VIS
-[cc0,cclight,ccdark]=palette(nzone_th*nzone_phi);
+% [c0_zone,clight_zone,cdark_zone]=palette(nzone_th*nzone_phi);
+
+%%% COLORSPACES for many lines
+% 1. max. distinguishable
+% [c0_zone,clight_zone,cdark_zone]=palette(nzone_th*nzone_phi);
+
+% 2. smooth colormaps
+% 2.1. parula (dark) - seems best
+clight_zone=parula(nzone_th*nzone_phi);
+[~,c0_zone]=colshades(clight_zone);
+
+% 2.2. viridis (dark)
+% clight_zone=viridis(nzone_th*nzone_phi);
+% [~,c0_zone]=colshades(clight_zone);
+
+% 2.3. plasma (dark) - looks like magma
+% clight_zone=plasma(nzone_th*nzone_phi);
+% [~,c0_zone]=colshades(clight_zone);
+
 
 h_ramsey_momzone=figure('Name','ramsey_momzone');
 hold on;
@@ -532,9 +556,9 @@ for ii=1:n_mf
         [mm,nn]=ind2sub([nzone_th,nzone_phi],jj);
         th=ploterr(par_dphi,squeeze(P_mJ_zone_avg{ii}(mm,nn,:)),[],...
             squeeze(P_mJ_zone_std{ii}(mm,nn,:)),'o','hhxy',0);
-        set(th(1),'color',cc0(jj,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
-            'MarkerSize',mark_siz,'MarkerFaceColor',cclight(jj,:));      % 'DisplayName',num2str(configs.mf(ii).mf)
-        set(th(2),'color',cc0(jj,:),'LineWidth',line_wid);
+        set(th(1),'color',c0_zone(jj,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+            'MarkerSize',mark_siz,'MarkerFaceColor',clight_zone(jj,:));      % 'DisplayName',num2str(configs.mf(ii).mf)
+        set(th(2),'color',c0_zone(jj,:),'LineWidth',line_wid);
         
         h=cat(1,h,th(1));
     end
@@ -549,10 +573,11 @@ box on;
 axis tight;
 ax.XTick=0:pi/2:2*pi;
 ax.XTickLabel={'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'};
-ax.YTick=0:0.2:1;
+% ax.YTick=0:0.2:1;
 ylim([0,1]);
 
-xlabel('$\phi$');
+% xlabel('$\phi$');
+xlabel('Relative phase $\phi$');
 ylabel('$P$');
 
 
@@ -595,7 +620,7 @@ for ii=1:numel(momzone_amp)
     % vis
     figure(h_ramsey_momzone);
     hold on;
-    tplot=plot(tt,pp,'-','Color',cc0(ii,:));
+    tplot=plot(tt,pp,'-','Color',c0_zone(ii,:));
     uistack(tplot,'bottom');
 end
 
@@ -666,7 +691,7 @@ hold on;
 for ii=1:numel(k_momzone_exp)
     [mm,nn]=ind2sub(size(k_momzone),ii);    % get zone
     
-    scatter_zxy(k_momzone_exp{mm,nn},plot_scat_size,cc0(ii,:));
+    scatter_zxy(k_momzone_exp{mm,nn},plot_scat_size,c0_zone(ii,:));
     % color to match the zonal Rabi plot
 end
 
