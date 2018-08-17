@@ -157,14 +157,15 @@ uistack(p_B_th_ideal,'bottom');
 % lgd=legend(p);
 ax=gca;
 box on;
-xlabel('$\theta$');
-ylabel('$\mathcal{B}$');
+axis square;
+xlabel('Basis rotation $\theta$');
+ylabel('Spin correlation $\mathcal{B}$');
 
 xlim(lim_th);
 xticks(0:pi/4:pi);
 xticklabels({'$0$','$\pi/4$','$\pi/2$','$3\pi/4$','$\pi$'});
 ylim([-1,1]);
-yticks(-1:0.5:1);
+% yticks(-1:0.5:1);
 
 set(gca,'FontSize',font_siz_reg);
 
@@ -173,5 +174,10 @@ p_bell_viol=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
     [B_max,B_max,ax.YLim(2),ax.YLim(2)],...
     ptch_col*ones(1,3),'FaceAlpha',ptch_alp,...
     'EdgeColor','none');
+belltext=text(0,B_max,sprintf('Bell\ncorrelation'),'FontSize',11,'VerticalAlignment','bottom');   % label
 uistack(p_bell_viol,'bottom');      % this should REALLY be bottom - to not cover any other graphics
 set(gca,'Layer','Top');     % graphics axes should be always on top
+
+
+%%% misc
+h.Renderer='painters';
