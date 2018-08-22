@@ -19,7 +19,7 @@ hotspot_rad=30e-3;
 
 
 % filter to Z-window
-lim_z=[1.6,1.76];
+lim_z=[1.61,1.753];
 [xyz_filt] = boxcull(xyz_filt,{[],[],lim_z});
 
 
@@ -45,16 +45,21 @@ n_v=squeeze(n_v)';      % squeeze to 2D (XZ)
 % filter
 gaussfilt_sig=10;
 n_filt=imgaussfilt(n_v,gaussfilt_sig);
+n_disp=log(n_filt);     % to display in arb unit
+n_lim=[-6 -1];         	% Caxis limits hardset
 
+% normalise displayable val to [0,1]
+n_disp=(n_disp-n_lim(1))/diff(n_lim);
 
 % vis: density image
 hfig_2d=figure('Name','density');
-% imagesc(v_ed{1},v_ed{3},n_filt);
-imagesc(v_ed{1},v_ed{3},log(n_filt));
+imagesc(v_ed{1},v_ed{3},n_disp);
 set(gca,'YDir','normal')
 axis equal;
-colorbar;
-caxis([-6 -1]);
+cbar=colorbar('southoutside','Ticks',0:0.5:1.0);
+cbar.Label.String='Scaled density (arb. unit)';
+cbar.FontSize=20;
+caxis([0,1]);
 colormap('inferno');
 
 
