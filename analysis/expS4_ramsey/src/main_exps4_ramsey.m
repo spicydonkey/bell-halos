@@ -357,7 +357,6 @@ P_mJ_halo_avg=cat(2,P_mJ_halo_avg{:});
 P_mJ_halo_std=cat(2,P_mJ_halo_std{:});
 
 
-
 %% Fit Ramsey fringe (momentum-integrated)
 %   simple model: phi is periodic by definition [0,2*pi]
 %   * amplitude
@@ -369,8 +368,6 @@ P_mJ_halo_std=cat(2,P_mJ_halo_std{:});
 
 ramsey_mdl='p~0.5*(1-amp*cos(x1))';
 
-halo_amp=NaN;
-
 idx_mJ=1;   % mJ=1
 tp=P_mJ_halo_avg(:,idx_mJ);
 
@@ -379,73 +376,10 @@ tAmp=max(tp)-min(tp);
 tparam0=tAmp;
 
 %%% fit model
-tfopts=statset('Display','off');
-tfit_ramsey=fitnlm(par_dphi,tp,ramsey_mdl,tparam0,'CoefficientNames',{'amp'},...
-    'Options',tfopts);
-tparam_fit=tfit_ramsey.Coefficients.Estimate;
-
-% get fitted model params
-halo_amp=tparam_fit(1);
-
-% evaluate fitted model
-tt=linspace(-pi,3*pi,1e4);
-pp=feval(tfit_ramsey,tt);
-
-
-
-%% DATA VISUALIZATION
-% config
-font_siz_reg=12;
-font_siz_sml=10;
-font_siz_lrg=14;
-mark_siz=7;
-line_wid=1.1;
-mark_typ={'o','^','d'};
-
-% better colors
-[c0_mf,clight_mf,cdark_mf]=palette(n_mf);
-gray_val=0.8;
-c0_mf(3,:)=[0,0,0]; clight_mf(3,:)=gray_val*[1,1,1]; cdark_mf(3,:)=[0,0,0];   % third color to black and grays
-
-
-%%% plot
-figure('Name','ramsey_fringe');
-hold on;
-
-% Fitted model
-pfit=plot(tt,pp,'Color',clight_mf(idx_mJ,:),'LineWidth',2,'LineStyle','-');
-
-% DATA
-h=NaN(n_mf,1);
-for ii=1:n_mf
-    th=ploterr(par_dphi,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
-    set(th(1),'color',c0_mf(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
-        'MarkerSize',mark_siz,'MarkerFaceColor',clight_mf(ii,:),...
-        'DisplayName',num2str(configs.mf(ii).mf));
-    set(th(2),'color',c0_mf(ii,:),'LineWidth',line_wid);
-    
-    h(ii)=th(1);
-end
-
-set(gca,'FontSize',font_siz_reg);
-
-set(gca,'Layer','Top');     % graphics axes should be always on top
-box on;
-
-% xlabel('$\phi$');
-xlabel('Relative phase $\phi$');
-ylabel('$P$');
-
-lgd=legend(h,'Location','East');
-title(lgd,'$m_J$');
-set(lgd,'FontSize',font_siz_reg);
-
-xlim([0-2*pi/25,2*pi+2*pi/25]);
-xticks(0:pi/2:2*pi);
-xticklabels({'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'});
-
-ylim([0,1]);
-% yticks(0:0.2:1);
+fopts=statset('Display','off');
+fit_ramsey_halo=fitnlm(par_dphi,tp,ramsey_mdl,tparam0,'CoefficientNames',{'amp'},...
+    'Options',fopts);
+fit_ramsey_halo_params=fit_ramsey_halo.Coefficients.Estimate;   % get fitted model params
 
 
 %% MOMENTUM-RESOLVED: Ramsey fringe
@@ -525,7 +459,96 @@ for ii=1:n_mf
 end
 
 
-%% DATA VIS
+%% Fit Ramsey fringe (momentum-zone resolved fit)
+P_momzone=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for this mJ
+
+fit_ramsey_zone=cell(nzone_th,nzone_phi);
+fit_ramsey_zone_param=NaN(nzone_th,nzone_phi,1);    % amp % #params fitted should be modular?
+
+for ii=1:nzone_th*nzone_phi
+    [mm,nn]=ind2sub([nzone_th,nzone_phi],ii);  % get this zone
+    tp=squeeze(P_momzone(mm,nn,:));    % pop fraction profile for this zone
+    
+    % check if this zone has any atoms
+    if sum(isnan(tp))>0.33*length(tp)     % all NaN (a little too strict)
+        continue
+    end
+        
+    % estimate params
+    tAmp=max(tp)-min(tp);
+    tparam0=tAmp;
+    
+    %%% fit model
+    fopts=statset('Display','off');
+    fit_ramsey_zone{mm,nn}=fitnlm(par_dphi,tp,ramsey_mdl,tparam0,'CoefficientNames',{'amp'},...
+        'Options',fopts);
+    fit_ramsey_zone_param(mm,nn)=fit_ramsey_zone{mm,nn}.Coefficients.Estimate;
+end
+% get statistics around halo
+ramsey_amp_zone=fit_ramsey_zone_param(:,:,1);
+errfrac_amp=std(ramsey_amp_zone(:))/mean(ramsey_amp_zone(:));
+
+
+%% DATA VISUALIZATION
+% evaluate fitted model
+tt=linspace(-pi,3*pi,1e4);
+%% Momentum mode unresolved
+% config
+font_siz_reg=12;
+font_siz_sml=10;
+font_siz_lrg=14;
+mark_siz=7;
+line_wid=1.1;
+mark_typ={'o','^','d'};
+
+% better colors
+[c0_mf,clight_mf,cdark_mf]=palette(n_mf);
+gray_val=0.8;
+c0_mf(3,:)=[0,0,0]; clight_mf(3,:)=gray_val*[1,1,1]; cdark_mf(3,:)=[0,0,0];   % third color to black and grays
+
+
+%%% plot
+figure('Name','ramsey_fringe');
+hold on;
+
+% Fitted model
+pp=feval(fit_ramsey_halo,tt);
+pfit=plot(tt,pp,'Color',clight_mf(idx_mJ,:),'LineWidth',2,'LineStyle','-');
+
+% DATA
+h=NaN(n_mf,1);
+for ii=1:n_mf
+    th=ploterr(par_dphi,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+    set(th(1),'color',c0_mf(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+        'MarkerSize',mark_siz,'MarkerFaceColor',clight_mf(ii,:),...
+        'DisplayName',num2str(configs.mf(ii).mf));
+    set(th(2),'color',c0_mf(ii,:),'LineWidth',line_wid);
+    
+    h(ii)=th(1);
+end
+
+set(gca,'FontSize',font_siz_reg);
+
+set(gca,'Layer','Top');     % graphics axes should be always on top
+box on;
+
+% xlabel('$\phi$');
+xlabel('Relative phase $\phi$');
+ylabel('$P$');
+
+lgd=legend(h,'Location','East');
+title(lgd,'$m_J$');
+set(lgd,'FontSize',font_siz_reg);
+
+xlim([0-2*pi/25,2*pi+2*pi/25]);
+xticks(0:pi/2:2*pi);
+xticklabels({'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'});
+
+ylim([0,1]);
+% yticks(0:0.2:1);
+
+
+%% Momentum resolved
 % [c0_zone,clight_zone,cdark_zone]=palette(nzone_th*nzone_phi);
 
 %%% COLORSPACES for many lines
@@ -564,13 +587,25 @@ for ii=1:n_mf
     end
 end
 
+for ii=1:nzone_th*nzone_phi
+    [mm,nn]=ind2sub([nzone_th,nzone_phi],ii);  % get this zone
+    % evaluate fitted model in this zone
+    pp=feval(fit_ramsey_zone{mm,nn},tt);
+    
+    % vis
+    figure(h_ramsey_momzone);
+    hold on;
+    tplot=plot(tt,pp,'-','Color',c0_zone(ii,:));
+    uistack(tplot,'bottom');
+end
+
 % annotatations
 ax=gca;
 set(ax,'FontSize',font_siz_reg);
 set(ax,'Layer','Top');     % graphics axes should be always on top
 box on;
 
-axis tight;
+xlim([0-2*pi/25,2*pi+2*pi/25]);
 ax.XTick=0:pi/2:2*pi;
 ax.XTickLabel={'$0$','$\pi/2$','$\pi$','$3\pi/2$','$2\pi$'};
 % ax.YTick=0:0.2:1;
@@ -579,50 +614,6 @@ ylim([0,1]);
 % xlabel('$\phi$');
 xlabel('Relative phase $\phi$');
 ylabel('$P$');
-
-
-
-%% Fit Ramsey fringe (momentum-zone resolved fit)
-momzone_amp=NaN(nzone_th,nzone_phi);
-
-P_momzone=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for this mJ
-
-
-htemp=100;
-for ii=1:numel(momzone_amp)
-    [mm,nn]=ind2sub(size(momzone_amp),ii);  % get this zone
-    tp=squeeze(P_momzone(mm,nn,:));    % pop fraction profile for this zone
-    
-    % check if this zone has any atoms
-    if sum(isnan(tp))>0.33*length(tp)     % all NaN (a little too strict)
-        continue
-    end
-        
-    % estimate params
-    tAmp=max(tp)-min(tp);
-    tparam0=tAmp;
-    
-    %%% fit model
-    tfopts=statset('Display','off');
-    
-    tfit_ramsey=fitnlm(par_dphi,tp,ramsey_mdl,tparam0,'CoefficientNames',{'amp'},...
-        'Options',tfopts);
-    
-    tparam_fit=tfit_ramsey.Coefficients.Estimate;
-    
-    % get fitted model params
-    momzone_amp(mm,nn)=tparam_fit(1);
-    
-    % evaluate fitted model
-    tt=linspace(0,max(par_dphi),1e3);
-    pp=feval(tfit_ramsey,tt);
-    
-    % vis
-    figure(h_ramsey_momzone);
-    hold on;
-    tplot=plot(tt,pp,'-','Color',c0_zone(ii,:));
-    uistack(tplot,'bottom');
-end
 
 
 %% Exploded figure of halo by lat-lon zones

@@ -489,7 +489,6 @@ P_momzone_0=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) fo
 fit_rabi_zone=cell(nzone_th,nzone_phi);
 fit_rabi_zone_param=NaN(nzone_th,nzone_phi,2);      % stores amp/omega in dim3
 
-htemp=100;
 for ii=1:nzone_th*nzone_phi
     [mm,nn]=ind2sub([nzone_th,nzone_phi],ii);  % get this zone
     tp=squeeze(P_momzone_0(mm,nn,:));    % pop fraction profile for this zone
@@ -507,12 +506,10 @@ for ii=1:nzone_th*nzone_phi
     
     % fit model
     fopts_raw=statset('Display','off');
-    tfit_rabi_zone=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
+    fit_rabi_zone{mm,nn}=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
         'Options',fopts_raw);
-    fit_rabi_zone{mm,nn}=tfit_rabi_zone;
-    fit_rabi_zone_param(mm,nn,:)=tfit_rabi_zone.Coefficients.Estimate;
+    fit_rabi_zone_param(mm,nn,:)=fit_rabi_zone{mm,nn}.Coefficients.Estimate;
 end
-
 % get statistics around halo
 rabi_amp_zone=fit_rabi_zone_param(:,:,1);
 errfrac_amp=std(rabi_amp_zone(:))/mean(rabi_amp_zone(:));
