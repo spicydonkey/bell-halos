@@ -376,9 +376,6 @@ P_mJ_halo_std=cat(2,P_mJ_halo_std{:});
 %   * Rabi frequency [rad/s]
 rabi_mdl='p~0.5*amp*(1-cos(om*x1))';    % for the initially unpopulated state mJ=0
 
-halo_amp=NaN;
-halo_om=NaN;
-
 idx_mJ=2;    % mJ=0
 tp=P_mJ_halo_avg(:,idx_mJ);
 
@@ -388,14 +385,11 @@ tRabiOmega=2*pi/20e-5;      % we keep this near const
 tparam0=[tRabiAmp,tRabiOmega];
 
 %%% fit model
-tfopts=statset('Display','off');
+fopts_halo=statset('Display','off');
 fit_rabi_halo=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
-    'Options',tfopts);
-tparam_fit=fit_rabi_halo.Coefficients.Estimate;
+    'Options',fopts_halo);
+fit_rabi_halo_params=fit_rabi_halo.Coefficients.Estimate;   % get fitted params
 
-% get fitted model params
-halo_amp=tparam_fit(1);
-halo_om=tparam_fit(2);
 
 % evaluate fitted model
 tt=linspace(0,max(par_T),1e3);
@@ -405,117 +399,6 @@ pp=feval(fit_rabi_halo,tt);
 %%% Uncertainty model
 %   Constant error fraction
 P_errfrac=harmmean(P_mJ_halo_std(:,idx_mJ)./P_mJ_halo_avg(:,idx_mJ));      % gives a reasonal fit to ~pi/2
-
-
-%% DATA VISUALIZATION (unresolved)
-% config
-font_siz_reg=12;
-font_siz_sml=10;
-font_siz_lrg=14;
-mark_siz=7;
-line_wid=1.1;
-mark_typ={'o','^','d'};
-
-% better colors
-[c0_mf,clight_mf,cdark_mf]=palette(n_mf);
-gray_val=0.8;
-c0_mf(3,:)=[0,0,0]; clight_mf(3,:)=gray_val*[1,1,1]; cdark_mf(3,:)=[0,0,0];   % third color to black and grays
-
-
-%%% plot
-hf=figure('Name','rabi_halo');
-hold on;
-
-% Fitted model (a composite graphics object) - plotted first to be in bottom
-lineProps.col={clight_mf(idx_mJ,:)};
-tfitted=mseb(1e6*tt,pp,P_errfrac.*pp,lineProps,1);
-
-% data
-h=NaN(n_mf,1);
-for ii=1:n_mf
-    th=ploterr(1e6*par_T,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
-%     th=ploterr(tau_rot,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
-    set(th(1),'color',c0_mf(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
-        'MarkerSize',mark_siz,'MarkerFaceColor',clight_mf(ii,:),...
-        'DisplayName',num2str(configs.mf(ii).mf));
-    set(th(2),'color',c0_mf(ii,:),'LineWidth',line_wid);
-    
-    h(ii)=th(1);
-end
-
-% annotations
-ax=gca;
-set(ax,'FontSize',font_siz_reg);
-set(ax,'Layer','Top');     % graphics axes should be always on top
-axis tight;
-box on;
-
-ylim([0,1]);
-% ax.YTick=0:0.2:1;
-
-xlabel('Pulse duration [$\mu$s]');
-% xlabel('Pulse duration, $\tau$');
-ylabel('$P$');
-
-lgd=legend(h,'Location','East');
-title(lgd,'$m_J$');
-set(lgd,'FontSize',font_siz_reg);
-
-
-%% raw data (non-averaged)
-%%% collate all the data
-% pulse duration
-% T_collate=cellfun(@(x) ones(size(k,1),1),k_par,'UniformOutput',false);
-T_collate=cell(nparam,1);
-for ii=1:nparam
-    T_collate{ii}=par_T(ii)*ones(size(k_par{ii},1),1);
-end
-T_collate=cat(1,T_collate{:});
-
-% mJ=0 pop fraction
-P_collate=cellfun(@(p) squeeze(p{2}),P_mJ_halo,'UniformOutput',false);
-P_collate=cat(1,P_collate{:});
-
-
-%%% FIT - same as for avgs
-% estimate params
-tRabiAmp=max(P_collate)-min(P_collate);
-tRabiOmega=2*pi/20e-5;      % we keep this near const
-tparam0=[tRabiAmp,tRabiOmega];
-
-%%% fit model
-tfopts=statset('Display','off');
-fit_rabi_halo_raw=fitnlm(T_collate,P_collate,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
-    'Options',tfopts);
-
-% evaluate fitted model
-tt=linspace(0,max(par_T),1e3);
-pp=feval(fit_rabi_halo_raw,tt);
-
-
-%%% Data vis
-h=figure('Name','rabi_halo_raw');
-
-% raw data
-plot(T_collate*1e6,P_collate,'r.');
-% fit
-hold on;
-plot(tt*1e6,pp,'r-');
-
-% annotation
-ax=gca;
-axis tight;
-box on;
-
-ylim([0,1]);
-ax.YTick=0:0.2:1;
-
-xlabel('Pulse duration [$\mu$s]');
-% xlabel('Pulse duration, $\tau$');
-ylabel('$P$');
-
-
-
 
 
 
@@ -596,7 +479,162 @@ for ii=1:n_mf
 end
 
 
-%% DATA VIS
+
+%% Rabi oscillation (momentum-zone resolved fit)
+% momzone_amp=NaN(nzone_th,nzone_phi);
+% momzone_om=NaN(nzone_th,nzone_phi);
+
+P_momzone_0=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for mJ=0
+
+fit_rabi_zone=cell(nzone_th,nzone_phi);
+fit_rabi_zone_param=NaN(nzone_th,nzone_phi,2);      % stores amp/omega in dim3
+
+htemp=100;
+for ii=1:nzone_th*nzone_phi
+    [mm,nn]=ind2sub([nzone_th,nzone_phi],ii);  % get this zone
+    tp=squeeze(P_momzone_0(mm,nn,:));    % pop fraction profile for this zone
+    
+    % check if this zone has any atoms
+    if sum(isnan(tp))>0.33*length(tp)     % all NaN (a little too strict)
+        continue
+    end
+        
+    % estimate params
+    tRabiAmp=max(tp)-min(tp);
+    tRabiOmega=2*pi/(20e-5);        % we keep this near const
+    
+    tparam0=[tRabiAmp,tRabiOmega];
+    
+    % fit model
+    fopts_raw=statset('Display','off');
+    tfit_rabi_zone=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
+        'Options',fopts_raw);
+    fit_rabi_zone{mm,nn}=tfit_rabi_zone;
+    fit_rabi_zone_param(mm,nn,:)=tfit_rabi_zone.Coefficients.Estimate;
+end
+
+% get statistics around halo
+rabi_amp_zone=fit_rabi_zone_param(:,:,1);
+errfrac_amp=std(rabi_amp_zone(:))/mean(rabi_amp_zone(:));
+
+
+
+%% DATA VISUALIZATION
+%% Momentum mode unresolved
+% config
+font_siz_reg=12;
+font_siz_sml=10;
+font_siz_lrg=14;
+mark_siz=7;
+line_wid=1.1;
+mark_typ={'o','^','d'};
+
+% better colors
+[c0_mf,clight_mf,cdark_mf]=palette(n_mf);
+gray_val=0.8;
+c0_mf(3,:)=[0,0,0]; clight_mf(3,:)=gray_val*[1,1,1]; cdark_mf(3,:)=[0,0,0];   % third color to black and grays
+
+
+%%% plot
+h_rabi_halo=figure('Name','rabi_halo');
+hold on;
+
+%%% model
+% % Fitted model to avg (a composite graphics object) - plotted first to be in bottom
+% lineProps.col={clight_mf(idx_mJ,:)};
+% tfitted=mseb(1e6*tt,pp,P_errfrac.*pp,lineProps,1);
+
+% momentum zone variability
+pp=feval(fit_rabi_halo,tt);
+lineProps.col={clight_mf(idx_mJ,:)};
+tfitted=mseb(1e6*tt,pp,errfrac_amp.*pp,lineProps,1);
+
+%%% data
+h=NaN(n_mf,1);
+for ii=1:n_mf
+    th=ploterr(1e6*par_T,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+%     th=ploterr(tau_rot,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+    set(th(1),'color',c0_mf(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+        'MarkerSize',mark_siz,'MarkerFaceColor',clight_mf(ii,:),...
+        'DisplayName',num2str(configs.mf(ii).mf));
+    set(th(2),'color',c0_mf(ii,:),'LineWidth',line_wid);
+    
+    h(ii)=th(1);
+end
+
+% annotations
+ax=gca;
+set(ax,'FontSize',font_siz_reg);
+set(ax,'Layer','Top');     % graphics axes should be always on top
+axis tight;
+box on;
+
+ylim([0,1]);
+% ax.YTick=0:0.2:1;
+
+xlabel('Pulse duration [$\mu$s]');
+% xlabel('Pulse duration, $\tau$');
+ylabel('$P$');
+
+lgd=legend(h,'Location','East');
+title(lgd,'$m_J$');
+set(lgd,'FontSize',font_siz_reg);
+
+
+% %% raw data (non-averaged)
+% %%% collate all the data
+% % pulse duration
+% % T_collate=cellfun(@(x) ones(size(k,1),1),k_par,'UniformOutput',false);
+% T_collate=cell(nparam,1);
+% for ii=1:nparam
+%     T_collate{ii}=par_T(ii)*ones(size(k_par{ii},1),1);
+% end
+% T_collate=cat(1,T_collate{:});
+% 
+% % mJ=0 pop fraction
+% P_collate=cellfun(@(p) squeeze(p{2}),P_mJ_halo,'UniformOutput',false);
+% P_collate=cat(1,P_collate{:});
+% 
+% 
+% %%% FIT - same as for avgs
+% % estimate params
+% tRabiAmp=max(P_collate)-min(P_collate);
+% tRabiOmega=2*pi/20e-5;      % we keep this near const
+% tparam0=[tRabiAmp,tRabiOmega];
+% 
+% %%% fit model
+% fopts_raw=statset('Display','off');
+% fit_rabi_halo_raw=fitnlm(T_collate,P_collate,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
+%     'Options',fopts_raw);
+% 
+% % evaluate fitted model
+% tt=linspace(0,max(par_T),1e3);
+% pp=feval(fit_rabi_halo_raw,tt);
+% 
+% 
+% %%% Data vis
+% h=figure('Name','rabi_halo_raw');
+% 
+% % raw data
+% plot(T_collate*1e6,P_collate,'r.');
+% % fit
+% hold on;
+% plot(tt*1e6,pp,'r-');
+% 
+% % annotation
+% ax=gca;
+% axis tight;
+% box on;
+% 
+% ylim([0,1]);
+% ax.YTick=0:0.2:1;
+% 
+% xlabel('Pulse duration [$\mu$s]');
+% % xlabel('Pulse duration, $\tau$');
+% ylabel('$P$');
+% 
+
+%% Momentum resolved
 %%% COLORSPACES for many lines
 % 1. max. distinguishable
 % [c0_zone,clight_zone,cdark_zone]=palette(nzone_th*nzone_phi);
@@ -634,6 +672,18 @@ for ii=1:n_mf
     end
 end
 
+for ii=1:nzone_th*nzone_phi
+    [mm,nn]=ind2sub([nzone_th,nzone_phi],ii);  % get this zone
+    % evaluate fitted model in this zone
+    pp=feval(fit_rabi_zone{mm,nn},tt);
+    
+    % vis
+    figure(h_rabi_momzone);
+    hold on;
+    tfitted=plot(1e6*tt,pp,'-','Color',c0_zone(ii,:));
+    uistack(tfitted,'bottom');
+end
+    
 % annotations
 ax=gca;
 set(ax,'FontSize',font_siz_reg);
@@ -647,58 +697,6 @@ ylim([0,1]);
 xlabel('Pulse duration [$\mu$s]');
 % xlabel('Pulse duration, $\tau$');
 ylabel('$P$');
-
-
-
-%% Rabi oscillation (momentum-zone resolved fit)
-momzone_amp=NaN(nzone_th,nzone_phi);
-momzone_om=NaN(nzone_th,nzone_phi);
-
-P_momzone_0=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for mJ=0
-
-fit_rabi_zone=cell(nzone_th,nzone_phi);
-
-htemp=100;
-for ii=1:numel(momzone_amp)
-    [mm,nn]=ind2sub(size(momzone_amp),ii);  % get this zone
-    tp=squeeze(P_momzone_0(mm,nn,:));    % pop fraction profile for this zone
-    
-    % check if this zone has any atoms
-    if sum(isnan(tp))>0.33*length(tp)     % all NaN (a little too strict)
-        continue
-    end
-        
-    % estimate params
-    tRabiAmp=max(tp)-min(tp);
-    tRabiOmega=2*pi/(20e-5);        % we keep this near const
-    
-    tparam0=[tRabiAmp,tRabiOmega];
-    
-    
-    %%% fit model
-    tfopts=statset('Display','off');
-    
-    tfit_rabi_zone=fitnlm(par_T,tp,rabi_mdl,tparam0,'CoefficientNames',{'amp','om'},...
-        'Options',tfopts);
-    fit_rabi_zone{mm,nn}=tfit_rabi_zone;
-    
-    tparam_fit=tfit_rabi_zone.Coefficients.Estimate;
-    
-    % get fitted model params
-    momzone_amp(mm,nn)=tparam_fit(1);
-    momzone_om(mm,nn)=tparam_fit(2);
-    
-    % evaluate fitted model
-    tt=linspace(0,max(par_T),1e3);
-    pp=feval(tfit_rabi_zone,tt);
-    
-    % vis
-    figure(h_rabi_momzone);
-    hold on;
-%     plot(1e6*par_T,tp,'o','Color',ccc(ii,:));
-    tfitted=plot(1e6*tt,pp,'-','Color',c0_zone(ii,:));
-    uistack(tfitted,'bottom');    
-end
 
 
 %% Exploded figure of halo by lat-lon zones
