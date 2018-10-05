@@ -34,7 +34,7 @@ lim_th=[-pi/20,pi+pi/20];   % theta-axis limits
 
 
 %% load collated data
-% load('C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot\bell_signal\bell_20180814_2.mat');
+% load('C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot\bell_signal\bell_20180815_1.mat');
 
 % OR have dataset loaded as "S"
 
@@ -154,7 +154,7 @@ for ii=1:ndatasets
     set(p(1),'Marker','o','MarkerSize',mark_siz,...
         'Color',cB,'LineWidth',line_wid,...
         'MarkerFaceColor',cBlight(1,:),...
-        'DisplayName','Experiment');
+        'DisplayName','Data');
     set(p(2),'Color',cB,'LineWidth',line_wid,...
         'DisplayName','');
 %     set(p(3),'Color',c0(1,:),'LineWidth',line_wid,...
@@ -174,18 +174,18 @@ uistack(p_B_sm,'bottom');
 % Bell+: Ideal rotation
 th=linspace(lim_th(1),lim_th(2),1e3);
 B_th_ideal=-cos(2*th);
-p_B_th_ideal=plot(th,B_th_ideal,'Color',0.2*ones(1,3),'LineStyle','--','LineWidth',2.2,...
-    'DisplayName','Ideal $\vert\Psi^+\rangle$');
+p_B_th_ideal=plot(th,B_th_ideal,'Color',0.2*ones(1,3),'LineStyle','- -','LineWidth',2.2,...
+    'DisplayName','$\vert\Psi^+\rangle$');
+%     'DisplayName','Ideal $\vert\Psi^+\rangle$');
 uistack(p_B_th_ideal,'bottom');
-text(3/4*pi,-0.75,'$\vert\Psi^+\rangle$','HorizontalAlignment','left',...
-    'FontSize',font_siz_lrg);
+% text(3/4*pi,-0.75,'$\vert\Psi^+\rangle$','HorizontalAlignment','left',...
+%     'FontSize',font_siz_lrg);
 
 % annotation
-% lgd=legend(p);
 ax=gca;
 box on;
 % axis square;
-xlabel('Rotation angle $\theta(\tau)$');
+xlabel('Rotation angle $\theta$');
 ylabel('Spin correlator $\mathcal{B}(\theta)$');
 
 xlim(lim_th);
@@ -207,15 +207,18 @@ uistack(p_bogo,'bottom');      % this should REALLY be bottom - to not cover any
 set(gca,'Layer','Top');     % graphics axes should be always on top
 text(0,B_bogo_max,sprintf('Nonlocal\n(based on QM)'),'FontSize',font_siz_reg,'VerticalAlignment','bottom');
 
-%%%% QENT
-B_cent=0.5*(max(B_col)+min(B_col));   % centre value
-p_qent=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-    B_cent*ones(1,4)+(0.5*B_qent_max_pkpk)*[-1,-1,+1,+1],...
-    ptch_col_qent,'FaceAlpha',ptch_alp,...
-    'EdgeColor','none');
-uistack(p_qent,'bottom');      % this should REALLY be bottom - to not cover any other graphics
-set(gca,'Layer','Top');     % graphics axes should be always on top
-text(0,B_cent+0.5*B_qent_max_pkpk,sprintf('Separable'),'FontSize',font_siz_reg,'VerticalAlignment','top');
+% %%%% QENT
+% B_cent=0.5*(max(B_col)+min(B_col));   % centre value
+% p_qent=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+%     B_cent*ones(1,4)+(0.5*B_qent_max_pkpk)*[-1,-1,+1,+1],...
+%     ptch_col_qent,'FaceAlpha',ptch_alp,...
+%     'EdgeColor','none');
+% uistack(p_qent,'bottom');      % this should REALLY be bottom - to not cover any other graphics
+% set(gca,'Layer','Top');     % graphics axes should be always on top
+% text(0,B_cent+0.5*B_qent_max_pkpk,sprintf('Separable'),'FontSize',font_siz_reg,'VerticalAlignment','top');
+
+% legend
+lgd=legend([p(1), p_B_th_ideal]);
 
 %%% misc
 h.Renderer='painters';
