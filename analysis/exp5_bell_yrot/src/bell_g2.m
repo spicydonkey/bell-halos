@@ -4,24 +4,33 @@
 % 20180814
 
 %% configs
-% general
+%%% Rabi
 Tpi=10e-6;        % pi-pulse duration [s]
 om_rabi=2*pi*50.3e3;    % Rabi frequency [rad/s]
 
-% Bell inequality (TODO: check with Jan)
-B_max=1/sqrt(2);
+%%% quantum correlations
+% BOGO: Bogoluibov theory --> violation of Bell inequality
+B_bogo_max=1/sqrt(2);
+ptch_col_bogo=0.85*ones(1,3);
 
-% vis
-font_siz_reg=12;
-font_siz_sml=10;
-font_siz_lrg=14;
-mark_siz=7;
-line_wid=1.1;
+% QENT: quantum entanglement
+B_qent_max_pkpk=1;      % max pk-pk range of the diag correlator B
+ptch_col_qent=[0.92,0.92,1.0];
 
-ptch_col=0.85;         	% some gray to patch violation zone
+%%% vis
+font_siz_reg=13;
+font_siz_sml=11;
+font_siz_lrg=15;
+mark_siz=9;
+line_wid=2;
+
+% ptch_col=0.85;         	% some gray to patch violation zone
 ptch_alp=1;       		% patch transparency
 
 lim_th=[-pi/20,pi+pi/20];   % theta-axis limits
+
+
+
 
 
 %% load collated data
@@ -124,7 +133,16 @@ set(gca,'FontSize',font_siz_reg);
 
 
 %% VIS: Bell corr vs theta
+cB=[0.5 0.3 0.7];       % main color for correlation
+[cBlight,cBdark]=colshades(cB);      % get shades
+
 h=figure('Name','B_vs_theta');
+
+% TODO: collate and plot as whole
+%   * use B_col rather than parsing through individual exp (S)
+%   * integrate with the smoothed plot below
+theta_col=om_rabi*cat(1,S.par_T);
+B_col=cat(1,S.E_par);       % collate correlator from all experiments
 
 %%% data
 for ii=1:ndatasets
@@ -134,32 +152,41 @@ for ii=1:ndatasets
         %         'MarkerEdgeColor',c0(1,:),'MarkerFaceColor',clight(1,:));
     
     set(p(1),'Marker','o','MarkerSize',mark_siz,...
-        'Color',c0(1,:),'LineWidth',line_wid,...
-        'MarkerFaceColor',clight(1,:),...
+        'Color',cB,'LineWidth',line_wid,...
+        'MarkerFaceColor',cBlight(1,:),...
         'DisplayName','Experiment');
-    set(p(2),'Color',c0(1,:),'LineWidth',line_wid,...
+    set(p(2),'Color',cB,'LineWidth',line_wid,...
         'DisplayName','');
 %     set(p(3),'Color',c0(1,:),'LineWidth',line_wid,...
 %         'DisplayName','');
 end
 
+% smoothed fit to data
+hold on;
+polyfit_B=polyfit(theta_col,B_col,6);
+theta_sm_fit=linspace(lim_th(1),lim_th(2),1e4);
+B_sm_fit=polyval(polyfit_B,theta_sm_fit);
+p_B_sm=plot(theta_sm_fit,B_sm_fit,'LineWidth',2.2,'Color',0.5*(cB+cBlight(1,:)));
+uistack(p_B_sm,'bottom');
+
+
 %%% Theory
 % Bell+: Ideal rotation
 th=linspace(lim_th(1),lim_th(2),1e3);
 B_th_ideal=-cos(2*th);
-
-p_B_th_ideal=plot(th,B_th_ideal,'k--','LineWidth',1.5,...
+p_B_th_ideal=plot(th,B_th_ideal,'Color',0.2*ones(1,3),'LineStyle','--','LineWidth',2.2,...
     'DisplayName','Ideal $\vert\Psi^+\rangle$');
 uistack(p_B_th_ideal,'bottom');
-
+text(3/4*pi,-0.75,'$\vert\Psi^+\rangle$','HorizontalAlignment','left',...
+    'FontSize',font_siz_lrg);
 
 % annotation
 % lgd=legend(p);
 ax=gca;
 box on;
-axis square;
-xlabel('Basis rotation $\theta$');
-ylabel('Spin correlation $\mathcal{B}$');
+% axis square;
+xlabel('Rotation angle $\theta(\tau)$');
+ylabel('Spin correlator $\mathcal{B}(\theta)$');
 
 xlim(lim_th);
 xticks(0:pi/4:pi);
@@ -168,16 +195,27 @@ ylim([-1,1]);
 % yticks(-1:0.5:1);
 
 set(gca,'FontSize',font_siz_reg);
+set(gca,'LineWidth',1.1);
 
 %%% inequality region
-p_bell_viol=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-    [B_max,B_max,ax.YLim(2),ax.YLim(2)],...
-    ptch_col*ones(1,3),'FaceAlpha',ptch_alp,...
+%%%% BOGO
+p_bogo=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    [B_bogo_max,B_bogo_max,ax.YLim(2),ax.YLim(2)],...
+    ptch_col_bogo,'FaceAlpha',ptch_alp,...
     'EdgeColor','none');
-belltext=text(0,B_max,sprintf('Bell\ncorrelation'),'FontSize',11,'VerticalAlignment','bottom');   % label
-uistack(p_bell_viol,'bottom');      % this should REALLY be bottom - to not cover any other graphics
+uistack(p_bogo,'bottom');      % this should REALLY be bottom - to not cover any other graphics
 set(gca,'Layer','Top');     % graphics axes should be always on top
+text(0,B_bogo_max,sprintf('Nonlocal\n(based on QM)'),'FontSize',font_siz_reg,'VerticalAlignment','bottom');
 
+%%%% QENT
+B_cent=0.5*(max(B_col)+min(B_col));   % centre value
+p_qent=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    B_cent*ones(1,4)+(0.5*B_qent_max_pkpk)*[-1,-1,+1,+1],...
+    ptch_col_qent,'FaceAlpha',ptch_alp,...
+    'EdgeColor','none');
+uistack(p_qent,'bottom');      % this should REALLY be bottom - to not cover any other graphics
+set(gca,'Layer','Top');     % graphics axes should be always on top
+text(0,B_cent+0.5*B_qent_max_pkpk,sprintf('Separable'),'FontSize',font_siz_reg,'VerticalAlignment','top');
 
 %%% misc
 h.Renderer='painters';
