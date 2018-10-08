@@ -1,4 +1,4 @@
-%% g2 analysed data from global rotation
+%% Collate postprocessed analysis results on diagonal correlators B(theta) = E(theta,theta)
 %
 % DKS
 % 2018-08-14
@@ -10,7 +10,7 @@ path_proc='C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\ex
 % vars to load
 vars2load={'par_T','g2mdl','g2','dk','idx_dk0',...
     'g2_sdev',...
-    'E_bootstrap_sdev',...
+    'E_bootstrap_sdev','n_frac_samp','n_subset',...     % bootstrap
     'g2anti_par','g2corr_par','E_par'};
 
 % parse directory
