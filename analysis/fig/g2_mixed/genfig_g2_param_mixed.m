@@ -1,4 +1,4 @@
-%% normalised g2 amplitude under unitary rotation (mixing spins)
+%% g2 parameters under unitary rotation (mixing spins)
 % DKS
 % 20181009
 
@@ -13,29 +13,51 @@ load(path_data);    % load into workspace
 %% collate data for vis
 tau=cat(1,S.par_T);     % rotation pulse duration
 
-%%% get g2 amplitudes
-% eval'd value at dk=0 
-%   - used in analysis
-%   g2_anti=cat(1,S.g2anti_par);
-%   g2_corr=cat(1,S.g2corr_par);
+%%% g2 PARAMS
+%   AMPLITUDE
+%   eval'd value at dk=0 ==> used in analysis
+%       g2_anti=cat(1,S.g2anti_par);
+%       g2_corr=cat(1,S.g2corr_par);
+%
+%   3D GAUSSIAN fit:
+%     y ~ 1 + amp*exp( - 0.5*(((x1 - mu1)/sig1)^2 + ((x2 - mu2)/sig2)^2 + ((x3 - mu3)/sig3)^2))
+%   CoefficientNames: ('amp','mu1','mu2','mu3','sig1','sig2','sig3')
+%
 
 n_dataset=numel(S);
 g2_amp_cell=cell(n_dataset,1);      % amplitude
 g2_se_cell=cell(n_dataset,1);       % stderr of amp
+g2_fit_param_cell=cell(n_dataset,1);     % fit params
 for ii=1:n_dataset
     tn_par=numel(S(ii).par_T);
     g2_amp_cell{ii}=NaN(tn_par,3);
     g2_se_cell{ii}=NaN(tn_par,3);
+    g2_fit_param_cell{ii}=cell(tn_par,3);
     tidx0=S(ii).idx_dk0;
     for jj=1:tn_par
         % get amp/SE from different S-S corr types
         g2_amp_cell{ii}(jj,:)=cellfun(@(x) x(tidx0,tidx0,tidx0),S(ii).g2{jj});
         g2_se_cell{ii}(jj,:)=cellfun(@(x) x(tidx0,tidx0,tidx0),S(ii).g2_sdev{jj});
+        
+        % get model params (param-"vectors" from corr-type idxd by cell)
+        g2_fit_param_cell{ii}(jj,:)=cellfun(@(f) f.Coefficients.Estimate',S(ii).g2mdl{jj},'UniformOutput',false);
     end
 end
 % form into array
 g2_amp=cat(1,g2_amp_cell{:});       
 g2_se=cat(1,g2_se_cell{:});       
+
+g2_fit_param=cell(1,3);     % a little more tedious for model params
+temp_g2_fit_param=cell(n_dataset,3);     
+for ii=1:n_dataset
+    for jj=1:3
+        temp_g2_fit_param{ii,jj}=cat(1,g2_fit_param_cell{ii}{:,jj});
+    end
+end
+for ii=1:3
+    g2_fit_param{ii}=cat(1,temp_g2_fit_param{:,ii});
+end
+
 
 %% evaluate normalised g2
 g2_amp_tot=0.5*(sum(g2_amp,2)+g2_amp(:,3));
