@@ -67,18 +67,10 @@ hfig=figure('Name','g2_vs_theta',...
 hold on;
 pleg=NaN(1,3);      % data for legend
 for ii=1:3
-    % TODO: reusable wrapper for ploterr with all the default settings i
-    % use
-    
-    tp=ploterr(1e6*tau,g2_amp(:,ii),[],g2_se(:,ii),'o','hhxy',0);
-    
-    set(tp(1),'Marker',mark_ss{ii},'MarkerSize',mark_siz,...
-        'Color',c0(ii,:),'LineWidth',line_wid,...
-        'MarkerFaceColor',clight(ii,:),...
-        'DisplayName',str_ss{ii});
+    tp=myploterr(1e6*tau,g2_amp(:,ii),[],g2_se(:,ii),mark_ss{ii},c0(ii,:));
+    set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,'DisplayName',str_ss{ii});
     pleg(ii)=tp(1);     % line data to show in legend
-    set(tp(2),'Color',c0(ii,:),'LineWidth',line_wid,...
-        'DisplayName','');
+    set(tp(2),'LineWidth',line_wid,'DisplayName','');
 end
 ax=gca;
 lgd=legend(pleg);
@@ -97,18 +89,10 @@ hfig=figure('Name','G_vs_theta',...
 hold on;
 pleg=NaN(1,3);      % data for legend
 for ii=1:3
-    % TODO: reusable wrapper for ploterr with all the default settings i
-    % use
-    
-    tp=ploterr(1e6*tau,g2_amp_norm(:,ii),[],g2_se_norm(:,ii),'o','hhxy',0);
-    
-    set(tp(1),'Marker',mark_ss{ii},'MarkerSize',mark_siz,...
-        'Color',c0(ii,:),'LineWidth',line_wid,...
-        'MarkerFaceColor',clight(ii,:),...
-        'DisplayName',str_ss{ii});
+    tp=myploterr(1e6*tau,g2_amp_norm(:,ii),[],g2_se_norm(:,ii),mark_ss{ii},c0(ii,:));
+    set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,'DisplayName',str_ss{ii});
     pleg(ii)=tp(1);     % line data to show in legend
-    set(tp(2),'Color',c0(ii,:),'LineWidth',line_wid,...
-        'DisplayName','');
+    set(tp(2),'LineWidth',line_wid,'DisplayName','');
 end
 
 % fitted line
