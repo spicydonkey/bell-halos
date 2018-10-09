@@ -57,6 +57,7 @@ end
 for ii=1:3
     g2_fit_param{ii}=cat(1,temp_g2_fit_param{:,ii});
 end
+sig_bb=cellfun(@(p) abs(p(:,5:7)),g2_fit_param,'UniformOutput',false);	% fitted g2BB sigma
 
 
 %% evaluate normalised g2
@@ -73,6 +74,20 @@ for ii=1:3
     polyfit_gnorm{ii}=polyfit(tau,g2_amp_norm(:,ii),6);
     gnorm_sm_fit(ii,:)=polyval(polyfit_gnorm{ii},tau_sm_fit);
 end
+
+
+%% evaluate correlation volume
+% TODO:
+%   need to check fits
+
+% mean BB corr length
+sig_bb_mean=cellfun(@(s) geomean(s,2),sig_bb,'UniformOutput',false);
+sig_bb_mean=cat(2,sig_bb_mean{:});
+
+% approx BB corr volume
+beta_mode=(2*pi)^(3/2);     % geo-factor by Gauss approx of BEC
+V_bb=beta_mode*sig_bb_mean.^3;
+
 
 %% vis
 % grahics configs
