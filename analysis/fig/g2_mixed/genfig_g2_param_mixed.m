@@ -65,14 +65,30 @@ g2_amp_tot=0.5*(sum(g2_amp,2)+g2_amp(:,3));
 g2_amp_norm=g2_amp./g2_amp_tot;
 g2_se_norm=g2_se./g2_amp_tot;       % scale err
 
-% smoothed fit to data
-polyfit_gnorm=cell(1,3);
+
+%%% fit
 ninterp=1e4;
-tau_sm_fit=linspace(min(tau),max(tau),ninterp);
-gnorm_sm_fit=NaN(3,ninterp);
+tau_fit=linspace(min(tau),max(tau),ninterp);
+
+% % polynomial fit
+% polyfit_gnorm=cell(1,3);
+% gnorm_fit_poly=NaN(3,ninterp);
+% for ii=1:3
+%     polyfit_gnorm{ii}=polyfit(tau,g2_amp_norm(:,ii),6);
+%     gnorm_fit_poly(ii,:)=polyval(polyfit_gnorm{ii},tau_fit);
+% end
+
+% damped sine fit
+modelfun='y~c+a*exp(-x1/xc)*sin(2*pi*0.1*x1+phi)';
+modelcoef={'a','c','phi','xc'};
+par0={[0.5 0.5 -pi/2 20], [0.5 0.5 -pi/2 20], [0.5 0.5 pi/2 20]};
+fo = statset('TolFun',10^-10,'TolX',10^-10,'MaxIter',10^6,'UseParallel',0);
+
+sinefit_gnorm=cell(1,3);
+gnorm_fit_sine=NaN(3,ninterp);
 for ii=1:3
-    polyfit_gnorm{ii}=polyfit(tau,g2_amp_norm(:,ii),6);
-    gnorm_sm_fit(ii,:)=polyval(polyfit_gnorm{ii},tau_sm_fit);
+    sinefit_gnorm{ii}=fitnlm(1e6*tau,g2_amp_norm(:,ii),modelfun,par0{ii},'CoefficientNames',modelcoef,'Options',fo);
+    gnorm_fit_sine(ii,:)=feval(sinefit_gnorm{ii},1e6*tau_fit);
 end
 
 
@@ -132,12 +148,22 @@ for ii=1:3
     set(tp(2),'LineWidth',line_wid,'DisplayName','');
 end
 
-% fitted line
-p_gnorm_sm=NaN(1,3);
+%%% fitted line
+%%% poly-fit: WARNING: simple to implement but often displays misleading
+%%% features!
+% p_gnorm_poly=NaN(1,3);
+% for ii=1:3
+%     p_gnorm_poly(ii)=plot(1e6*tau_fit,gnorm_fit_poly(ii,:),'LineWidth',2.2,'Color',0.5*(c0(ii,:)+clight(ii,:)));
+%     uistack(p_gnorm_poly(ii),'bottom');
+% end
+
+% damped sine fit: closer to underlying physics
+p_gnorm_sine=NaN(1,3);
 for ii=1:3
-    p_gnorm_sm(ii)=plot(1e6*tau_sm_fit,gnorm_sm_fit(ii,:),'LineWidth',2.2,'Color',0.5*(c0(ii,:)+clight(ii,:)));
-    uistack(p_gnorm_sm(ii),'bottom');
+    p_gnorm_sine(ii)=plot(1e6*tau_fit,gnorm_fit_sine(ii,:),'LineWidth',2.2,'Color',0.5*(c0(ii,:)+clight(ii,:)));
+    uistack(p_gnorm_sine(ii),'bottom');
 end
+
 
 % annotation
 ax=gca;
