@@ -53,7 +53,7 @@ end
 mark_ss={'o','s','^','d'};
 mark_siz=8;
 line_wid=2;
-str_ss={'$1$','$0$','$-1$','loss'};
+str_ss={'$m_J=1$','$m_J=0$','$m_J=-1$','loss'};
 
 hfig=figure('Units', 'normalized', 'Position', [0.2,0.2,0.3,0.3]);
 hfig.Renderer='painters';
@@ -75,7 +75,7 @@ axis tight;
 lgd=legend(pleg);
 lgd.FontSize=11;
 lgd.Location='East';
-lgd.Title.String='$m_J$';
+% lgd.Title.String='$m_J$';
 box on;
 xlabel('Pulse duration $\tau$ [$\mu$s]');
 ylabel('Atom counts');
