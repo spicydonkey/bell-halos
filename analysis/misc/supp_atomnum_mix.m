@@ -81,3 +81,19 @@ xlabel('Pulse duration $\tau$ [$\mu$s]');
 ylabel('Atom counts');
 ax.FontSize=11;
 ax.LineWidth=1.2;
+
+%% Misc number loss analysis
+N0=Navg(:,2);
+
+hfig=figure('Units', 'normalized', 'Position', [0.2,0.2,0.3,0.3]); 
+hfig.Renderer='painters';
+
+plot(1e6*par_T,Nloss./(N0+Nloss),'ko-','LineWidth',1.2);
+
+axis tight;
+ylim([-1,1]);
+ax=gca;
+ax.FontSize=11;
+ylabel('$N_{\textrm{loss}}/(N_{0}+N_{\textrm{loss}})$');
+xlabel('Pulse duration $\tau$ [$\mu$s]');
+grid on;
