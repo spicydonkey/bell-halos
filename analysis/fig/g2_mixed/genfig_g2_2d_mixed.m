@@ -4,7 +4,7 @@
 
 % config
 path_dir='C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot\bell_signal';
-data_fname='bell_20181008_bs_fix.mat';
+data_fname='bell_20181009_bs_fix.mat';
 path_data=fullfile(path_dir,data_fname);
 
 % load data
@@ -15,10 +15,14 @@ cmap='viridis';
 
 
 %% g2 plotting
+n_param_data=sum(cellfun(@(x) numel(x),{S.par_T}));
+hfig=cell(n_param_data,1);
+counter=0;
 for ii=1:numel(S)
     tS=S(ii);
     tn_config=numel(S(ii).par_T);
     for jj=1:tn_config
+        counter=counter+1;
         %% g2 2D profile
         tdk=unique(tS.dk{1}{1});    % dk grid (symmetric) in each dim
         
@@ -29,8 +33,8 @@ for ii=1:numel(S)
         tg2_max=max(cellfun(@(x) max(max(x(:,:,I0))),tg2));
         tclims=[0,tg2_max];
         
-        hfig=figure('Units', 'normalized', 'Position', [0.2,0.2,0.45,0.26]);
-        hfig.Renderer='painters';
+        hfig{counter}=figure('Units', 'normalized', 'Position', [0.2,0.2,0.45,0.26]);
+        hfig{counter}.Renderer='painters';
         
         bgAxes=axes('Position',[0,0,1,1],'XColor','none','YColor','none',...
             'XLim',[0,1],'YLim',[0,1]);     % bg axes
@@ -43,7 +47,7 @@ for ii=1:numel(S)
         
         %%% labels
         % param
-        str_param=sprintf('%s%0.3g','$\tau=$',1e6*tS.par_T(jj));
+        str_param=sprintf('%s%0.3g %s','$\tau=$',1e6*tS.par_T(jj),'$\mu$s');
         text(0.015,y(1)+0.5*h,str_param,'FontSize',18,'Rotation',90,...
             'HorizontalAlignment','center','VerticalAlignment','middle',...
             'FontWeight','bold');
@@ -97,6 +101,19 @@ for ii=1:numel(S)
         ax=gca;
         ax.Visible='off';
         cbar=colorbar('Position',[0.89,y(1),0.02,h],'FontSize',14);
+    end
+end
 
+%% save data
+if false        % must be called manually
+    %% Manually run this section
+    path_save_dir='C:\Users\HE BEC\Dropbox\PhD\thesis\projects\bell_epr_steering\figS\g2_2d_mix';
+    
+    for ii=1:n_param_data
+        fname=sprintf('fig_%d_%s',ii,getdatetimestr);
+        fpath=fullfile(path_save_dir,fname);
+        
+%         saveas(hfig{ii},fpath,'fig');     % HUGE!
+        print(hfig{ii},fpath,'-dsvg');
     end
 end
