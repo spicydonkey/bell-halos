@@ -17,7 +17,7 @@ dk_bb=0.04;     % back-to-back pair correlation length (rms width) [norm unit]
 dk0={dk_bb*[-1,1],dk_bb*[-1,1],dk_bb*[-1,1]};   % define BB pair single-pixel
 
 lim_Dk=[-dk_bb,dk_bb];          % limits for shift [normed]
-n_Dk=1;                        % n-points to scan (MUST BE ODD!)
+n_Dk=15;                        % n-points to scan (MUST BE ODD!)
 
 Dk_0=linspace(lim_Dk(1),lim_Dk(2),n_Dk);     % shift in halo center in each dim (symm)
 idx_0=find(Dk_0==0);        % index to Dk=0
@@ -37,7 +37,10 @@ for ii=1:nparam
             % evaluate g2 at near BB
             tg2_11=g2_bb(boost_zxy(tk(:,1),tDk),dk0);       % (up,up)
             tg2_00=g2_bb(boost_zxy(tk(:,2),tDk),dk0);       % (down,down)
-            tg2_01=g2x_bb(boost_zxy(tk,tDk),dk0);           % (up,down)
+            
+            ttk=tk;
+            ttk(:,1)=boost_zxy(tk(:,1),tDk);
+            tg2_01=g2x_bb(ttk,dk0);           % (up,down): shift only UP
             
             % store
             g2_shift{ii}{1}(kk,jj)=tg2_11;
@@ -100,8 +103,8 @@ if exist('flag_save_data','var')   % otherwise must be called manually
             fname=sprintf('fig_%0.2g_%s',tT,getdatetimestr);
             fpath=fullfile(path_save_dir,fname);
             
-            saveas(hfig{ii},fpath,'fig');
-            print(hfig{ii},fpath,'-dsvg');
+            saveas(hfig{ii},strcat(fpath,'.fig'),'fig');
+            print(hfig{ii},strcat(fpath,'.svg'),'-dsvg');
         end
     end
 end
