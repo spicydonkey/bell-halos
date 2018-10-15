@@ -70,7 +70,7 @@ g2_se_norm=g2_se./g2_amp_tot;       % scale err
 ninterp=1e4;
 tau_fit=linspace(min(tau),max(tau),ninterp);
 
-% % polynomial fit
+% %%% polynomial fit
 % polyfit_gnorm=cell(1,3);
 % gnorm_fit_poly=NaN(3,ninterp);
 % for ii=1:3
@@ -78,19 +78,34 @@ tau_fit=linspace(min(tau),max(tau),ninterp);
 %     gnorm_fit_poly(ii,:)=polyval(polyfit_gnorm{ii},tau_fit);
 % end
 
-% damped sine fit
-modelfun='y~c+a*exp(-x1/xc)*sin(2*pi*0.1*x1+phi)';
-modelcoef={'a','c','phi','xc'};
-par0={[0.5 0.5 -pi/2 20], [0.5 0.5 -pi/2 20], [0.5 0.5 pi/2 20]};
+%%% damped sine fit
 fo = statset('TolFun',10^-10,'TolX',10^-10,'MaxIter',10^6,'UseParallel',0);
+% % Model 1: amp,offset,phase,decayrate
+% modelfun='y~c+a*exp(-x1/xc)*sin(2*pi*0.1*x1+phi)';
+% modelcoef={'a','c','phi','xc'};
+% par0={[0.5 0.5 -pi/2 20], [0.5 0.5 -pi/2 20], [0.5 0.5 pi/2 20]};
+% 
+% sinefit_gnorm=cell(1,3);
+% gnorm_fit_sine=NaN(3,ninterp);
+% for ii=1:3
+%     sinefit_gnorm{ii}=fitnlm(1e6*tau,g2_amp_norm(:,ii),modelfun,par0{ii},'CoefficientNames',modelcoef,'Options',fo);
+%     gnorm_fit_sine(ii,:)=feval(sinefit_gnorm{ii},1e6*tau_fit);
+% end
+
+% Model 2: amp,offset,decayrate (i.e. freq, phase are fixed for simplicity)
+modelfun=cell(1,3);
+modelfun{1}='y~c+a*exp(-x1/xc)*sin(2*pi*0.1*x1-pi/2)';
+modelfun{2}=modelfun{1};
+modelfun{3}='y~c+a*exp(-x1/xc)*sin(2*pi*0.1*x1+pi/2)';
+modelcoef={'a','c','xc'};
+par0={[0.5 0.5 20], [0.5 0.5 20], [0.5 0.5 20]};
 
 sinefit_gnorm=cell(1,3);
 gnorm_fit_sine=NaN(3,ninterp);
 for ii=1:3
-    sinefit_gnorm{ii}=fitnlm(1e6*tau,g2_amp_norm(:,ii),modelfun,par0{ii},'CoefficientNames',modelcoef,'Options',fo);
+    sinefit_gnorm{ii}=fitnlm(1e6*tau,g2_amp_norm(:,ii),modelfun{ii},par0{ii},'CoefficientNames',modelcoef,'Options',fo);
     gnorm_fit_sine(ii,:)=feval(sinefit_gnorm{ii},1e6*tau_fit);
 end
-
 
 %% evaluate correlation volume
 % TODO:
