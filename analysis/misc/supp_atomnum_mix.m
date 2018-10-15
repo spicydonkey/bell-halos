@@ -38,14 +38,33 @@ Nse(:,4)=NaN(size(Nse,1),1);
 
 
 %%% smooth fit to data
-polyfit_N=cell(3,1);
 ninterp=1e4;
-tau_sm_fit=linspace(min(par_T),max(par_T),ninterp);
+tau_fit=linspace(min(par_T),max(par_T),ninterp);
 Nfit=NaN(3,ninterp);
+
+% % Model: polynomial
+% polyfit_N=cell(3,1);
+% for ii=1:4
+%     polyfit_N{ii}=polyfit(par_T,Navg(:,ii),6);
+%     Nfit(ii,:)=polyval(polyfit_N{ii},tau_fit);
+% end
+
+% Model 2: amp,offset,decayrate (i.e. freq, phase are fixed for simplicity)
+modelfun=cell(1,4);
+modelfun{1}='y~c+a*exp(-x1/xc)*sin(2*pi*0.05*x1+pi/2)';
+modelfun{2}='y~c+a*exp(-x1/xc)*sin(2*pi*0.05*x1-pi/2)';
+modelfun{3}=modelfun{2};
+modelfun{4}=modelfun{2};
+modelcoef={'a','c','xc'};
+par0={[120 130 50], [120 130 50], [1 1 50], [25 25 -40]};
+fo = statset('TolFun',10^-10,'TolX',10^-10,'MaxIter',10^6,'UseParallel',0);
+
+sinefit_N=cell(1,3);
 for ii=1:4
-    polyfit_N{ii}=polyfit(par_T,Navg(:,ii),6);
-    Nfit(ii,:)=polyval(polyfit_N{ii},tau_sm_fit);
+    sinefit_N{ii}=fitnlm(1e6*par_T,Navg(:,ii),modelfun{ii},par0{ii},'CoefficientNames',modelcoef,'Options',fo);
+    Nfit(ii,:)=feval(sinefit_N{ii},1e6*tau_fit);
 end
+
 
 %% vis
 % grahics configs
@@ -66,7 +85,7 @@ for ii=1:4
     set(tp(2),'LineWidth',line_wid,'DisplayName','');
     
     % fit
-    tpfit=plot(1e6*tau_sm_fit,Nfit(ii,:),'LineWidth',2.2,'Color',0.5*(c0(ii,:)+clight(ii,:)));
+    tpfit=plot(1e6*tau_fit,Nfit(ii,:),'LineWidth',2.2,'Color',0.5*(c0(ii,:)+clight(ii,:)));
     uistack(tpfit,'bottom');
 end
 
