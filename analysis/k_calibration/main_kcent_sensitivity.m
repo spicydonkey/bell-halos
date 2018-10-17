@@ -9,6 +9,10 @@
 flag_analysis_3d=true;       % true for 3D; false for 1-bin g2
 flag_g2_fastrun=false;      % fast-run gives noisy g2 so fit doesn't work
 
+% some constants
+dk_bb=0.04;     % back-to-back pair correlation length (rms width) [norm unit]
+
+
 %% load data
 if ~exist('flag_load_override','var') || ~flag_load_override
     path_dir='C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot';
@@ -19,10 +23,8 @@ if ~exist('flag_load_override','var') || ~flag_load_override
 end
 
 %% define g2 analysis
-dk_bb=0.04;     % back-to-back pair correlation length (rms width) [norm unit]
-
-lim_Dk=[-dk_bb,dk_bb];          % limits for shift [normed]
-n_Dk=25;                        % n-points to scan (MUST BE ODD!)
+lim_Dk=1*dk_bb*[-1,1];          % limits for shift [normed]
+n_Dk=5;                        % n-points to scan (MUST BE ODD!)
 Dk_0=linspace(lim_Dk(1),lim_Dk(2),n_Dk);     % shift in halo center in each dim (symm)
 idx_0=find(Dk_0==0);        % index to Dk=0
 
@@ -54,8 +56,11 @@ for ii=1:nparam
     g2mdl{ii}=cell(1,3);
     for tt=1:3
         g2_shift{ii}{tt}=NaN(n_Dk,3);
-        g2_3d{ii}{tt}=cell(n_Dk,3);
-        g2mdl{ii}{tt}=cell(n_Dk,3);
+%         g2_3d{ii}{tt}=cell(n_Dk,3);
+%         g2mdl{ii}{tt}=cell(n_Dk,3);
+        % allocate temporary vars for storage
+        tg2_3d=cell(n_Dk,3);
+        tg2mdl=cell(n_Dk,3);
     end
     for jj=1:3
         for kk=1:n_Dk
@@ -64,38 +69,67 @@ for ii=1:nparam
             % evaluate g2 at near BB
             if ~flag_analysis_3d
                 %%% 1D g2 at BB (single-bin)
-                tg2_11=g2_bb(boost_zxy(tk(:,1),tDk),dk_ed);       % (up,up)
-                tg2_00=g2_bb(boost_zxy(tk(:,2),tDk),dk_ed);       % (down,down)
+                tg2_shift(1)=g2_bb(boost_zxy(tk(:,1),tDk),dk_ed);       % (up,up)
+                tg2_shift(2)=g2_bb(boost_zxy(tk(:,2),tDk),dk_ed);       % (down,down)
                 
                 ttk=tk;
                 ttk(:,1)=boost_zxy(tk(:,1),tDk);
-                tg2_01=g2x_bb(ttk,dk_ed);           % (up,down): shift only UP
+                tg2_shift(3)=g2x_bb(ttk,dk_ed);           % (up,down): shift only UP
             else
                 %%% g2 in 3D. get fitted amplitude
                 tk_shift=tk;
                 tk_shift(:,1)=boost_zxy(tk(:,1),tDk);       % shift mJ=1
                 % upup and updown
-                [tg2,~,tg2mdl]=summary_disthalo_g2(tk_shift,dk_ed,flag_g2_fastrun,0,1,0);
-                tg2_11=tg2mdl{1}.Coefficients.Estimate(1);       % UP-UP
-                tg2_01=tg2mdl{3}.Coefficients.Estimate(1);       % UP-DOWN
-                g2_3d{ii}{jj}{kk,1}=tg2{1};
-                g2_3d{ii}{jj}{kk,3}=tg2{3};
-                g2mdl{ii}{jj}{kk,1}=tg2mdl{1};
-                g2mdl{ii}{jj}{kk,3}=tg2mdl{3};
+                [tg2,~,ttg2mdl]=summary_disthalo_g2(tk_shift,dk_ed,flag_g2_fastrun,0,1,0);
+                tg2_shift(1)=ttg2mdl{1}.Coefficients.Estimate(1);       % UP-UP
+                tg2_shift(3)=ttg2mdl{3}.Coefficients.Estimate(1);       % UP-DOWN
+%                 g2_3d{ii}{jj}{kk,1}=tg2{1};
+%                 g2_3d{ii}{jj}{kk,3}=tg2{3};
+%                 g2mdl{ii}{jj}{kk,1}=ttg2mdl{1};
+%                 g2mdl{ii}{jj}{kk,3}=ttg2mdl{3};
+                tg2_3d{kk,1}=tg2{1};
+                tg2_3d{kk,3}=tg2{3};
+                tg2mdl{kk,1}=ttg2mdl{1};
+                tg2mdl{kk,3}=ttg2mdl{3};
                 
+                % downdown
                 tk_shift=tk;
                 tk_shift(:,2)=boost_zxy(tk(:,2),tDk);       % shift mJ=0
-                % downdown
-                [tg2,~,tg2mdl]=summary_disthalo_g2(tk_shift,dk_ed,flag_g2_fastrun,0,1,0);     
-                tg2_00=tg2mdl{2}.Coefficients.Estimate(1);       % DOWN-DOWN
-                g2_3d{ii}{jj}{kk,2}=tg2{2};
-                g2mdl{ii}{jj}{kk,2}=tg2mdl{2};
+                [tg2,~,ttg2mdl]=summary_disthalo_g2(tk_shift,dk_ed,flag_g2_fastrun,0,1,0);     
+                tg2_shift(2)=ttg2mdl{2}.Coefficients.Estimate(1);       % DOWN-DOWN
+%                 g2_3d{ii}{jj}{kk,2}=tg2{2};
+%                 g2mdl{ii}{jj}{kk,2}=ttg2mdl{2};
+                tg2_3d{kk,2}=tg2{2};                
+                tg2mdl{kk,2}=ttg2mdl{2};
+                
+                %%% check acceptibility of fit
+                %   peak location (mu) from 0 <~ corr length
+                %   spread should not be >> than orig corr length
+                for ll=1:3
+                    % get fitted params
+                    tparam=tg2mdl{kk,ll}.Coefficients.Estimate;
+                    tmu=tparam(2:4);
+                    tsig=tparam(2:4);
+                    % check if ok
+                    if vnorm(tmu')>dk_bb || geomean(abs(tsig))>2*dk_bb
+                        % NOT OK
+                        tg2_shift(ll)=NaN;
+                    end
+                end
             end
             
             % store
-            g2_shift{ii}{1}(kk,jj)=tg2_11;
-            g2_shift{ii}{2}(kk,jj)=tg2_00;
-            g2_shift{ii}{3}(kk,jj)=tg2_01;
+%             g2_shift{ii}{1}(kk,jj)=tg2_11;
+%             g2_shift{ii}{2}(kk,jj)=tg2_00;
+%             g2_shift{ii}{3}(kk,jj)=tg2_01;
+            for ll=1:3
+                g2_shift{ii}{ll}(kk,jj)=tg2_shift(ll);
+            end
+        end
+        if flag_analysis_3d
+            % store g2 and fitted model
+            g2_3d{ii}{jj}=tg2_3d;
+            g2mdl{ii}{jj}=tg2mdl;
         end
     end
 end
@@ -107,8 +141,10 @@ for ii=1:nparam
 end
 
 %% data vis
+% configs
 [c,cl,cd]=palette(3);
 line_sty={'-','--',':'};
+mark_typ={'o','s','^'};
 % str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
 % str_dim={'$z$','$x$','$y$'};
 
@@ -131,6 +167,7 @@ for ii=1:nparam
             % normalised to Dk=0
             plot(Dk_0,g2_shift_norm{ii}{jj}(:,kk),...
                 'Color',c(kk,:),'LineStyle',line_sty{jj},...
+                'Marker',mark_typ{jj},...
                 'LineWidth',1.5);
         end
     end
@@ -146,8 +183,10 @@ for ii=1:nparam
     ax.LineWidth=1.2;
     
     str_tau=sprintf('%s%0.3g %s','$\tau=$',tT,'$\mu$s');
-    text('Units','normalized','Position',[0.95 0.9],'String',str_tau,...
-        'FontSize',14,'VerticalAlignment','middle','HorizontalAlignment','right'); 
+%     text('Units','normalized','Position',[0.95 0.9],'String',str_tau,...
+%         'FontSize',14,'VerticalAlignment','middle','HorizontalAlignment','right');
+    text('Units','normalized','Position',[0.5 1.03],'String',str_tau,...
+        'FontSize',14,'VerticalAlignment','baseline','HorizontalAlignment','center');
 end
 
 %% save data
@@ -156,6 +195,11 @@ if exist('flag_save_data','var')   % otherwise must be called manually
         %% Manually run this section
         path_save_dir='C:\Users\HE BEC\Dropbox\PhD\thesis\projects\bell_epr_steering\figS\k_calibration';
         
+%         % workspace
+%         fname=sprintf('data_%d_%s',II,getdatetimestr);
+%         save(fullfile(path_save_dir,fname));
+        
+        % figs
         for ii=1:nparam
             tT=1e6*par_T(ii);
             fname=sprintf('fig_%0.2g_%s',tT,getdatetimestr);
