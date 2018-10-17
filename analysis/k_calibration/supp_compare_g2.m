@@ -94,16 +94,21 @@ g2_amp=g2_amp(Isort,:);
 g2_param=g2_param(Isort,:);
 g_ratio=g_ratio(Isort,:);
 
+%%% processed - correlator
+% sum correlations
+G_BB=sum(g2_BB_0,2)+g2_BB_0(:,3);       % anti-corr twice!
+G_amp=sum(g2_amp,2)+g2_amp(:,3);
 
 %% vis
 %%% configs
 [c,cl,cd]=palette(3);
+c_gray=0.6*ones(1,3);
 % line_sty={'-','--',':'};
 line_sty={'-','-','-'};
 mark_typ={'o','s','^'};
 str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
 
-%%% draw fig
+%%% g2 ratio
 figname='g2_ratio';
 
 h=figure('Name',figname,'Units','normalized',...
@@ -123,3 +128,30 @@ ylabel('Ratio of $g^{(2)}$ correlation');
 ax.FontSize=12;
 ax.LineWidth=1.2;
 legend(p,'Location','southeast');
+
+%% sum g2
+figname='g2_sum';
+h=figure('Name',figname,'Units','normalized',...
+    'Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
+hold on;
+p=[];
+
+% BB
+p(1)=plot(1e6*tau,G_BB,...
+    'Color','k','LineStyle','-','LineWidth',1.5,...
+    'Marker','o','MarkerFaceColor',c_gray,'MarkerSize',7,...
+    'DisplayName','BB');
+
+% fitted amplitude
+p(2)=plot(1e6*tau,G_amp,...
+    'Color','k','LineStyle','--','LineWidth',1.5,...
+    'Marker','d','MarkerFaceColor',c_gray,'MarkerSize',7,...
+    'DisplayName','fit amp');
+
+ax=gca;
+box on;
+xlabel('$\tau$ [$\mu$s]');
+ylabel('$\sum g^{(2)}_{S^{A}S^{B}}$');
+ax.FontSize=12;
+ax.LineWidth=1.2;
+legend(p,'Location','northeast');
