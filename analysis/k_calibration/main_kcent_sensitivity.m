@@ -3,7 +3,7 @@
 % DKS
 % 20181015
 
-nparam=1;     % DEBUGGING
+% nparam=1;     % DEBUGGING
 
 %% CONFIG
 flag_analysis_3d=true;       % true for 3D; false for 1-bin g2
@@ -24,7 +24,7 @@ end
 
 %% define g2 analysis
 lim_Dk=1*dk_bb*[-1,1];          % limits for shift [normed]
-n_Dk=5;                        % n-points to scan (MUST BE ODD!)
+n_Dk=19;                        % n-points to scan (MUST BE ODD!)
 Dk_0=linspace(lim_Dk(1),lim_Dk(2),n_Dk);     % shift in halo center in each dim (symm)
 idx_0=find(Dk_0==0);        % index to Dk=0
 
@@ -100,9 +100,9 @@ for ii=1:nparam
                     % get fitted params
                     tparam=tg2mdl{jj,kk,ll}.Coefficients.Estimate;
                     tmu=tparam(2:4);
-                    tsig=tparam(2:4);
+                    tsig=tparam(5:7);
                     % check if ok
-                    if vnorm(tmu')>dk_bb || geomean(abs(tsig))>2*dk_bb
+                    if vnorm(tmu')>2*dk_bb || geomean(abs(tsig))>2*dk_bb
                         % NOT OK
                         tg2_shift(jj,kk,ll)=NaN;
                     end
