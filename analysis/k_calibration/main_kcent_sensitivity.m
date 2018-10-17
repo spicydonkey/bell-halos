@@ -3,7 +3,7 @@
 % DKS
 % 20181015
 
-% nparam=1;     % DEBUGGING
+nparam=1;     % DEBUGGING
 
 %% CONFIG
 flag_analysis_3d=true;       % true for 3D; false for 1-bin g2
@@ -37,31 +37,28 @@ else
     n_bins=29;      % original: 29
     dk_ed_vec=linspace(-lim_dk,lim_dk,n_bins+1);
     dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
-    [~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
+    [~,idx_dk0]=min(abs(dk_cent_vec));    % g2 bin-idx nearest 0
     dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
     dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
 end
 
 %% evaluate g2 while shifting center
-g2_shift=cell(nparam,1);        % scalar "amplitude" of g2
-g2_3d=cell(nparam,1);       % full analysis results
-g2mdl=cell(nparam,1);
+g2_shift=cell(nparam,1);        % scalar "amplitude" of g2 (3D-->fitted; 1-bin-->BB value)
+g2_3d=cell(nparam,1);           % g2 function for all params
+g2mdl=cell(nparam,1);           % fitted g2 model
 % NOTE: Cell structure indexing:
 %   {TAU} {ZXY} {DK, SPINSPIN}
-%     TODO  --> {TAU} {ZXY, DK, SPINSPIN}
+%   TODO
+%       [ ] {TAU} {ZXY, DK, SPINSPIN}
 
 for ii=1:nparam
     tk=k_par{ii};
-%     g2_shift{ii}=cell(1,3);
-    g2_3d{ii}=cell(1,3);
-    g2mdl{ii}=cell(1,3);
-    for tt=1:3
-%         g2_shift{ii}{tt}=NaN(n_Dk,3);
-        % allocate temporary vars for storage
-        tg2_3d=cell(n_Dk,3);
-        tg2mdl=cell(n_Dk,3);
-    end
-    tg2_shift=NaN(3,n_Dk,3);    % DIMS: ZXY, DK, SPINSPIN
+    
+    % allocate temporary vars for storage
+    tg2_3d=cell(3,n_Dk,3);          % DIMS: ZXY, DK, SPINSPIN
+    tg2mdl=cell(3,n_Dk,3);
+    tg2_shift=NaN(3,n_Dk,3);
+    
     for jj=1:3          % ZXY dim
         for kk=1:n_Dk   % DK center shift
             tDk=circshift([Dk_0(kk),0,0],jj-1);     % get new origin shift
@@ -69,14 +66,11 @@ for ii=1:nparam
             % evaluate g2 at near BB
             if ~flag_analysis_3d
                 %%% 1D g2 at BB (single-bin)
-%                 tg2_shift(1)=g2_bb(boost_zxy(tk(:,1),tDk),dk_ed);       % (up,up)
-%                 tg2_shift(2)=g2_bb(boost_zxy(tk(:,2),tDk),dk_ed);       % (down,down)
                 tg2_shift(jj,kk,1)=g2_bb(boost_zxy(tk(:,1),tDk),dk_ed);       % (up,up)
                 tg2_shift(jj,kk,2)=g2_bb(boost_zxy(tk(:,2),tDk),dk_ed);       % (down,down)
                 
                 ttk=tk;
                 ttk(:,1)=boost_zxy(tk(:,1),tDk);
-%                 tg2_shift(3)=g2x_bb(ttk,dk_ed);           % (up,down): shift only UP
                 tg2_shift(jj,kk,3)=g2x_bb(ttk,dk_ed);           % (up,down): shift only UP
             else
                 %%% g2 in 3D. get fitted amplitude
@@ -84,30 +78,27 @@ for ii=1:nparam
                 tk_shift(:,1)=boost_zxy(tk(:,1),tDk);       % shift mJ=1
                 % upup and updown
                 [tg2,~,ttg2mdl]=summary_disthalo_g2(tk_shift,dk_ed,flag_g2_fastrun,0,1,0);
-%                 tg2_shift(1)=ttg2mdl{1}.Coefficients.Estimate(1);       % UP-UP
-%                 tg2_shift(3)=ttg2mdl{3}.Coefficients.Estimate(1);       % UP-DOWN
                 tg2_shift(jj,kk,1)=ttg2mdl{1}.Coefficients.Estimate(1);       % UP-UP
                 tg2_shift(jj,kk,3)=ttg2mdl{3}.Coefficients.Estimate(1);       % UP-DOWN
-                tg2_3d{kk,1}=tg2{1};
-                tg2_3d{kk,3}=tg2{3};
-                tg2mdl{kk,1}=ttg2mdl{1};
-                tg2mdl{kk,3}=ttg2mdl{3};
+                tg2_3d{jj,kk,1}=tg2{1};
+                tg2_3d{jj,kk,3}=tg2{3};
+                tg2mdl{jj,kk,1}=ttg2mdl{1};
+                tg2mdl{jj,kk,3}=ttg2mdl{3};
                 
                 % downdown
                 tk_shift=tk;
                 tk_shift(:,2)=boost_zxy(tk(:,2),tDk);       % shift mJ=0
                 [tg2,~,ttg2mdl]=summary_disthalo_g2(tk_shift,dk_ed,flag_g2_fastrun,0,1,0);     
-%                 tg2_shift(2)=ttg2mdl{2}.Coefficients.Estimate(1);       % DOWN-DOWN
                 tg2_shift(jj,kk,2)=ttg2mdl{2}.Coefficients.Estimate(1);       % DOWN-DOWN
-                tg2_3d{kk,2}=tg2{2};                
-                tg2mdl{kk,2}=ttg2mdl{2};
+                tg2_3d{jj,kk,2}=tg2{2};                
+                tg2mdl{jj,kk,2}=ttg2mdl{2};
                 
                 %%% check acceptibility of fit
                 %   peak location (mu) from 0 <~ corr length
                 %   spread should not be >> than orig corr length
                 for ll=1:3
                     % get fitted params
-                    tparam=tg2mdl{kk,ll}.Coefficients.Estimate;
+                    tparam=tg2mdl{jj,kk,ll}.Coefficients.Estimate;
                     tmu=tparam(2:4);
                     tsig=tparam(2:4);
                     % check if ok
@@ -117,24 +108,17 @@ for ii=1:nparam
                     end
                 end
             end
-%             for ll=1:3
-%                 g2_shift{ii}{ll}(kk,jj)=tg2_shift(ll);
-%             end
-        end
-        if flag_analysis_3d
-            % store g2 and fitted model
-            g2_3d{ii}{jj}=tg2_3d;
-            g2mdl{ii}{jj}=tg2mdl;
         end
     end
+    % store analysis results
     g2_shift{ii}=tg2_shift;
+    if flag_analysis_3d
+        g2_3d{ii}=tg2_3d;
+        g2mdl{ii}=tg2mdl;
+    end
 end
 
 % evaluate g2 normed wrt Dk=0
-% g2_shift_norm=cell(size(g2_shift));
-% for ii=1:nparam
-%     g2_shift_norm{ii}=cellfun(@(x) x./x(idx_0,:),g2_shift{ii},'UniformOutput',false);    
-% end
 g2_shift_norm=cellfun(@(x) x./x(:,idx_0,:),g2_shift,'UniformOutput',false);
 
 %% data vis
@@ -162,10 +146,6 @@ for ii=1:nparam
             %                 'LineWidth',1.5);
             
             % normalised to Dk=0
-            %             plot(Dk_0,g2_shift_norm{ii}{jj}(:,kk),...
-            %                 'Color',c(kk,:),'LineStyle',line_sty{jj},...
-            %                 'Marker',mark_typ{jj},...
-            %                 'LineWidth',1.5);
             plot(Dk_0,g2_shift_norm{ii}(kk,:,jj),...
                 'Color',c(kk,:),'LineStyle',line_sty{jj},...
                 'Marker',mark_typ{jj},...
@@ -196,7 +176,7 @@ if exist('flag_save_data','var')   % otherwise must be called manually
         %% Manually run this section
         path_save_dir='C:\Users\HE BEC\Dropbox\PhD\thesis\projects\bell_epr_steering\figS\k_calibration';
         
-%         % workspace
+%         % workspace       % VERY LARGE
 %         fname=sprintf('data_%d_%s',II,getdatetimestr);
 %         save(fullfile(path_save_dir,fname));
         
