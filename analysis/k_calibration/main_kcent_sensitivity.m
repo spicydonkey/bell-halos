@@ -48,45 +48,46 @@ g2_3d=cell(nparam,1);       % full analysis results
 g2mdl=cell(nparam,1);
 % NOTE: Cell structure indexing:
 %   {TAU} {ZXY} {DK, SPINSPIN}
+%     TODO  --> {TAU} {ZXY, DK, SPINSPIN}
 
 for ii=1:nparam
     tk=k_par{ii};
-    g2_shift{ii}=cell(1,3);
+%     g2_shift{ii}=cell(1,3);
     g2_3d{ii}=cell(1,3);
     g2mdl{ii}=cell(1,3);
     for tt=1:3
-        g2_shift{ii}{tt}=NaN(n_Dk,3);
-%         g2_3d{ii}{tt}=cell(n_Dk,3);
-%         g2mdl{ii}{tt}=cell(n_Dk,3);
+%         g2_shift{ii}{tt}=NaN(n_Dk,3);
         % allocate temporary vars for storage
         tg2_3d=cell(n_Dk,3);
         tg2mdl=cell(n_Dk,3);
     end
-    for jj=1:3
-        for kk=1:n_Dk
+    tg2_shift=NaN(3,n_Dk,3);    % DIMS: ZXY, DK, SPINSPIN
+    for jj=1:3          % ZXY dim
+        for kk=1:n_Dk   % DK center shift
             tDk=circshift([Dk_0(kk),0,0],jj-1);     % get new origin shift
             
             % evaluate g2 at near BB
             if ~flag_analysis_3d
                 %%% 1D g2 at BB (single-bin)
-                tg2_shift(1)=g2_bb(boost_zxy(tk(:,1),tDk),dk_ed);       % (up,up)
-                tg2_shift(2)=g2_bb(boost_zxy(tk(:,2),tDk),dk_ed);       % (down,down)
+%                 tg2_shift(1)=g2_bb(boost_zxy(tk(:,1),tDk),dk_ed);       % (up,up)
+%                 tg2_shift(2)=g2_bb(boost_zxy(tk(:,2),tDk),dk_ed);       % (down,down)
+                tg2_shift(jj,kk,1)=g2_bb(boost_zxy(tk(:,1),tDk),dk_ed);       % (up,up)
+                tg2_shift(jj,kk,2)=g2_bb(boost_zxy(tk(:,2),tDk),dk_ed);       % (down,down)
                 
                 ttk=tk;
                 ttk(:,1)=boost_zxy(tk(:,1),tDk);
-                tg2_shift(3)=g2x_bb(ttk,dk_ed);           % (up,down): shift only UP
+%                 tg2_shift(3)=g2x_bb(ttk,dk_ed);           % (up,down): shift only UP
+                tg2_shift(jj,kk,3)=g2x_bb(ttk,dk_ed);           % (up,down): shift only UP
             else
                 %%% g2 in 3D. get fitted amplitude
                 tk_shift=tk;
                 tk_shift(:,1)=boost_zxy(tk(:,1),tDk);       % shift mJ=1
                 % upup and updown
                 [tg2,~,ttg2mdl]=summary_disthalo_g2(tk_shift,dk_ed,flag_g2_fastrun,0,1,0);
-                tg2_shift(1)=ttg2mdl{1}.Coefficients.Estimate(1);       % UP-UP
-                tg2_shift(3)=ttg2mdl{3}.Coefficients.Estimate(1);       % UP-DOWN
-%                 g2_3d{ii}{jj}{kk,1}=tg2{1};
-%                 g2_3d{ii}{jj}{kk,3}=tg2{3};
-%                 g2mdl{ii}{jj}{kk,1}=ttg2mdl{1};
-%                 g2mdl{ii}{jj}{kk,3}=ttg2mdl{3};
+%                 tg2_shift(1)=ttg2mdl{1}.Coefficients.Estimate(1);       % UP-UP
+%                 tg2_shift(3)=ttg2mdl{3}.Coefficients.Estimate(1);       % UP-DOWN
+                tg2_shift(jj,kk,1)=ttg2mdl{1}.Coefficients.Estimate(1);       % UP-UP
+                tg2_shift(jj,kk,3)=ttg2mdl{3}.Coefficients.Estimate(1);       % UP-DOWN
                 tg2_3d{kk,1}=tg2{1};
                 tg2_3d{kk,3}=tg2{3};
                 tg2mdl{kk,1}=ttg2mdl{1};
@@ -96,9 +97,8 @@ for ii=1:nparam
                 tk_shift=tk;
                 tk_shift(:,2)=boost_zxy(tk(:,2),tDk);       % shift mJ=0
                 [tg2,~,ttg2mdl]=summary_disthalo_g2(tk_shift,dk_ed,flag_g2_fastrun,0,1,0);     
-                tg2_shift(2)=ttg2mdl{2}.Coefficients.Estimate(1);       % DOWN-DOWN
-%                 g2_3d{ii}{jj}{kk,2}=tg2{2};
-%                 g2mdl{ii}{jj}{kk,2}=ttg2mdl{2};
+%                 tg2_shift(2)=ttg2mdl{2}.Coefficients.Estimate(1);       % DOWN-DOWN
+                tg2_shift(jj,kk,2)=ttg2mdl{2}.Coefficients.Estimate(1);       % DOWN-DOWN
                 tg2_3d{kk,2}=tg2{2};                
                 tg2mdl{kk,2}=ttg2mdl{2};
                 
@@ -113,18 +113,13 @@ for ii=1:nparam
                     % check if ok
                     if vnorm(tmu')>dk_bb || geomean(abs(tsig))>2*dk_bb
                         % NOT OK
-                        tg2_shift(ll)=NaN;
+                        tg2_shift(jj,kk,ll)=NaN;
                     end
                 end
             end
-            
-            % store
-%             g2_shift{ii}{1}(kk,jj)=tg2_11;
-%             g2_shift{ii}{2}(kk,jj)=tg2_00;
-%             g2_shift{ii}{3}(kk,jj)=tg2_01;
-            for ll=1:3
-                g2_shift{ii}{ll}(kk,jj)=tg2_shift(ll);
-            end
+%             for ll=1:3
+%                 g2_shift{ii}{ll}(kk,jj)=tg2_shift(ll);
+%             end
         end
         if flag_analysis_3d
             % store g2 and fitted model
@@ -132,13 +127,15 @@ for ii=1:nparam
             g2mdl{ii}{jj}=tg2mdl;
         end
     end
+    g2_shift{ii}=tg2_shift;
 end
 
 % evaluate g2 normed wrt Dk=0
-g2_shift_norm=cell(size(g2_shift));
-for ii=1:nparam
-    g2_shift_norm{ii}=cellfun(@(x) x./x(idx_0,:),g2_shift{ii},'UniformOutput',false);
-end
+% g2_shift_norm=cell(size(g2_shift));
+% for ii=1:nparam
+%     g2_shift_norm{ii}=cellfun(@(x) x./x(idx_0,:),g2_shift{ii},'UniformOutput',false);    
+% end
+g2_shift_norm=cellfun(@(x) x./x(:,idx_0,:),g2_shift,'UniformOutput',false);
 
 %% data vis
 % configs
@@ -160,12 +157,16 @@ for ii=1:nparam
     for jj=1:3      % Spin-Spin corr type
         for kk=1:3  % offset Cartesian dim
             % g2
-%             plot(Dk_0,g2_shift{ii}{jj}(:,kk),...
-%                 'Color',c(kk,:),'LineStyle',line_sty{jj},...
-%                 'LineWidth',1.5);
+            %             plot(Dk_0,g2_shift{ii}{jj}(:,kk),...
+            %                 'Color',c(kk,:),'LineStyle',line_sty{jj},...
+            %                 'LineWidth',1.5);
             
             % normalised to Dk=0
-            plot(Dk_0,g2_shift_norm{ii}{jj}(:,kk),...
+            %             plot(Dk_0,g2_shift_norm{ii}{jj}(:,kk),...
+            %                 'Color',c(kk,:),'LineStyle',line_sty{jj},...
+            %                 'Marker',mark_typ{jj},...
+            %                 'LineWidth',1.5);
+            plot(Dk_0,g2_shift_norm{ii}(kk,:,jj),...
                 'Color',c(kk,:),'LineStyle',line_sty{jj},...
                 'Marker',mark_typ{jj},...
                 'LineWidth',1.5);
