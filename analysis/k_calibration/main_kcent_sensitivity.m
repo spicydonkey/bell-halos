@@ -8,23 +8,47 @@
 %% CONFIG
 flag_analysis_3d=true;       % true for 3D; false for 1-bin g2
 flag_g2_fastrun=false;      % fast-run gives noisy g2 so fit doesn't work
+flag_save_data=true;
 
 % some constants
 dk_bb=0.04;     % back-to-back pair correlation length (rms width) [norm unit]
 
 
 %% load data
+% if ~exist('flag_load_override','var') || ~flag_load_override
+%     path_dir='C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot';
+%     fname_mat='exp5_1_20180813_1.mat';
+%     path_data=fullfile(path_dir,fname_mat);
+%     
+%     load(path_data);
+% end
+
+%% reduced big dataset (~20k shots)
 if ~exist('flag_load_override','var') || ~flag_load_override
     path_dir='C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot';
-    fname_mat='exp5_1_20180813_1.mat';
-    path_data=fullfile(path_dir,fname_mat);
+    tdataname='exp1_collated_20180815_1.mat';
+    path_data=fullfile(path_dir,tdataname);
     
     load(path_data);
+    
+    %% reduce
+    %%% config
+    samp_frac=sqrt(1/50);    % g2 analysis scales as N^2
+    
+    %%% main
+    nshot_red=round(nshot_par*samp_frac);   % reduced run size
+    idx_samp=arrayfun(@(N,n) randperm(N,n),nshot_par,nshot_red,'UniformOutput',false);  % random shot# selected
+    k_par_orig=cellfun(@(c,i) c(i,:),k_par,idx_samp,'UniformOutput',false);     % reduced dataset
+    [k_par_orig,k_par]=deal(k_par,k_par_orig);      % swap var contents
 end
+
+%% progress
+progressbar(tdataname);
+prog=0;     % begin progress
 
 %% define g2 analysis
 lim_Dk=1*dk_bb*[-1,1];          % limits for shift [normed]
-n_Dk=19;                        % n-points to scan (MUST BE ODD!)
+n_Dk=21;                        % n-points to scan (MUST BE ODD!)
 Dk_0=linspace(lim_Dk(1),lim_Dk(2),n_Dk);     % shift in halo center in each dim (symm)
 idx_0=find(Dk_0==0);        % index to Dk=0
 
@@ -108,6 +132,8 @@ for ii=1:nparam
                     end
                 end
             end
+            prog=prog+(1/nparam)*(1/3)*(1/n_Dk);    % incremental progress
+            progressbar(prog);
         end
     end
     % store analysis results
@@ -117,6 +143,7 @@ for ii=1:nparam
         g2mdl{ii}=tg2mdl;
     end
 end
+progressbar(1);     % close prog-bar
 
 % evaluate g2 normed wrt Dk=0
 g2_shift_norm=cellfun(@(x) x./x(:,idx_0,:),g2_shift,'UniformOutput',false);

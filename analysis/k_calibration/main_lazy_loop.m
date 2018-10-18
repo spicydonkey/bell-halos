@@ -10,13 +10,21 @@ flag_save_data=true;
 
 PATH_DIR='C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot';
 D=dir(PATH_DIR);
+tfnames={D.name};
+b_isfile=cellfun(@(s) is_file(fullfile(PATH_DIR,s)), tfnames);
+filename=tfnames(b_isfile);
+b_ismat=cellfun(@(s) strcmp(fileext(s),'.mat'),filename);
+dataname=filename(b_ismat);
+n_data=numel(dataname);
 
-for II=1:numel(D)
+for II=2:n_data     % SKIP exp1_collated
+% for II=2      % DEBUGGING
     %%%%%%%%%% LOAD SOME DATA
-    if ~is_file(fullfile(PATH_DIR,D(II).name))
+    if ~is_file(fullfile(PATH_DIR,dataname{II}))
         continue
     end
-    load(fullfile(PATH_DIR,D(II).name));
+    tdataname=dataname{II};
+    load(fullfile(PATH_DIR,tdataname));
     %%%%%%%%%% DATA IS LOADED FOR CALLING SCRIPT
     
     run('main_kcent_sensitivity.m');
