@@ -3,7 +3,10 @@
 % 20181018
 
 %% CONFIG
-path_dir='C:\Users\David\Dropbox\PhD\data\bell_epr_2018\proc\exp5_bell_yrot';
+flag_save_data=false;
+
+% path_dir='C:\Users\David\Dropbox\PhD\data\bell_epr_2018\proc\exp5_bell_yrot';
+path_dir='C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot';
 
 % get data (.mat) files to load
 D=dir(path_dir);
@@ -124,11 +127,11 @@ tylim=ax.YLim;
 ylim([0,tylim(2)]);
 
 %% detected number distribution
-H=NaN(n_tau,1);
+H=cell(n_tau,1);
 for ii=1:n_tau
     %%
     tfigname=sprintf('Ndet_dist_%0.2g',1e6*tau(ii));
-    H(ii)=figure('Name',tfigname,...
+    H{ii}=figure('Name',tfigname,...
     'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
     hold on;
     pleg=NaN(2,1);
@@ -143,4 +146,33 @@ for ii=1:n_tau
     ax.LineWidth=1.2;
     lgd=legend(pleg);
     lgd.FontSize=fontsize;
+    txlim=ax.XLim;
+    xlim([-0.5,txlim(2)]);
+end
+
+%% save data
+if exist('flag_save_data','var') && flag_save_data
+    %% manually run this section
+    path_save_dir='C:\Users\HE BEC\Dropbox\phd\thesis\projects\bell_epr_steering\figS\Nsc';
+    
+    % workspace
+    savefname=sprintf('supp_Nsc_%s',getdatetimestr);
+    save(fullfile(path_save_dir,savefname));
+    
+    % figs
+    % Nsc vs tau
+    savefigname=sprintf('fig_Nsc_tau_%s',getdatetimestr);
+    fpath=fullfile(path_save_dir,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+    
+    % Ndet dist
+    for ii=1:n_tau
+        savefigname=sprintf('fig_Ndetdist_%0.2g_%s',1e6*tau(ii),getdatetimestr);
+        fpath=fullfile(path_save_dir,savefigname);
+        
+        saveas(H{ii},strcat(fpath,'.fig'),'fig');
+        print(H{ii},strcat(fpath,'.svg'),'-dsvg');
+    end
 end
