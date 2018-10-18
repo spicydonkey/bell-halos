@@ -184,7 +184,7 @@ for ii=1:nparam
     if ~flag_analysis_3d
         ylabel('Normalised correlation $\bar{g}^{(2)}_{\textrm{BB}}(0)$');
     else
-        ylabel('Correlation amplitude $\mathcal{G}$');      % fitted
+        ylabel('Norm. $g^{(2)}$ amplitude');      % fitted
     end
     box on;
     ax.FontSize=12;
