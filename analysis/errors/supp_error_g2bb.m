@@ -69,13 +69,13 @@ g2BB_mean=g2BB_mean(Isort,:);
 %% vis
 % configs
 [c,cl,cd]=palette(3);
-% line_sty={'-','--',':'};
+line_sty={'-','--',':'};
 mark_typ={'o','s','^'};
 str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
 mark_siz=7;
 line_wid=1.5;
 
-% draw
+%% g2BB
 h=figure('Name','g2BB',...
     'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
 hold on;
@@ -92,5 +92,26 @@ lgd.FontSize=12;
 box on;
 xlabel('Pulse duration $\tau$ [$\mu$s]');
 ylabel('$g^{(2)}_\textrm{BB}(0)$');
+ax.FontSize=12;
+ax.LineWidth=1.2;
+
+%% UNCERTAINTY g2BB
+h=figure('Name','g2BB_uncertainty',...
+    'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
+hold on;
+pleg=NaN(1,3);
+for ii=1:3
+    tp=plot(1e6*tau,g2BB_se(:,ii)./g2BB(:,ii),'Color','none',...
+        'Marker',mark_typ{ii},'MarkerEdgeColor',c(ii,:),...
+        'MarkerFaceColor',cl(ii,:),'LineWidth',line_wid,...
+        'MarkerSize',mark_siz,'DisplayName',str_ss{ii});
+    pleg(ii)=tp;     % line data to show in legend
+end
+ax=gca;
+lgd=legend(pleg);
+lgd.FontSize=12;
+box on;
+xlabel('Pulse duration $\tau$ [$\mu$s]');
+ylabel('Frac. unc. of $g^{(2)}_\textrm{BB}(0)$');
 ax.FontSize=12;
 ax.LineWidth=1.2;
