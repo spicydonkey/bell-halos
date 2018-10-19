@@ -148,6 +148,10 @@ for ii=1:n_tau
     lgd.FontSize=fontsize;
     txlim=ax.XLim;
     xlim([-0.5,txlim(2)]);
+    
+    str_tau=sprintf('%s %0.2g %s','$\tau=$',1e6*tau(ii),'$\mu$s');
+    text('Units','normalized','Position',[0.5 1.03],'String',str_tau,...
+        'FontSize',fontsize,'VerticalAlignment','baseline','HorizontalAlignment','center');
 end
 
 %% save data
