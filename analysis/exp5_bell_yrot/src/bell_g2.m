@@ -34,8 +34,8 @@ lim_th=[-pi/20,pi+pi/20];   % theta-axis limits
 
 
 %% load collated data
-% load('C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot\bell_signal\bell_20180815_1.mat');
-load('C:\Users\David\Dropbox\PhD\data\bell_epr_2018\proc\exp5_bell_yrot\bell_signal\bell_20181009_bs_fix.mat');
+load('C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot\bell_signal\bell_20181009_bs_fix.mat');
+% load('C:\Users\David\Dropbox\PhD\data\bell_epr_2018\proc\exp5_bell_yrot\bell_signal\bell_20181009_bs_fix.mat');
 
 % OR have dataset loaded as "S"
 
@@ -259,7 +259,7 @@ S_epr_fit=abs(B_fit(1:end-dI+1) - B_fit(dI:end));
 %% vis
 % configs
 [c,cl,cd]=palette(3);
-c_gray=0.6*ones(1,3);
+% c_gray=0.6*ones(1,3);
 line_sty={'-','--',':'};
 mark_typ={'o','s','^'};
 % str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
@@ -268,6 +268,11 @@ str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
 mark_siz=7;
 line_wid=1.5;
 fontsize=12;
+ptch_col_epr=0.85*ones(1,3);
+
+% bounds
+S_epr_min=sqrt(2);
+S_ent_min=1;
 
 % figure
 h_epr=figure('Name','epr_steering',...
@@ -297,13 +302,25 @@ ylim([0,2]);
 xticks(0:pi/8:pi/2);
 xticklabels({'$0$','$\pi/8$','$\pi/4$','$3\pi/8$','$\pi/2$'});
 
-% violation region
-S_epr_min=sqrt(2);
+%%% violation region
+% EPR
 p_epr=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
     [S_epr_min,S_epr_min,2,2],...
-    ptch_col_bogo,'FaceAlpha',ptch_alp,...
-    'EdgeColor','none');
-uistack(p_epr,'bottom');      % this should REALLY be bottom - to not cover any other graphics
+    ptch_col_epr,'EdgeColor','none');
+uistack(p_epr,'bottom');
+% hatch fill to distinguish
+hatchfill2(p_epr,'single','HatchAngle',45,'HatchDensity',30,...
+    'HatchColor',0.25*ones(1,3),'HatchLineWidth',1);
 set(gca,'Layer','Top');     % graphics axes should be always on top
-text(pi/2,0.5*(sqrt(2)+2),sprintf('EPR-steering'),'FontSize',font_siz_reg,...
+text(pi/2,0.5*(S_epr_min+2),sprintf('EPR-steering'),'FontSize',font_siz_reg-2,...
+    'HorizontalAlignment','right','VerticalAlignment','middle',...
+    'BackgroundColor',ptch_col_epr);
+
+% entanglement
+p_ent=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    [S_ent_min,S_ent_min,2,2],...
+    ptch_col_epr,'EdgeColor','none');
+uistack(p_ent,'bottom');   
+text(pi/2,0.5*(S_ent_min+S_epr_min),sprintf('Entanglement'),'FontSize',font_siz_reg-2,...
     'HorizontalAlignment','right','VerticalAlignment','middle');
+
