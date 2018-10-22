@@ -35,6 +35,7 @@ lim_th=[-pi/20,pi+pi/20];   % theta-axis limits
 
 %% load collated data
 % load('C:\Users\HE BEC\Documents\lab\bell_momentumspin\bell_epr_2018\proc\exp5_bell_yrot\bell_signal\bell_20180815_1.mat');
+load('C:\Users\David\Dropbox\PhD\data\bell_epr_2018\proc\exp5_bell_yrot\bell_signal\bell_20181009_bs_fix.mat');
 
 % OR have dataset loaded as "S"
 
@@ -222,3 +223,87 @@ lgd=legend([p(1), p_B_th_ideal]);
 
 %%% misc
 h.Renderer='painters';
+
+%% EPR-steering parameter
+% 20181022
+
+tau=cat(1,S.par_T);
+Th=tau*om_rabi;
+
+B=cat(1,S.E_par);
+B_se=cat(1,S.E_bootstrap_sdev);
+
+% sort
+[tau,Isort]=sort(tau);
+Th=Th(Isort);
+B=B(Isort);
+B_se=B_se(Isort);
+
+%%% EPR-steering
+Th_epr=Th(1:9);
+S_epr=abs(B(1:9)-B(9:end));
+S_epr_se=vnorm(cat(2,B_se(1:9),B_se(9:end)),2);
+
+% get fitted correlator
+Th_fit=theta_sm_fit;
+B_fit=B_sm_fit;
+
+dth=Th_fit(2)-Th_fit(1);
+dI=round((pi/2)/dth);
+
+Th_epr_fit=Th_fit(1:end-dI+1);
+S_epr_fit=abs(B_fit(1:end-dI+1) - B_fit(dI:end));
+
+
+
+%% vis
+% configs
+[c,cl,cd]=palette(3);
+c_gray=0.6*ones(1,3);
+line_sty={'-','--',':'};
+mark_typ={'o','s','^'};
+% str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
+% str_ss={'$m_J = 1$','$m_J = 0$'};
+str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
+mark_siz=7;
+line_wid=1.5;
+fontsize=12;
+
+% figure
+h_epr=figure('Name','epr_steering',...
+    'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
+
+hold on;
+
+% data
+tp=myploterr(Th_epr,S_epr,[],S_epr_se,'o',c(1,:));
+set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,'DisplayName','');
+pleg=tp(1);     % line data to show in legend
+set(tp(2),'LineWidth',line_wid,'DisplayName','');
+
+% fit
+tp=plot(Th_epr_fit,S_epr_fit,'Color',c(1,:),'LineWidth',line_wid,...
+    'LineStyle','-');
+uistack(tp,'bottom');
+
+box on;
+ax=gca;
+xlabel('Rotation angle $\theta$');
+ylabel('$\mathcal{S}\left(\theta\right)$')
+ax.FontSize=fontsize;
+ax.LineWidth=1.2;
+xlim([-0.1,pi/2+0.1]);
+ylim([0,2]);
+xticks(0:pi/8:pi/2);
+xticklabels({'$0$','$\pi/8$','$\pi/4$','$3\pi/8$','$\pi/2$'});
+
+% violation region
+S_epr_min=sqrt(2);
+p_epr=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    [S_epr_min,S_epr_min,2,2],...
+    ptch_col_bogo,'FaceAlpha',ptch_alp,...
+    'EdgeColor','none');
+uistack(p_epr,'bottom');      % this should REALLY be bottom - to not cover any other graphics
+set(gca,'Layer','Top');     % graphics axes should be always on top
+text(pi/2,0.5*(sqrt(2)+2),sprintf('EPR-steering'),'FontSize',font_siz_reg,...
+    'HorizontalAlignment','right','VerticalAlignment','middle');
