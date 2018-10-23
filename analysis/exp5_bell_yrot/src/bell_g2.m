@@ -115,6 +115,9 @@ B_se=B_se(Isort);
 g2_tot=g2_tot(Isort,:);
 g2_norm=g2_norm(Isort,:);
 
+%%% clear raw data
+clearvars S;    
+
 %% VIS: Norm g2 vs theta
 h=figure('Name','g2_vs_theta','Units',f_units,'Position',f_pos,'Renderer',f_ren);
 hold on;
