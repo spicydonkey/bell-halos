@@ -9,9 +9,11 @@
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\HE BEC\bell\2018april\exp4_tevo\1.25ms';
+% configs.path.base='C:\Users\HE BEC\bell\2018april\exp4_tevo\1.25ms';
+% configs.path.data=fullfile(configs.path.base,'data');
 
-configs.path.data=fullfile(configs.path.base,'data');
+configs.path.base='C:\Users\HE BEC\bell_data\exp4_bell_t_evo\1.7ms';
+configs.path.data=configs.path.base;
 
 configs.path.out=fullfile(configs.path.base,'out');
 configs.path.src=fullfile(configs.path.base,'src');
@@ -20,6 +22,7 @@ configs.load.path=fullfile(configs.path.data,'d');
 
 configs.flag.param_scan=0;      % 0 for no scan; 1 for param scan
 configs.path.paramlog=fullfile(configs.path.data,'LOG_parameters.txt');
+configs.misc.param=1.25;     % DELAY (ms)
 
 configs.load.id=[];
 configs.load.mincount=1000;
@@ -58,5 +61,9 @@ configs.filt.z_cap=0.8;
 
 % post-distortion
 configs.filt2.r_crop=[0.9,1.1];
-configs.filt2.z_cap=0.7;
+configs.filt2.z_cap=0.75;
 
+
+%%% halo centering
+configs.post.Dk{1}=[0,0,0];
+configs.post.Dk{2}=[0.027,0.005,0.005];

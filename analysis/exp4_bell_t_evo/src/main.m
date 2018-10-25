@@ -7,8 +7,14 @@
 
 
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms7.m';
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_0ms95.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_0ms95.m';
 
+%%% 2018-10-25
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms7.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_0ms95.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms1.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms25.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms4.m';
 
 %% load config
 run(config_name);
@@ -22,16 +28,16 @@ if configs.flag.param_scan
     
     % get searched param
     par_T=params;       % scanned pulse duration [s]
-else
-    % TODO
-    %   do I need to set some things to default? or re-code analysis?
-    
+else    
     % defaults autoscan-related vars
     nparam=1;       % 1- since we don't search any params
     id_in_param={configs.load.id};    % all IDS to load
     
-    par_T=NaN;      % default param to NaN
+%     par_T=NaN;      % default param to NaN
+    par_T=configs.misc.param;       % const param hardcoded in configs
 end
+
+
 
 %% load txy
 [txy,fout]=load_txy(configs.load.path,configs.load.id,configs.load.window,configs.load.mincount,configs.load.maxcount,[],1,2,0);
@@ -284,15 +290,44 @@ clear h_zxy*;       % clear figs
 
 %% ANALYSIS
 
+k_par_orig=k_par;       % save original
+
+%% HACK: optimise halo centering
+k_par=k_par_orig;       % to orig
+
+% displace
+for ii=1:nparam
+    tk=k_par{ii};
+    
+    for jj=1:n_mf
+        tk(:,jj)=boost_zxy(tk(:,jj),configs.post.Dk{jj});
+    end
+    
+    k_par{ii}=tk;
+end
+
+%% number of counts captured in halo
+n_sc_counts_avg=NaN(nparam,n_mf);
+n_sc_counts_std=NaN(nparam,n_mf);
+
+for ii=1:nparam
+    n_sc_counts_avg(ii,:)=mean(shotSize(k_par{ii}));
+    n_sc_counts_std(ii,:)=std(shotSize(k_par{ii}));
+end
+
+
+% TODO
+%   * generalise for n_mf
+fprintf('Summary: Counts in halo\n');
+for ii=1:nparam
+    fprintf('par %d:\t %5.3g(%2.2g) : %5.3g(%2.2g)\n',ii,...
+        [n_sc_counts_avg(ii,1),n_sc_counts_std(ii,1),...
+        n_sc_counts_avg(ii,2),n_sc_counts_std(ii,2)]);
+end
+
+
 %% g2 BB
-% MONEY
-
-% TODO 
-%   [ ] halo centering
-%   [ ] improve filtering
-%
-
-% g2 rel-vec bins
+% configs
 n_bins=29;      % original: 29
 dk_ed_vec=linspace(-0.2,0.2,n_bins+1);      % original: [-0.2,0.2]
 dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
@@ -300,191 +335,215 @@ dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
 dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
 dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
 
+% eval g2
 g2=cell(nparam,1);
-dk=cell(nparam,1);
+g2mdl=cell(nparam,1);
 
 for ii=1:nparam
     % run full g2
-    [tg2,tdk,~]=summary_disthalo_g2(k_par{ii},dk_ed,0,1,1,0);     
-    
+    [tg2,tdk,tg2mdl]=summary_disthalo_g2(k_par{ii},dk_ed,0,1,1,0);     
+        
     % store
     g2{ii}=tg2;
     dk{ii}=tdk;
-end
-    
-
-%% Correlation coefficient
-%    Note: may contain systematic error since unverified by Jan
-%       + B-field distortions in halos aren't perfectly filtered
-%
-
-
-g2anti_par=NaN(nparam,1);
-g2corr_par=NaN(nparam,1);
-E_par=NaN(nparam,1);
-E0_par=NaN(nparam,1);
-
-for ii=1:nparam
-    % get this paramset
-    tg2=g2{ii};
-    
-    % *aproximate* g2 amplitude at evaluated value at dk=0
-    g2corr_par(ii)=mean([tg2{1}(idx_dk0,idx_dk0,idx_dk0),tg2{2}(idx_dk0,idx_dk0,idx_dk0)]);
-    g2anti_par(ii)=tg2{3}(idx_dk0,idx_dk0,idx_dk0);
-    
-    % evaluate spin-corr based on g2
-    [E_par(ii),E0_par(ii)]=g2toE(g2corr_par(ii),g2anti_par(ii));
+    g2mdl{ii}=tg2mdl;
 end
 
 
+%% original below
 
-%% PRELIM bootstrapping
-%%% CONFIG
-subset_shotsize=150;    % shot-size of bootstrap sampled subset
-n_subset=20;            % no. of bootstrap repeats
-%   NOTE: unclear at the moment how config affects analysis
-
-
-%%% main
-nshot_par=shotSize(k_par);    % num. exp shots for each scanned parameter set
-n_frac_samp=subset_shotsize./nshot_par; 
-
-
-g2anti_samp=cell(nparam,1);
-g2corr_samp=cell(nparam,1);
-E_samp=cell(nparam,1);
-E0_samp=cell(nparam,1);
-
-for ii=1:nparam
-    tnshot=nshot_par(ii);
-    tn_frac_samp=n_frac_samp(ii);
-    tk_par=k_par{ii};
-    
-    g2anti_samp{ii}=NaN(n_subset,1);
-    g2corr_samp{ii}=NaN(n_subset,1);
-    E_samp{ii}=NaN(n_subset,1);
-    E0_samp{ii}=NaN(n_subset,1);
-    
-    for jj=1:n_subset
-        Isamp=rand(tnshot,1)<tn_frac_samp;       % randomly select subset of shots to sample
-        k_samp=tk_par(Isamp,:);           % the sampled data
-        
-        tg2=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
-        
-        % *aproximate* g2 amplitude at evaluated value at dk=0
-        tg2corr=mean([tg2{1}(idx_dk0,idx_dk0,idx_dk0),tg2{2}(idx_dk0,idx_dk0,idx_dk0)]);     % get results
-        tg2anti=tg2{3}(idx_dk0,idx_dk0,idx_dk0);
-        
-        [tE,tE0]=g2toE(tg2corr,tg2anti);
-        
-        % store
-        g2anti_samp{ii}(jj)=tg2anti;
-        g2corr_samp{ii}(jj)=tg2corr;
-        E_samp{ii}(jj)=tE;
-        E0_samp{ii}(jj)=tE0;
-    end
-end
-
-% statistics
-E_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E_samp);
-E_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E_samp);
-
-E0_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E0_samp);
-E0_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E0_samp);
-
-%%% diplay some output
-
-par_T'
-E_par'
-[E_bootstrap_mean,E_bootstrap_sdev]'
-
-E0_par'
-[E0_bootstrap_mean,E0_bootstrap_sdev]'
-
-
-%% Correlation - data vis
-% Measured correlation
-figure('Name','E_raw');
-
-hh=ploterr(par_T/10e-6,E_par,...
-    [],E_bootstrap_sdev,...
-    'o','hhxy',0);
-set(hh(1),'Marker','o','MarkerSize',7,...
-    'Color','b','LineWidth',1.2,...
-    'MarkerFaceColor','w');
-set(hh(2),'Color','b','LineWidth',1.2);  % Y-err
-
-% xlim([0,1]);
-ylim([-1,1]);
-xlabel('$\theta_0/\pi$');
-ylabel('$E$');
-
-
-% Mode occupancy corrected correlation
-figure('Name','E_corrected');
-
-hh=ploterr(par_T/10e-6,E0_par,...
-    [],E0_bootstrap_sdev,...
-    'o','hhxy',0);
-set(hh(1),'Marker','o','MarkerSize',7,...
-    'Color','k','LineWidth',1.2,...
-    'MarkerFaceColor','w');
-set(hh(2),'Color','k','LineWidth',1.2);  % Y-err
-
-% xlim([0,1]);
-ylim([-1,1]);
-xlabel('$\theta_0/\pi$');
-ylabel('$\bar{E}$');
-
-ylim([-1,1]);
-
-
-
-%% simple vis of 3D g2
-%   NOTE: 3d g2 is completely averaged across Y-axis
-for ii=1:nparam
-    
-    tT=1e6*par_T(ii);
-    tfigname=sprintf('g2_T%0.3g',tT);
-    
-    figure('Name',tfigname);
-    hold on;
-    for jj=1:3      % 3-types of spin-spin type of mom-correlation
-        subplot(1,3,jj);
-        imagesc(mean(g2{ii}{jj},3));        % averaged across Y (3rd dim)
-        
-        title(sprintf('TH=%d, G2=%d',ii,jj));
-        colorbar;
-        
-        axis square;
-    end
-end
-
-
-
-
-%%
-% %%% g2 spatial distribution
-% % data to analyse
-% k=k_par{1};
+% %% Fitted g2 model
+% %%% Get params
+% %   NOTE: fit can be poor at the extrema of correlations
+% %   TODO: is there g2 - 1 corrector to apply here?
+% %         tg2mdl_params=cellfun(@(m) m.Coefficients.Estimate,tg2mdl,'UniformOutput',false);
+% %         tg2corr=0.5*(tg2mdl_params{1}(1)+tg2mdl_params{2}(1));
+% %         tg2anti=tg2mdl_params{3}(1);
+%     
 % 
-% % config
-% naz=200;
-% nel=100;
-% [az,el]=sphgrid(naz,nel);
+% %%% Evaluate fitted function
+% n_bins_fit=101;
+% dk_fit_vec=linspace(min(dk_cent_vec),max(dk_cent_vec),n_bins_fit);
+% [~,idx_dk0_fit]=min(abs(dk_fit_vec));
+% dk_fit={dk_fit_vec,dk_fit_vec,dk_fit_vec};
+% [dk_fit_grid{1},dk_fit_grid{2},dk_fit_grid{3}]=ndgrid(dk_fit{:});
 % 
-% b_pole=(abs(el)>asin(0.6));      % bool to bad region around poles
+% dk_fit_sq=cellfun(@(k) k(:),dk_fit_grid,'UniformOutput',false);
+% dk_fit_sq=cat(2,dk_fit_sq{:});
+% 
+% g2_fit=cell(1,nparam);
+% for ii=1:nparam
+%     for jj=1:3
+%         tg2_fit_sq=feval(g2mdl{ii}{jj},dk_fit_sq);
+%         g2_fit{ii}{jj}=reshape(tg2_fit_sq,n_bins_fit*[1,1,1]);
+%     end
+% end
+% 
+% %% Correlation coefficient
+% g2anti_par=NaN(nparam,1);
+% g2corr_par=NaN(nparam,1);
+% E_par=NaN(nparam,1);
+% E0_par=NaN(nparam,1);
+% 
+% for ii=1:nparam
+%     % get this paramset
+%     tg2=g2{ii};
+%     
+%     % *aproximate* g2 amplitude at evaluated value at dk=0
+%     g2corr_par(ii)=mean([tg2{1}(idx_dk0,idx_dk0,idx_dk0),tg2{2}(idx_dk0,idx_dk0,idx_dk0)]);
+%     g2anti_par(ii)=tg2{3}(idx_dk0,idx_dk0,idx_dk0);
+%     
+%     % evaluate spin-corr based on g2
+%     [E_par(ii),E0_par(ii)]=g2toE(g2corr_par(ii),g2anti_par(ii));
+% end
 % 
 % 
-% % count
-% NN=cellfun(@(x) haloZoneCount(x,az,el,0.03,[],'simple'),k,'UniformOutput',false);
-% Nhalo{1}=cat(3,NN{:,1});
-% Nhalo{2}=cat(3,NN{:,2});
+% %% PRELIM bootstrapping
+% %   TODO
+% %   [x] with replacement
+% %   [ ] convergence
+% %
 % 
-% Nhalo{1}(repmat(b_pole,[1,1,nshot]))=NaN;
-% Nhalo{2}(repmat(b_pole,[1,1,nshot]))=NaN;
+% %%% CONFIG
+% bs_frac=0.2;       % 0.2
+% bs_nrep=20;                    % no. of bootstrap repeats
+% %   NOTE: unclear at the moment how config affects analysis
 % 
-% % analysis
-% summary_disthalo_g2dist(Nhalo,az,el,1);
+% % dataset and subset
+% nshot_par=shotSize(k_par);    % num. exp shots for each scanned parameter set
+% bs_nsamp=round(nshot_par*bs_frac);    % shot-size of bootstrap sampled subset
+% 
+% g2_bootstrap=cell(nparam,1);
+% g2anti_samp=cell(nparam,1);
+% g2corr_samp=cell(nparam,1);
+% E_samp=cell(nparam,1);
+% E0_samp=cell(nparam,1);
+% 
+% for ii=1:nparam
+%     tk_par=k_par{ii};   % the population-representative data set
+%     
+%     % random sub-sample sel with replacement
+%     Isamp=randi(nshot_par(ii),[bs_nrep,bs_nsamp(ii)]);
+%     
+%     % initialise
+%     g2_bootstrap{ii}=cell(1,3);
+%     for jj=1:3
+%         g2_bootstrap{ii}{jj}=NaN([dk_grid_size,bs_nrep]);
+%     end
+%     g2anti_samp{ii}=NaN(bs_nrep,1);
+%     g2corr_samp{ii}=NaN(bs_nrep,1);
+%     E_samp{ii}=NaN(bs_nrep,1);
+%     E0_samp{ii}=NaN(bs_nrep,1);
+%     
+%     for jj=1:bs_nrep
+%         k_samp=tk_par(Isamp(jj,:),:);           % the sampled data
+%         
+%         [tg2,~,~]=summary_disthalo_g2(k_samp,dk_ed,0,0,0,0);      % evaluate function
+% %         [tg2,~,tg2mdl]=summary_disthalo_g2(k_samp,dk_ed,0,0,1,0);      % evaluate and fit
+%         
+%         for kk=1:3
+%             g2_bootstrap{ii}{kk}(:,:,:,jj)=tg2{kk};
+%         end
+%         
+%         % *aproximate* g2 amplitude at evaluated value at dk=0
+%         tg2corr=mean([tg2{1}(idx_dk0,idx_dk0,idx_dk0),tg2{2}(idx_dk0,idx_dk0,idx_dk0)]);     % get results
+%         tg2anti=tg2{3}(idx_dk0,idx_dk0,idx_dk0);
+%         
+%         % from fitted profile
+%         %   NOTE: fit can be poor at the extrema of correlations
+%         %   TODO: is there g2 - 1 corrector to apply here?
+% %         tg2mdl_params=cellfun(@(m) m.Coefficients.Estimate,tg2mdl,'UniformOutput',false);
+% %         tg2corr=0.5*(tg2mdl_params{1}(1)+tg2mdl_params{2}(1));
+% %         tg2anti=tg2mdl_params{3}(1);
+%         
+%         [tE,tE0]=g2toE(tg2corr,tg2anti);
+%         
+%         % store
+%         g2anti_samp{ii}(jj)=tg2anti;
+%         g2corr_samp{ii}(jj)=tg2corr;
+%         E_samp{ii}(jj)=tE;
+%         E0_samp{ii}(jj)=tE0;
+%     end
+% end
+% 
+% %%% statistics
+% g2_mean=cell(size(g2_bootstrap));
+% g2_sdev=cell(size(g2_bootstrap));
+% for ii=1:nparam
+%     g2_mean{ii}=cellfun(@(x) mean(x,4,'omitnan'),g2_bootstrap{ii},'UniformOutput',false);
+%     g2_sdev{ii}=cellfun(@(x) sqrt(bs_frac)*std(x,[],4,'omitnan'),g2_bootstrap{ii},'UniformOutput',false);
+% end
+% 
+% E_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E_samp);
+% E_bootstrap_sdev=cellfun(@(x) sqrt(bs_frac)*std(x,'omitnan'),E_samp);
+% 
+% E0_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E0_samp);
+% E0_bootstrap_sdev=cellfun(@(x) sqrt(bs_frac)*std(x,'omitnan'),E0_samp);
+% 
+% %%% diplay some output
+% par_T'
+% 
+% E_par'
+% [E_bootstrap_mean,E_bootstrap_sdev]'
+% 
+% E0_par'
+% [E0_bootstrap_mean,E0_bootstrap_sdev]'
 % 
 % 
+% %% Correlation - data vis
+% % Measured correlation
+% figure('Name','E_raw');
+% 
+% hh=ploterr(par_T/10e-6,E_par,...
+%     [],E_bootstrap_sdev,...
+%     'o','hhxy',0);
+% set(hh(1),'Marker','o','MarkerSize',7,...
+%     'Color','b','LineWidth',1.2,...
+%     'MarkerFaceColor','w');
+% set(hh(2),'Color','b','LineWidth',1.2);  % Y-err
+% 
+% % xlim([0,1]);
+% ylim([-1,1]);
+% xlabel('$\theta_0/\pi$');
+% ylabel('$E$');
+% 
+% 
+% % Mode occupancy corrected correlation
+% figure('Name','E_corrected');
+% 
+% hh=ploterr(par_T/10e-6,E0_par,...
+%     [],E0_bootstrap_sdev,...
+%     'o','hhxy',0);
+% set(hh(1),'Marker','o','MarkerSize',7,...
+%     'Color','k','LineWidth',1.2,...
+%     'MarkerFaceColor','w');
+% set(hh(2),'Color','k','LineWidth',1.2);  % Y-err
+% 
+% % xlim([0,1]);
+% ylim([-1,1]);
+% xlabel('$\theta_0/\pi$');
+% ylabel('$\bar{E}$');
+% 
+% ylim([-1,1]);
+% 
+% 
+% 
+% %% simple vis of 3D g2
+% %   NOTE: 3d g2 is completely averaged across Y-axis
+% for ii=1:nparam
+%     
+%     tPar=par_T(ii);
+%     tfigname=sprintf('g2_T%0.3g',tPar);
+%     
+%     figure('Name',tfigname);
+%     hold on;
+%     for jj=1:3      % 3-types of spin-spin type of mom-correlation
+%         subplot(1,3,jj);
+%         imagesc(mean(g2{ii}{jj},3));        % averaged across Y (3rd dim)
+%         
+%         title(sprintf('TH=%d, G2=%d',ii,jj));
+%         colorbar;
+%         
+%         axis square;
+%     end
+% end
