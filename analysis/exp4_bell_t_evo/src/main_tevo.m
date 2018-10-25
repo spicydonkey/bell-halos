@@ -154,7 +154,8 @@ for ii=1:n_tau
 end
 
 
-%% vis: corrected parity
+%% vis: corrected parity - ALL
+%%% ALL
 [cc,ccl,ccd]=palette(n_zone);
 
 h=figure('Name','triplet_halo_tevo','Units',f_units,'Position',f_pos,'Renderer',f_ren);
@@ -177,5 +178,69 @@ xlabel('$\tau~[\textrm{ms}]$');
 ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
 ax.FontSize=fontsize;
 ax.LineWidth=1.2;
-% ylim([-1,1]);
+ylim([-1.2,1.2]);
 
+%% vis: Polar distribution
+% config
+iaz_disp=[1,4,7];
+
+for ii=1:length(iaz_disp)
+    iaz=iaz_disp(ii);       % azim idx to great circle
+    figname=sprintf('B0_tevo_polar_%0.0f',rad2deg(Vaz(iaz)));
+    
+    % figure
+    figure('Name',figname,...
+        'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    hold on;
+    
+    pleg=NaN(n_el,1);
+    for jj=1:n_el
+        tp=ploterr(tau,squeeze(B0(:,iaz,jj)),[],squeeze(B0_bs_se(:,iaz,jj)),'-o','hhxy',0);
+        set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
+            'MarkerFaceColor',ccl(jj,:),'Color',cc(jj,:),'DisplayName',num2str(rad2deg(Vel(jj)),2));
+        set(tp(2),'LineWidth',line_wid,'Color',cc(jj,:));
+        pleg(jj)=tp(1);
+    end
+    
+    % annotation
+    box on;
+    ax=gca;
+    xlabel('$\tau~[\textrm{ms}]$');
+    ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
+    ax.FontSize=fontsize;
+    ax.LineWidth=1.2;
+    ylim([-1.2,1.2]);
+    legend(pleg);
+    legend(pleg,'Location','EastOutside');
+end
+
+%% vis: Equatorial distribution
+% config
+[~,iel_0]=min(abs(Vel));
+el_0=Vel(iel_0);
+
+figname='B0_tevo_eqt';
+
+% figure
+figure('Name',figname,...
+    'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+hold on;
+
+pleg=NaN(n_az,1);
+for ii=1:n_az
+    tp=ploterr(tau,squeeze(B0(:,ii,iel_0)),[],squeeze(B0_bs_se(:,ii,iel_0)),'-o','hhxy',0);
+    set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
+        'MarkerFaceColor',ccl(ii,:),'Color',cc(ii,:),'DisplayName',num2str(rad2deg(Vaz(ii)),2));
+    set(tp(2),'LineWidth',line_wid,'Color',cc(ii,:));
+    pleg(ii)=tp(1);
+end
+
+% annotation
+box on;
+ax=gca;
+xlabel('$\tau~[\textrm{ms}]$');
+ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
+ax.FontSize=fontsize;
+ax.LineWidth=1.2;
+ylim([-1.2,1.2]);
+legend(pleg,'Location','EastOutside');
