@@ -35,6 +35,7 @@ str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
 mark_siz=7;
 line_wid=1.5;
 fontsize=12;
+ax_lwidth=1.2;
 
 %% load data
 load(fdata);
@@ -177,7 +178,7 @@ ax=gca;
 xlabel('$\tau~[\textrm{ms}]$');
 ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
 ax.FontSize=fontsize;
-ax.LineWidth=1.2;
+ax.LineWidth=ax_lwidth;
 ylim([-1.2,1.2]);
 
 %% vis: Polar distribution

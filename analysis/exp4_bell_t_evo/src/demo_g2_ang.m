@@ -93,9 +93,10 @@ for ii=1:nfiles
     ax=gca;
     ax.FontSize=fontsize;
     ax.LineWidth=ax_lwidth;
-    uistack(ax.Layer,'top');
+    ax.Layer='top';
     xlabel('$\Delta\theta$ (rad)');
     ylabel('$g^{(2)}$');
-    legend(tp,'Location','Northwest');
+    lgd=legend(tp,'Location','Northwest');
+    lgd.FontSize=fontsize-1;
     xlim(dth_lim);
 end
