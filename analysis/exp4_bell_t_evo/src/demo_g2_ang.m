@@ -7,12 +7,14 @@
 
 %% configs
 % FILES
-path_dir='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo';
+% path_dir='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo';
+path_dir='C:\Users\David\Dropbox\PhD\data\bell_epr_2018\proc\exp4_tevo';
 fname_data='exp4_20181025.mat';
 
 % VIS
 f_units='normalized';
-f_pos=[0.2,0.2,0.2,0.3];
+% f_pos=[0.2,0.2,0.2,0.3];
+f_pos=[0.2,0.2,0.4,0.6];
 f_ren='painters';
 
 [c,cl,cd]=palette(3);
@@ -42,7 +44,9 @@ n_dth=30;
 
 % construct diff-angle bins for g2 histogram
 dth_ed=linspace(dth_lim(1),dth_lim(2),n_dth);
-dth=edge2cent(dth_ed);
+dth=edge2cent(dth_ed);      % angle between k1 and k2 (0 for CL)
+th=pi-dth;      % angle between -k1 and k2 (0 for BB)
+th_lim=sort(pi-dth_lim);
 
 %%% g2 analysis
 % preallocate
@@ -70,6 +74,22 @@ for ii=1:nfiles
     progressbar(ii/nfiles);
 end
 
+%% gaussian fit to g2
+% Constraints: MU = 0, OFFSET = 1
+fgauss.mdl='y~amp*exp(-1*x^2/(2*sigma^2))+1';       
+fgauss.cname={'amp','sigma'};
+fgauss.fopt=statset('TolFun',10^-10,'TolX',10^-10,'MaxIter',10^6,'UseParallel',0);
+
+% Fitting
+sigma0=0.02;
+% g2_fit=cell(nfiles,3);
+g2_fitmdl=cellfun(@(g) fitnlm(th,g,fgauss.mdl,[g(1),sigma0],...
+    'CoefficientNames',fgauss.cname,'Options',fgauss.fopt),g2,'UniformOutput',false);
+
+% eval fitted model
+th_fit=linspace(0,th_lim(2),1e3);
+g2_fit=cellfun(@(f) feval(f,th_fit),g2_fitmdl,'UniformOutput',false);
+
 %% vis: angular g2
 % figures
 for ii=1:nfiles
@@ -80,10 +100,15 @@ for ii=1:nfiles
     hold on;
     tp=NaN(3,1);
     for jj=1:3
-        tp(jj)=plot(dth,g2{ii,jj},...
-            'LineStyle',line_sty{jj},'LineWidth',line_wid,'Color',c(jj,:),...
+        % data
+        tp(jj)=plot(th,g2{ii,jj},...
+            'LineStyle','none','LineWidth',line_wid,'Color',c(jj,:),...
             'MarkerSize',mark_siz,'Marker',mark_typ{jj},'MarkerFaceColor',cl(jj,:),...
             'DisplayName',str_ss{jj});
+        % fitted
+        plot(th_fit,g2_fit{ii,jj},...
+            'LineStyle',line_sty{jj},'LineWidth',line_wid,'Color',c(jj,:));
+        
         titlestr=sprintf('%s%0.2f ms','$\tau=$',tau(ii));
         title(titlestr);
     end
@@ -96,7 +121,7 @@ for ii=1:nfiles
     ax.Layer='top';
     xlabel('$\Delta\theta$ (rad)');
     ylabel('$g^{(2)}$');
-    lgd=legend(tp,'Location','Northwest');
+    lgd=legend(tp,'Location','Northeast');
     lgd.FontSize=fontsize-1;
-    xlim(dth_lim);
+    xlim(th_lim);
 end
