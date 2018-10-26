@@ -4,9 +4,28 @@
 % DKS
 % 2018-06-06
 
-
+%% CONFIGS
+% data file
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\expS4_ramsey\src\config_1.m';
 config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\expS4_ramsey\src\config_1.m';
+
+% vis
+f_units='normalized';
+f_pos=[0.2,0.2,0.2,0.3];
+f_ren='painters';
+
+[c,cl,cd]=palette(3);
+% c_gray=0.6*ones(1,3);
+% line_sty={'-','--',':'};
+mark_typ={'o','^','d','s'};
+% str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
+% str_ss={'$m_J = 1$','$m_J = 0$'};
+% str_ss={'$m_J = 1$','$m_J = 0$','$m_J = -1$'};
+% str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
+mark_siz=7;
+line_wid=1.5;
+fontsize=12;
+ax_lwidth=1.2;
 
 
 %% load config
@@ -366,20 +385,27 @@ P_mJ_halo_std=cat(2,P_mJ_halo_std{:});
 %   pulse state.
 %
 
-ramsey_mdl='p~0.5*(1-amp*cos(x1))';
+% HACK to simple sine fits to mJ=1/0 Ramsey fringe separately
+ramsey_mdl{1}='p~0.5*(1-amp*cos(x1))';
+ramsey_mdl{2}='p~0.5*(1+amp*cos(x1))';
 
-idx_mJ=1;   % mJ=1
-tp=P_mJ_halo_avg(:,idx_mJ);
+fit_ramsey_halo=cell(2,1);
+fit_ramsey_halo_params=cell(2,1);
 
-% estimate params
-tAmp=max(tp)-min(tp);
-tparam0=tAmp;
-
-%%% fit model
-fopts=statset('Display','off');
-fit_ramsey_halo=fitnlm(par_dphi,tp,ramsey_mdl,tparam0,'CoefficientNames',{'amp'},...
-    'Options',fopts);
-fit_ramsey_halo_params=fit_ramsey_halo.Coefficients.Estimate;   % get fitted model params
+for idx_mJ=1:2      % mJ=1,0
+%     idx_mJ=1;   % mJ=1
+    tp=P_mJ_halo_avg(:,idx_mJ);
+    
+    % estimate params
+    tAmp=max(tp)-min(tp);
+    tparam0=tAmp;
+    
+    %%% fit model
+    fopts=statset('Display','off');
+    fit_ramsey_halo{idx_mJ}=fitnlm(par_dphi,tp,ramsey_mdl{idx_mJ},tparam0,'CoefficientNames',{'amp'},...
+        'Options',fopts);
+    fit_ramsey_halo_params{idx_mJ}=fit_ramsey_halo{idx_mJ}.Coefficients.Estimate;   % get fitted model params
+end
 
 
 %% MOMENTUM-RESOLVED: Ramsey fringe
@@ -460,6 +486,8 @@ end
 
 
 %% Fit Ramsey fringe (momentum-zone resolved fit)
+idx_mJ=1;       % analyse mJ=1 only
+
 P_momzone=P_mJ_zone_avg{idx_mJ};  % get pop fracs for all (expparams,zones) for this mJ
 
 fit_ramsey_zone=cell(nzone_th,nzone_phi);
@@ -480,7 +508,7 @@ for ii=1:nzone_th*nzone_phi
     
     %%% fit model
     fopts=statset('Display','off');
-    fit_ramsey_zone{mm,nn}=fitnlm(par_dphi,tp,ramsey_mdl,tparam0,'CoefficientNames',{'amp'},...
+    fit_ramsey_zone{mm,nn}=fitnlm(par_dphi,tp,ramsey_mdl{idx_mJ},tparam0,'CoefficientNames',{'amp'},...
         'Options',fopts);
     fit_ramsey_zone_param(mm,nn)=fit_ramsey_zone{mm,nn}.Coefficients.Estimate;
 end
@@ -492,53 +520,41 @@ errfrac_amp=std(ramsey_amp_zone(:))/mean(ramsey_amp_zone(:));
 %% DATA VISUALIZATION
 % evaluate fitted model
 tt=linspace(-pi,3*pi,1e4);
+
 %% Momentum mode unresolved
-% config
-font_siz_reg=12;
-font_siz_sml=10;
-font_siz_lrg=14;
-mark_siz=7;
-line_wid=1.1;
-mark_typ={'o','^','d'};
-
-% better colors
-[c0_mf,clight_mf,cdark_mf]=palette(n_mf);
-gray_val=0.8;
-c0_mf(3,:)=[0,0,0]; clight_mf(3,:)=gray_val*[1,1,1]; cdark_mf(3,:)=[0,0,0];   % third color to black and grays
-
-
-%%% plot
-figure('Name','ramsey_fringe');
+figure('Name','ramsey_fringe','Units',f_units,'Position',[0.2,0.2,0.2,0.25],'Renderer',f_ren);
 hold on;
 
 % Fitted model
-pp=feval(fit_ramsey_halo,tt);
-pfit=plot(tt,pp,'Color',clight_mf(idx_mJ,:),'LineWidth',2,'LineStyle','-');
+for ii=1:2
+    pp=feval(fit_ramsey_halo{ii},tt);
+    pfit=plot(tt,pp,'Color',cl(ii,:),'LineWidth',line_wid,'LineStyle','-');
+end
 
 % DATA
 h=NaN(n_mf,1);
 for ii=1:n_mf
     th=ploterr(par_dphi,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
-    set(th(1),'color',c0_mf(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
-        'MarkerSize',mark_siz,'MarkerFaceColor',clight_mf(ii,:),...
+    set(th(1),'color',c(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+        'MarkerSize',mark_siz,'MarkerFaceColor',cl(ii,:),...
         'DisplayName',num2str(configs.mf(ii).mf));
-    set(th(2),'color',c0_mf(ii,:),'LineWidth',line_wid);
+    set(th(2),'color',c(ii,:),'LineWidth',line_wid);
     
     h(ii)=th(1);
 end
 
-set(gca,'FontSize',font_siz_reg);
-
-set(gca,'Layer','Top');     % graphics axes should be always on top
 box on;
+ax=gca;
+ax.LineWidth=ax_lwidth;
+ax.FontSize=fontsize;
+set(ax,'Layer','Top');     % graphics axes should be always on top
 
-% xlabel('$\phi$');
 xlabel('Relative phase $\phi$');
-ylabel('$P$');
+ylabel('Population fraction $P$');
 
 lgd=legend(h,'Location','East');
-title(lgd,'$m_J$');
-set(lgd,'FontSize',font_siz_reg);
+% title(lgd,'$m_J$');
+set(lgd,'FontSize',fontsize-1);
 
 xlim([0-2*pi/25,2*pi+2*pi/25]);
 xticks(0:pi/2:2*pi);
@@ -569,7 +585,7 @@ clight_zone=parula(nzone_th*nzone_phi);
 % [~,c0_zone]=colshades(clight_zone);
 
 
-h_ramsey_momzone=figure('Name','ramsey_momzone');
+h_ramsey_momzone=figure('Name','ramsey_momzone','Units',f_units,'Position',f_pos,'Renderer',f_ren);
 hold on;
 
 h=[];
@@ -600,10 +616,11 @@ for ii=1:nzone_th*nzone_phi
 end
 
 % annotatations
-ax=gca;
-set(ax,'FontSize',font_siz_reg);
-set(ax,'Layer','Top');     % graphics axes should be always on top
 box on;
+ax=gca;
+ax.LineWidth=ax_lwidth;
+ax.FontSize=fontsize;
+set(ax,'Layer','Top');     % graphics axes should be always on top
 
 xlim([0-2*pi/25,2*pi+2*pi/25]);
 ax.XTick=0:pi/2:2*pi;
@@ -613,7 +630,7 @@ ylim([0,1]);
 
 % xlabel('$\phi$');
 xlabel('Relative phase $\phi$');
-ylabel('$P$');
+ylabel('Population fraction $P$');
 
 
 %% Exploded figure of halo by lat-lon zones
@@ -675,7 +692,6 @@ plot_scat_col=plot_scat_col(2:end-1,:);
 
 % colormaps
 % plot_scat_col=palette(numel(k_momzone_exp));
-
 
 h_halo_exp=figure('Name','halo_momzone_exploded');
 hold on;
