@@ -12,7 +12,7 @@ exp_param=expparams();
 % configs.path.base='C:\Users\HE BEC\bell\2018april\exp4_tevo\1.25ms';
 % configs.path.data=fullfile(configs.path.base,'data');
 
-configs.path.base='C:\Users\HE BEC\bell_data\exp4_bell_t_evo\1.7ms';
+configs.path.base='C:\Users\HE BEC\bell_data\exp4_bell_t_evo\1.25ms';
 configs.path.data=configs.path.base;
 
 configs.path.out=fullfile(configs.path.base,'out');

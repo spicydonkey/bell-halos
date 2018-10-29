@@ -13,8 +13,8 @@
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms7.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_0ms95.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms1.m';
-% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms25.m';
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms4.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms25.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\src\config_1ms4.m';
 
 %% load config
 run(config_name);
