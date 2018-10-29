@@ -7,13 +7,17 @@
 
 %% configs
 % FILES
-% path_dir='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo';
-path_dir='C:\Users\David\Dropbox\PhD\data\bell_epr_2018\proc\exp4_tevo';
-fname_data='exp4_20181025.mat';
+path_dir='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo';
+% path_dir='C:\Users\David\Dropbox\PhD\data\bell_epr_2018\proc\exp4_tevo';
+fname_data='exp4_20181029.mat';
+
+% G2
+dth_lim=[pi-0.2,pi];
+n_dth=30;
 
 % BOOTSTRAPPING
 bs_frac=0.2;
-bs_nrep=5;
+bs_nrep=10;
 
 % VIS
 f_units='normalized';
@@ -42,10 +46,6 @@ warning('Reducing data for speed.');
 k_tau{1}=k_tau{1}(1:3000,:);
 
 %% angular g2
-% configs
-dth_lim=[pi-0.2,pi];
-n_dth=30;
-
 % construct diff-angle bins for g2 histogram
 dth_ed=linspace(dth_lim(1),dth_lim(2),n_dth);
 dth=edge2cent(dth_ed);      % angle between k1 and k2 (0 for CL)
@@ -60,22 +60,7 @@ N=cell(nfiles,3);
 
 progressbar(0);
 for ii=1:nfiles
-%     tk=k_tau{ii};
-    
-%     tg2=cell(1,3);
-%     tG=cell(1,3);
-%     tN=cell(1,3);
-    
     [g2(ii,:),G(ii,:),N(ii,:)]=g2_ang_disthalo(k_tau{ii},dth_ed,0);
-%     [tg2{1},tG{1},tN{1}]=g2_ang(tk(:,1),dth_ed);
-%     [tg2{2},tG{2},tN{2}]=g2_ang(tk(:,2),dth_ed);
-%     [tg2{3},tG{3},tN{3}]=g2x_ang(tk,dth_ed);
-    
-%     %store
-%     g2(ii,:)=tg2(:);
-%     G(ii,:)=tG(:);
-%     N(ii,:)=tN(:);
-    
     progressbar(ii/nfiles);
 end
 

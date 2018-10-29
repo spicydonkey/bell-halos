@@ -4,10 +4,10 @@
 
 %% CONFIGS
 % data file
-fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\exp4_20181025.mat';
+fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\exp4_20181029.mat';
 
 % capture region
-alpha=pi/6;     % cone half-angle
+alpha=pi/8;     % cone half-angle
 n_az=12;         % azimuthally equispaced between 0 and pi (excl)
 n_el=7;         % elev equispaced between -maxphi and maxphi
 phi_max=asin(0.75);
