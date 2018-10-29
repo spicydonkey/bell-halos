@@ -8,8 +8,10 @@ fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\exp4_201810
 
 % capture region
 alpha=pi/12;     % cone half-angle
-n_az=12;         % azimuthally equispaced between 0 and pi (excl)
-n_el=7;         % elev equispaced between -maxphi and maxphi
+% n_az=12;         % azimuthally equispaced between 0 and pi (excl)
+% n_el=7;         % elev equispaced between -maxphi and maxphi
+n_az=2;
+n_el=1;
 phi_max=asin(0.75);
 
 % g2
@@ -23,6 +25,7 @@ bs_nrep=20;
 % vis
 f_units='normalized';
 f_pos=[0.2,0.2,0.2,0.3];
+f_pos_wide=[0.2,0.2,0.25,0.3];
 f_ren='painters';
 
 [c,cl,cd]=palette(3);
@@ -39,6 +42,11 @@ ax_lwidth=1.2;
 
 %% load data
 load(fdata);
+
+%% PROTOTYPE: reduce data
+warning('Reducing data for speed.');
+k_tau{1}=k_tau{1}(1:3000,:);
+
 
 %% create halo sections to investigate
 Vaz=linspace(0,pi,n_az+1);
@@ -80,7 +88,6 @@ B_bs_se=m3;
 B0_bs_se=m3;
 
 for ii=1:n_tau
-% for ii=2:n_tau      % DEBUG: skip HUGE dataset
     %% 
     k=k_tau{ii};
     n_data_size=size(k,1);
@@ -187,11 +194,12 @@ iaz_disp=[1,4,7];
 
 for ii=1:length(iaz_disp)
     iaz=iaz_disp(ii);       % azim idx to great circle
-    figname=sprintf('B0_tevo_polar_%0.0f',rad2deg(Vaz(iaz)));
+    taz=Vaz(iaz);
+    figname=sprintf('B0_tevo_polar_%0.0f',rad2deg(taz));
     
     % figure
     figure('Name',figname,...
-        'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+        'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
     hold on;
     
     pleg=NaN(n_el,1);
@@ -211,8 +219,10 @@ for ii=1:length(iaz_disp)
     ax.FontSize=fontsize;
     ax.LineWidth=1.2;
     ylim([-1.2,1.2]);
-    legend(pleg);
-    legend(pleg,'Location','EastOutside');
+    titlestr=sprintf('%s %0.0f','$\theta=$',rad2deg(taz));
+    title(titlestr);
+    lgd=legend(pleg,'Location','EastOutside');
+    title(lgd,'Latitude $\phi$ (deg)');
 end
 
 %% vis: Equatorial distribution
@@ -224,7 +234,7 @@ figname='B0_tevo_eqt';
 
 % figure
 figure('Name',figname,...
-    'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
 hold on;
 
 pleg=NaN(n_az,1);
@@ -236,6 +246,8 @@ for ii=1:n_az
     pleg(ii)=tp(1);
 end
 
+title('Equatorial');
+
 % annotation
 box on;
 ax=gca;
@@ -244,4 +256,6 @@ ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
 ax.FontSize=fontsize;
 ax.LineWidth=1.2;
 ylim([-1.2,1.2]);
-legend(pleg,'Location','EastOutside');
+title('Equator ($\phi=0$)');
+lgd=legend(pleg,'Location','EastOutside');
+title(lgd,'Azimuth $\theta$ (deg)');
