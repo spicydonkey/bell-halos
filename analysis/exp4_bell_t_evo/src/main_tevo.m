@@ -7,11 +7,9 @@
 fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\exp4_20181025.mat';
 
 % capture region
-alpha=pi/12;     % cone half-angle
-% n_az=12;         % azimuthally equispaced between 0 and pi (excl)
-% n_el=7;         % elev equispaced between -maxphi and maxphi
-n_az=2;
-n_el=1;
+alpha=pi/6;     % cone half-angle
+n_az=12;         % azimuthally equispaced between 0 and pi (excl)
+n_el=7;         % elev equispaced between -maxphi and maxphi
 phi_max=asin(0.75);
 
 % g2
@@ -20,7 +18,7 @@ lim_dk=[-0.2,0.2];
 
 % bootstrapping
 bs_frac=0.2;
-bs_nrep=20;
+bs_nrep=20;        %20;
 
 % vis
 f_units='normalized';
@@ -46,7 +44,6 @@ load(fdata);
 %% PROTOTYPE: reduce data
 warning('Reducing data for speed.');
 k_tau{1}=k_tau{1}(1:3000,:);
-
 
 %% create halo sections to investigate
 Vaz=linspace(0,pi,n_az+1);
@@ -78,8 +75,8 @@ g0=m4;
 B=m3;
 B0=m3;
 
-% g2_bs_mu=c4;
-% g2_bs_se=c4;
+g2_bs_mu=c4;
+g2_bs_se=c4;
 g0_bs_mu=m4;
 g0_bs_se=m4;
 B_bs_mu=m3;
@@ -135,9 +132,12 @@ for ii=1:n_tau
         [tB_bs,tB0_bs]=g2toE(mean(tg0_bs(:,1:2),2),tg0_bs(:,3));
         
         %%% statistics
-        % TODO
-%         tg2_bs_mu
-%         tg2_bs_se
+        tg2_bs_cat=cell(1,3);       % tidy bs sampled g2
+        for kk=1:3
+            tg2_bs_cat{kk}=cat(4,tg2_bs{:,kk});
+        end
+        tg2_bs_mu=cellfun(@(x) mean(x,4),tg2_bs_cat,'UniformOutput',false);
+        tg2_bs_se=cellfun(@(x) sqrt(bs_frac)*std(x,0,4),tg2_bs_cat,'UniformOutput',false);
 
         tg0_bs_mu=mean(tg0_bs,1);
         tg0_bs_se=sqrt(bs_frac)*std(tg0_bs,0,1);
@@ -148,8 +148,8 @@ for ii=1:n_tau
         tB0_bs_se=sqrt(bs_frac)*std(tB0_bs,0,1);
         
         %%% store
-%         g2_bs_mu(:,ii,iaz,iel)=tg2_bs_mu(:);
-%         g2_bs_se(:,ii,iaz,iel)=tg2_bs_se(:);
+        g2_bs_mu(:,ii,iaz,iel)=tg2_bs_mu(:);
+        g2_bs_se(:,ii,iaz,iel)=tg2_bs_se(:);
         g0_bs_mu(:,ii,iaz,iel)=tg0_bs_mu;
         g0_bs_se(:,ii,iaz,iel)=tg0_bs_se;
         B_bs_mu(ii,iaz,iel)=tB_bs_mu;
