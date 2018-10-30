@@ -161,6 +161,34 @@ for ii=1:n_tau
     end
 end
 
+%% Fit time-evolution model
+% simplest model: time-independent asymmetry of Bell triplet
+% B_pi/2 = cos(hbar*gamma* deltaB * t)
+
+% set up model and solver
+mdl_tevo.mdl='y~cos(om*x)';
+mdl_tevo.cname={'om'};
+mdl_tevo.fopt=statset('TolFun',10^-10,'TolX',10^-10,'MaxIter',10^6,'UseParallel',0);
+par0=1;
+
+% preproc
+tau0=tau-tau(1);        % time evolution since T(PSI+)~0.8 ms
+tau0_fit=linspace(min(tau0),max(tau0),1e3);
+
+% fit
+mdl_tevo.fit=cell(n_az,n_el);
+for ii=1:n_zone
+    [iaz,iel]=ind2sub([n_az,n_el],ii);
+    
+    tB0=B0(:,iaz,iel);
+    mdl_tevo.fit{iaz,iel}=fitnlm(tau0,tB0,mdl_tevo.mdl,par0,...
+        'CoefficientNames',mdl_tevo.cname,'Options',mdl_tevo.fopt);
+end
+
+% eval fitted model
+mdl_tevo.fit_par=cellfun(@(m) m.Coefficients.Estimate,mdl_tevo.fit);
+B0_fit=cellfun(@(f) feval(f,tau0_fit),mdl_tevo.fit,'UniformOutput',false);
+
 
 %% vis: corrected parity - ALL
 %%% ALL
@@ -182,6 +210,7 @@ end
 % annotate
 box on;
 ax=gca;
+set(ax,'Layer','Top');
 xlabel('$\tau~[\textrm{ms}]$');
 ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
 ax.FontSize=fontsize;
@@ -204,16 +233,23 @@ for ii=1:length(iaz_disp)
     
     pleg=NaN(n_el,1);
     for jj=1:n_el
-        tp=ploterr(tau,squeeze(B0(:,iaz,jj)),[],squeeze(B0_bs_se(:,iaz,jj)),'-o','hhxy',0);
+%         tp=ploterr(tau,squeeze(B0(:,iaz,jj)),[],squeeze(B0_bs_se(:,iaz,jj)),'-o','hhxy',0);
+        tp=ploterr(tau,squeeze(B0(:,iaz,jj)),[],squeeze(B0_bs_se(:,iaz,jj)),'o','hhxy',0);
         set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
             'MarkerFaceColor',ccl(jj,:),'Color',cc(jj,:),'DisplayName',num2str(rad2deg(Vel(jj)),2));
         set(tp(2),'LineWidth',line_wid,'Color',cc(jj,:));
         pleg(jj)=tp(1);
+        
+        % fitted model
+        tpf=plot(tau0_fit+tau(1),B0_fit{iaz,jj},'-',...
+            'LineWidth',line_wid,'Color',cc(jj,:));
+        uistack(tpf,'bottom');
     end
     
     % annotation
     box on;
     ax=gca;
+    set(ax,'Layer','Top');
     xlabel('$\tau~[\textrm{ms}]$');
     ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
     ax.FontSize=fontsize;
@@ -239,11 +275,17 @@ hold on;
 
 pleg=NaN(n_az,1);
 for ii=1:n_az
-    tp=ploterr(tau,squeeze(B0(:,ii,iel_0)),[],squeeze(B0_bs_se(:,ii,iel_0)),'-o','hhxy',0);
+%     tp=ploterr(tau,squeeze(B0(:,ii,iel_0)),[],squeeze(B0_bs_se(:,ii,iel_0)),'-o','hhxy',0);
+    tp=ploterr(tau,squeeze(B0(:,ii,iel_0)),[],squeeze(B0_bs_se(:,ii,iel_0)),'o','hhxy',0);
     set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
         'MarkerFaceColor',ccl(ii,:),'Color',cc(ii,:),'DisplayName',num2str(rad2deg(Vaz(ii)),2));
     set(tp(2),'LineWidth',line_wid,'Color',cc(ii,:));
     pleg(ii)=tp(1);
+    
+    % fitted model
+    tpf=plot(tau0_fit+tau(1),B0_fit{ii,iel_0},'-',...
+        'LineWidth',line_wid,'Color',cc(ii,:));
+    uistack(tpf,'bottom');
 end
 
 title('Equatorial');
@@ -251,6 +293,7 @@ title('Equatorial');
 % annotation
 box on;
 ax=gca;
+set(ax,'Layer','Top');
 xlabel('$\tau~[\textrm{ms}]$');
 ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
 ax.FontSize=fontsize;
