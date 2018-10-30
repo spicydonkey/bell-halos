@@ -19,9 +19,9 @@ ff(end+1,:)=ff(1,:);
 r=1;    % mapped on a unit sphere
 [xx,yy,zz]=sph2cart(azim,elev,r);
 
-hs=surf(xx,yy,zz,ff);
+ax=surf(xx,yy,zz,ff);
 
-set(hs,'FaceAlpha',0.7);
+set(ax,'FaceAlpha',0.7);
 
 axis equal;
 box off;
