@@ -6,18 +6,18 @@
 % data file
 fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\exp4_20181029.mat';
 
-% capture region
-alpha=pi/12; % pi/8;        % cone half-angle
-lim_az=[0,pi];              % limit of azim angle (exc max lim)
-n_az=12;                	% equispaced bins
+% capture region - "central symmetry"!
+alpha=pi/10; % pi/8;        % cone half-angle
+lim_az=[0,pi];              % limit of azim angle (exc +pi)
+n_az=24;                	% equispaced bins
 phi_max=pi/4;
 lim_el=[-phi_max,phi_max];
-n_el=7;
+n_el=15;
 
 az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
 
 % g2
-n_dk=15;
+n_dk=7;     %15
 lim_dk=[-0.2,0.2];
 % n_dk=7;
 % lim_dk=[-0.1,0.1];
@@ -317,7 +317,6 @@ title(titlestr);
 lgd=legend(pleg,'Location','EastOutside');
 title(lgd,'Azimuth $\theta$ (deg)');
 
-
 %% vis: B0 distribution (3D)
 H=[];
 for ii=1:n_tau
@@ -325,8 +324,11 @@ for ii=1:n_tau
     figname=sprintf('B0_sphdist_3d_%0.2f',tau(ii));
     H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
     tB0=squeeze(B0(ii,:,:));
-    tp=plot_sph_surf(vaz,vel,tB0);
-    
+
+%     tp=plot_sph_surf(vaz,vel,tB0);
+    [vazf,velf,tB0f]=autofill_cent_symm(vaz,vel,tB0);
+    tp=plot_sph_surf(vazf,velf,tB0f);    
+
     % annotation
 %     tp.FaceAlpha=1;
 
@@ -361,8 +363,11 @@ for ii=1:n_tau
     figname=sprintf('B0_sphdist_2d_%0.2f',tau(ii));
     H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
     tB0=squeeze(B0(ii,:,:));
-    tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),tB0,'eckert4','texturemap');
-
+    
+%     tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),tB0,'eckert4','texturemap');
+    [vazf,velf,tB0f]=autofill_cent_symm(vaz,vel,tB0);
+    tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),tB0f,'eckert4','texturemap');
+    
     % annotation
     titlestr=sprintf('%s %0.2f ms','$\tau=$',tau(ii));
     title(titlestr);
@@ -382,7 +387,9 @@ end
 %% vis: deltaB (asymmetry measure) around halo: t-indep model (3D SPH)
 h=figure('Name','deltaB_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-tp=plot_sph_surf(vaz,vel,1e3*deltaB);
+% tp=plot_sph_surf(vaz,vel,1e3*deltaB);
+[vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB);
+tp=plot_sph_surf(vazf,velf,1e3*deltaBf);
 
 % annotation
 ax=gca;
@@ -406,7 +413,9 @@ cbar.Label.FontSize=fontsize;
 %% vis: deltaB (asymmetry measure) around halo: t-indep model (2D PROJ MAP)
 h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),1e3*deltaB,'eckert4','texturemap');
+% tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),1e3*deltaB,'rect','texturemap');
+[vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB);
+tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaBf,'eckert4','texturemap');
 
 % annotation
 ax=gca;
