@@ -7,12 +7,12 @@
 fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\exp4_20181029.mat';
 
 % capture region
-alpha=pi/12; % pi/8;     % cone half-angle
-lim_az=[-pi,pi];            % limit of azim angle (exc max lim)
-n_az=24;                    % equispaced bins
-phi_max=pi/3;
+alpha=pi/12; % pi/8;        % cone half-angle
+lim_az=[0,pi];              % limit of azim angle (exc max lim)
+n_az=12;                	% equispaced bins
+phi_max=pi/4;
 lim_el=[-phi_max,phi_max];
-n_el=9;
+n_el=7;
 
 az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
 
