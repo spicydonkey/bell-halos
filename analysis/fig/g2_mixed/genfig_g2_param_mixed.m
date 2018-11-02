@@ -186,6 +186,6 @@ lgd=legend(pleg);
 lgd.FontSize=12;
 box on;
 xlabel('Pulse duration $\tau$ [$\mu$s]');
-ylabel('Normalised correlation $\mathcal{G}$');
+ylabel('Normalised correlation $\mathcal{G}_{ij}$');
 ax.FontSize=12;
 ax.LineWidth=1.2;

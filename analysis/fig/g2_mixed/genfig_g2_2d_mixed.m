@@ -61,7 +61,8 @@ for ii=1:numel(S)
         end
         
         % colorbar
-        str_cbar='$g^{(2)}_{\textrm{BB}}$';
+%         str_cbar='$g^{(2)}_{\textrm{BB}}$';
+        str_cbar='$g^{(2)}_{ij}$';
         tt=text(0.975,y(1)+0.5*h,str_cbar,'FontSize',16,'Rotation',90,...
             'HorizontalAlignment','center','VerticalAlignment','middle');
         
