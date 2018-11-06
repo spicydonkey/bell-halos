@@ -114,12 +114,12 @@ for ii=1:n_tau
         tel=vel(jj);
         
         % capture vecs in section
-        [~,b_A]=cellfun(@(x) inCone(x,taz,tel,alpha),k,'UniformOutput',false);     % in k
-        [~,b_B]=cellfun(@(x) inCone(x,taz+pi,-tel,alpha),k,'UniformOutput',false);    % in -k
-        b_AB=cellfun(@(b1,b2) b1|b2,b_A,b_B,'UniformOutput',false);        % in both
-        
-        k_in=cellfun(@(x,b) x(b,:),k,b_AB,'UniformOutput',false);
-        
+%         [~,b_A]=cellfun(@(x) inCone(x,taz,tel,alpha),k,'UniformOutput',false);     % in k
+%         [~,b_B]=cellfun(@(x) inCone(x,taz+pi,-tel,alpha),k,'UniformOutput',false);    % in -k
+%         b_AB=cellfun(@(b1,b2) b1|b2,b_A,b_B,'UniformOutput',false);        % in both
+%         k_in=cellfun(@(x,b) x(b,:),k,b_AB,'UniformOutput',false);
+        k_in=cellfun(@(x) inDoubleCone(x,taz,tel,alpha),k,'UniformOutput',false);
+
         %% g2
         tg2=summary_disthalo_g2(k_in,dk_ed,0,0,0,0);
         
@@ -211,7 +211,7 @@ B0_fit=cellfun(@(f) feval(f,tau0_fit),mdl_tevo.fit,'UniformOutput',false);
 om_fit=1e3*mdl_tevo.fit_par;        % fitted omega [rad/s]
 om_se_fit=1e3*mdl_tevo.fit_par_se;
 deltaB=2*pi*om_fit/C_gymag;        % diff in B-field strength [G]
-deltaB_se=2*pi*om_se_fit/C_gymag;
+deltaB_se=2*pi*om_se_fit/C_gymag;   % standard error (fit)
 
 
 %% vis: corrected parity - ALL
@@ -287,16 +287,22 @@ figure('Name',figname,...
     'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
 hold on;
 
-pleg=NaN(n_az,1);
-for ii=1:n_az
-    tp=ploterr(tau,squeeze(B0(:,ii,iel_0)),[],squeeze(B0_bs_se(:,ii,iel_0)),'o','hhxy',0);
+disp_iaz=iaz_disp;
+
+% pleg=NaN(n_az,1);
+pleg=NaN(numel(disp_iaz),1);
+% for ii=1:n_az
+for ii=1:numel(disp_iaz)
+    tiaz=disp_iaz(ii);
+    tp=ploterr(tau,squeeze(B0(:,tiaz,iel_0)),[],squeeze(B0_bs_se(:,tiaz,iel_0)),'o','hhxy',0);
+%     tp=ploterr(tau,squeeze(B0(:,ii,iel_0)),[],squeeze(B0_bs_se(:,ii,iel_0)),'o','hhxy',0);
     set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
-        'MarkerFaceColor',ccl(ii,:),'Color',cc(ii,:),'DisplayName',num2str(rad2deg(Vaz(ii)),2));
+        'MarkerFaceColor',ccl(ii,:),'Color',cc(ii,:),'DisplayName',num2str(rad2deg(Vaz(tiaz)),2));
     set(tp(2),'LineWidth',line_wid,'Color',cc(ii,:));
     pleg(ii)=tp(1);
     
     % fitted model
-    tpf=plot(tau0_fit+tau(1),B0_fit{ii,iel_0},'-',...
+    tpf=plot(tau0_fit+tau(1),B0_fit{tiaz,iel_0},'-',...
         'LineWidth',line_wid,'Color',cc(ii,:));
     uistack(tpf,'bottom');
 end
