@@ -188,13 +188,23 @@ ylim([-1,1]);
 
 %%% inequality region
 %%%% BOGO
+% ABOVE
 p_bogo=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
     [B_bogo_max,B_bogo_max,ax.YLim(2),ax.YLim(2)],...
     c_bogo,...
     'EdgeColor','none');
 uistack(p_bogo,'bottom');      % this should REALLY be bottom - to not cover any other graphics
-set(gca,'Layer','Top');     % graphics axes should be always on top
+
 text(0,0.5*(B_bogo_max+1),sprintf('Nonlocal (QM)'),'FontSize',fontsize-1,'VerticalAlignment','middle');
+
+% BELOW
+p_bogo_2=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    [ax.YLim(1),ax.YLim(1),-B_bogo_max,-B_bogo_max],...
+    c_bogo,...
+    'EdgeColor','none');
+uistack(p_bogo_2,'bottom');      
+set(gca,'Layer','Top');
+% text(0,-0.5*(B_bogo_max+1),sprintf('Nonlocal (QM)'),'FontSize',fontsize-1,'VerticalAlignment','middle');
 
 % %%%% QENT
 % B_cent=0.5*(max(B)+min(B));   % centre value
@@ -207,6 +217,7 @@ text(0,0.5*(B_bogo_max+1),sprintf('Nonlocal (QM)'),'FontSize',fontsize-1,'Vertic
 % text(0,B_cent+0.5*B_qent_max_pkpk,sprintf('Separable'),'FontSize',fontsize,'VerticalAlignment','top');
 
 lgd=legend([p(1), p_B_psi]);
+set(gca,'Layer','Top');     % graphics axes should be always on top
 
 %% EPR-steering parameter
 % 20181022
@@ -243,7 +254,7 @@ uistack(tp,'bottom');
 box on;
 ax=gca;
 xlabel('Rotation angle $\theta$');
-ylabel('$\mathcal{S}\left(\theta\right)$')
+ylabel('$\mathcal{S}\left(\theta,\theta+\pi/2\right)$')
 ax.FontSize=fontsize;
 ax.LineWidth=ax_lwid;
 xlim([-0.1,pi/2+0.1]);
@@ -261,7 +272,7 @@ uistack(p_epr,'bottom');
 hatchfill2(p_epr,'single','HatchAngle',45,'HatchDensity',30,...
     'HatchColor','k','HatchLineWidth',1);
 set(gca,'Layer','Top');     % graphics axes should be always on top
-text(pi/4,0.5*(S_epr_min+2),sprintf('Bell nonlocality'),'FontSize',fontsize-1,...
+text(pi/4,0.5*(S_epr_min+2),sprintf('Bell correlation witness'),'FontSize',fontsize-1,...
     'HorizontalAlignment','center','VerticalAlignment','middle',...
     'BackgroundColor',c_epr);
 
