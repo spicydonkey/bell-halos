@@ -176,11 +176,12 @@ for ii=1:n_tau
     end
 end
 
-%% Fit time-evolution model
-% simplest model: time-independent asymmetry of Bell triplet
-% B_pi/2 = cos(hbar*gamma* deltaB * t)
-
+%% ANALYSIS: Magnetic gradiometry
 if do_fit
+    %% fit time-evolution model
+    % simplest model: time-independent asymmetry of Bell triplet
+    % B_pi/2 = cos(hbar*gamma* deltaB * t)
+
     % set up model and solver
     mdl_tevo.mdl='y~cos(om*x)';
     mdl_tevo.cname={'om'};
@@ -211,10 +212,26 @@ if do_fit
     om_se_fit=1e3*mdl_tevo.fit_par_se;
     deltaB=2*pi*om_fit/C_gymag;        % diff in B-field strength [G]
     deltaB_se=2*pi*om_se_fit/C_gymag;   % standard error (fit)
+    
+    %% cull outliers
+    % get outliers: fit uncertainty more than 1sig from median    
+    % A) # stdevs
+%     n_sig_outlier=0.3;
+%     dx_outlier=n_sig_outlier*std(deltaB_se(:));
+    % B) hard limit
+    dx_outlier=1e-3;        % hard bound
+    
+    b_fit_outlier=abs(deltaB_se-median(deltaB_se(:)))>dx_outlier;    
+
+    % outliers to NaN
+    deltaB_filt=deltaB;
+    deltaB_filt(b_fit_outlier)=NaN;
+    
+    deltaB_se_filt=deltaB_se;
+    deltaB_se_filt(b_fit_outlier)=NaN;
 end
 
-
-%% vis
+%% DATA VISUALISATION
 [cc,ccl,ccd]=palette(n_zone);
 
 %% vis: Polar distribution
@@ -318,11 +335,12 @@ if do_save_figs
     print(h,strcat(fpath,'.svg'),'-dsvg');
 end
 
-%% vis: deltaB (asymmetry measure) around halo: t-indep model (2D PROJ MAP)
+%% deltaB distribution
+%% MEAN: deltaB (asymmetry measure) around halo: t-indep model (2D PROJ MAP)
 if do_fit
     h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
     
-    [vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB);
+    [vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB_filt);
     tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaBf,'eckert4','texturemap');
     
     % % rectangle
@@ -354,6 +372,44 @@ if do_fit
         print(h,strcat(fpath,'.svg'),'-dsvg');
     end
 end
+
+%% Statistical uncertainty
+if do_fit
+    h=figure('Name','deltaB_unc','Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    
+    [vazf,velf,deltaB_sef]=autofill_cent_symm(vaz,vel,deltaB_se_filt);
+    tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaB_sef,'eckert4','texturemap');
+    
+    mu_se_dB=1e3*meanall(deltaB_sef,'omitnan');
+    sig_se_dB=1e3*stdall(deltaB_sef,'omitnan');
+    
+    % annotation
+    box on;
+    ax=gca;
+    set(ax,'Layer','Top');
+    ax.FontSize=fontsize;
+    ax.LineWidth=ax_lwidth;
+    
+    cbar=colorbar('SouthOutside');
+    cbar.TickLabelInterpreter='latex';
+    cbar.Label.Interpreter='latex';
+    cbar.Label.String='$\mathrm{SE}(\Delta \mathrm{B})$ [mG]';
+    cbar.Label.FontSize=fontsize;
+    
+    titlestr=sprintf('%s%0.1g(%0.1g)',...
+        '$\overline{\mathrm{SE}}=$',mu_se_dB,sig_se_dB);  % label expparam
+    title(titlestr);
+    
+    % save fig
+    if do_save_figs
+        savefigname=sprintf('fig_%s_%s',h.Name,getdatetimestr);
+        fpath=fullfile(dir_save,savefigname);
+        
+        saveas(h,strcat(fpath,'.fig'),'fig');
+        print(h,strcat(fpath,'.svg'),'-dsvg');
+    end
+end
+
 
 %% integrated G
 %% vis: G (integrated sum)
