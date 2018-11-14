@@ -12,9 +12,10 @@ alpha=pi/8;                 % cone half-angle
 lim_az=[0,pi];              % limit of azim angle (exc +pi)
 phi_max=pi/4;
 lim_el=[-phi_max,phi_max];
-n_az=24;                	% equispaced bins
-n_el=15;
+n_az=18;   %24;                	% equispaced bins
+n_el=11;   %15;
 az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
+el_disp=deg2rad([-30,0,30]);    % elev/lat zones to display
 
 % g2 
 n_dk=15;
@@ -24,8 +25,32 @@ lim_dk=[-0.2,0.2];
 dk_int_lim=0.1;
 
 % bootstrapping
-bs_frac=0.2;
-bs_nrep=20;
+bs_frac=0.5;
+bs_nrep=10;
+
+% FIT
+do_fit=false;
+
+% He*
+C_gymag=2.8e6;     % gyromagnetic ratio (gamma) [Hz/G]
+
+% vis
+f_units='normalized';
+f_pos=[0.2,0.2,0.2,0.3];
+f_pos_wide=[0.2,0.2,0.25,0.3];
+f_ren='painters';
+
+[c,cl,cd]=palette(3);
+% c_gray=0.6*ones(1,3);
+line_sty={'-','--',':','-.'};
+mark_typ={'o','s','^','d'};
+% str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
+% str_ss={'$m_J = 1$','$m_J = 0$'};
+str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
+mark_siz=7;
+line_wid=1.5;
+fontsize=12;
+ax_lwidth=1.2;
 
 %% configure g2
 dk_ed_vec=linspace(lim_dk(1),lim_dk(2),n_dk+1);
@@ -39,16 +64,20 @@ dIk_int=round(dk_int_lim/(range(lim_dk)/n_dk));
 intFilter=@(x) x(idx_dk0-dIk_int:idx_dk0+dIk_int,...
     idx_dk0-dIk_int:idx_dk0+dIk_int,idx_dk0-dIk_int:idx_dk0+dIk_int);
 
-
 %% load data
 load(fdata);
 
 %% PROTOTYPE: reduce data
 warning('Reducing data for speed.');
-k_tau{1}=k_tau{1}(1:3000,:);
+% k_tau{1}=k_tau{1}(1:3000,:);
 
 % warning('DEBUG ONLY!!!!');
 % k_tau=cellfun(@(k) k(1:100,:),k_tau,'UniformOutput',false);
+
+% TEST K-ALIGNMENT SENSITIVITY
+IDX_TAU=4;
+k_tau={k_tau{IDX_TAU}};
+tau=tau(IDX_TAU);
 
 %% k-modes
 Vaz=linspace(lim_az(1),lim_az(2),n_az+1);
@@ -59,9 +88,11 @@ Vel=linspace(lim_el(1),lim_el(2),n_el);
 n_zone=numel(vaz);
 
 % special angles
-[~,iaz_disp]=arrayfun(@(x) min(abs(Vaz-x)),az_disp);     % idx to ~displayable azim angles
+[~,iaz_disp]=arrayfun(@(x) min(abs(Vaz-x)),az_disp);     % idx to displayable azim
+[~,iel_disp]=arrayfun(@(x) min(abs(Vel-x)),el_disp);     % idx to displayable elev
+naz_disp=length(iaz_disp);
+nel_disp=length(iel_disp);
 [~,iel_0]=min(abs(Vel));        % idx to ~zero elev angle (equator)
-
 
 %% main
 n_tau=length(k_tau);
@@ -123,8 +154,7 @@ for ii=1:n_tau
         tB_se=sqrt(bs_frac)*std(tB_bs,[],1);
         tB0_mu=mean(tB0_bs,1);
         tB0_se=sqrt(bs_frac)*std(tB0_bs,[],1);
-        
-        
+                
         %% store
         G_int(ii,iaz,iel,:)=tG_int;
         G_sum(ii,iaz,iel)=tG_sum;
@@ -138,4 +168,247 @@ for ii=1:n_tau
         
         progressbar(jj/n_zone);
     end
+end
+
+%% Fit time-evolution model
+% simplest model: time-independent asymmetry of Bell triplet
+% B_pi/2 = cos(hbar*gamma* deltaB * t)
+
+if do_fit
+    % set up model and solver
+    mdl_tevo.mdl='y~cos(om*x)';
+    mdl_tevo.cname={'om'};
+    mdl_tevo.fopt=statset('TolFun',10^-10,'TolX',10^-10,'MaxIter',10^6,'UseParallel',0);
+    par0=1;
+    
+    % preproc
+    tau0=tau-tau(1);        % time evolution since T(PSI+)~0.8 [ms]
+    tau0_fit=linspace(min(tau0),max(tau0),1e3);
+    
+    % fit
+    mdl_tevo.fit=cell(n_az,n_el);
+    for ii=1:n_zone
+        [iaz,iel]=ind2sub([n_az,n_el],ii);
+        
+        tB0=B0(:,iaz,iel);
+        mdl_tevo.fit{iaz,iel}=fitnlm(tau0,tB0,mdl_tevo.mdl,par0,...
+            'CoefficientNames',mdl_tevo.cname,'Options',mdl_tevo.fopt);
+    end
+    
+    % eval fitted model
+    mdl_tevo.fit_par=cellfun(@(m) m.Coefficients.Estimate,mdl_tevo.fit);
+    mdl_tevo.fit_par_se=cellfun(@(m) m.Coefficients.SE,mdl_tevo.fit);
+    B0_fit=cellfun(@(f) feval(f,tau0_fit),mdl_tevo.fit,'UniformOutput',false);
+    
+    % diff B field
+    om_fit=1e3*mdl_tevo.fit_par;        % fitted omega [rad/s]
+    om_se_fit=1e3*mdl_tevo.fit_par_se;
+    deltaB=2*pi*om_fit/C_gymag;        % diff in B-field strength [G]
+    deltaB_se=2*pi*om_se_fit/C_gymag;   % standard error (fit)
+end
+
+
+%% vis
+[cc,ccl,ccd]=palette(n_zone);
+
+%% vis: Polar distribution
+for ii=1:naz_disp
+    iaz=iaz_disp(ii);       % azim idx to displayable great circle
+    taz=Vaz(iaz);
+    figname=sprintf('B0_tevo_polar_%0.0f',rad2deg(taz));
+    
+    % figure
+    figure('Name',figname,...
+        'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
+    hold on;
+    
+    pleg=NaN(nel_disp,1);
+    for jj=1:nel_disp
+        iel=iel_disp(jj);
+        
+        tp=ploterr(tau,squeeze(B0(:,iaz,iel)),[],squeeze(B0_se(:,iaz,iel)),'o','hhxy',0);
+        set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
+            'MarkerFaceColor',ccl(jj,:),'Color',cc(jj,:),'DisplayName',num2str(rad2deg(Vel(iel)),2));
+        set(tp(2),'LineWidth',line_wid,'Color',cc(jj,:));
+        pleg(jj)=tp(1);
+        
+        if do_fit
+            % fitted model
+            tpf=plot(tau0_fit+tau(1),B0_fit{iaz,iel},'-',...
+                'LineWidth',line_wid,'Color',cc(jj,:));
+            uistack(tpf,'bottom');
+        end
+    end
+    
+    % annotation
+    box on;
+    ax=gca;
+    set(ax,'Layer','Top');
+    xlabel('$\tau~[\textrm{ms}]$');
+    ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
+    ax.FontSize=fontsize;
+    ax.LineWidth=1.2;
+    ylim([-1.2,1.2]);
+    titlestr=sprintf('%s %0.0f','$\theta=$',rad2deg(taz));
+    title(titlestr);
+    lgd=legend(pleg,'Location','EastOutside');
+    title(lgd,'Latitude $\phi$ (deg)');
+end
+
+%% vis: Equatorial distribution
+figname='B0_tevo_eqt';
+figure('Name',figname,...
+    'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
+hold on;
+
+pleg=NaN(naz_disp,1);
+for ii=1:naz_disp
+    iaz=iaz_disp(ii);
+    tp=ploterr(tau,squeeze(B0(:,iaz,iel_0)),[],squeeze(B0_se(:,iaz,iel_0)),'o','hhxy',0);
+    set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
+        'Marker',mark_typ{mod(ii,length(mark_typ))+1},...     % will be shifted by 1
+        'MarkerFaceColor',ccl(ii,:),'Color',cc(ii,:),'DisplayName',num2str(rad2deg(Vaz(iaz)),2));
+    set(tp(2),'LineWidth',line_wid,'Color',cc(ii,:));
+    pleg(ii)=tp(1);
+
+    if do_fit
+        % fitted model
+        tpf=plot(tau0_fit+tau(1),B0_fit{iaz,iel_0},'-',...
+            'LineWidth',line_wid,'Color',cc(ii,:));
+        uistack(tpf,'bottom');
+    end
+end
+
+% annotation
+title('Equatorial');
+box on;
+ax=gca;
+set(ax,'Layer','Top');
+xlabel('$\tau~[\textrm{ms}]$');
+ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
+ax.FontSize=fontsize;
+ax.LineWidth=1.2;
+ylim([-1.2,1.2]);
+titlestr=sprintf('Equator (%s %0.2g)','$\phi=$',Vel(iel_0));
+title(titlestr);
+lgd=legend(pleg,'Location','EastOutside');
+title(lgd,'Azimuth $\theta$ (deg)');
+
+%% vis: deltaB (asymmetry measure) around halo: t-indep model (2D PROJ MAP)
+if do_fit
+    h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    
+    [vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB);
+    tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaBf,'eckert4','texturemap');
+    
+    % % rectangle
+    % tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaBf,'rect','texturemap');
+    % xlim([-180,180]);
+    % ylim(rad2deg(lim_el));
+    % xlabel('$\theta$');
+    % ylabel('$\phi$');
+    
+    % annotation
+    box on;
+    ax=gca;
+    set(ax,'Layer','Top');
+    ax.FontSize=fontsize;
+    ax.LineWidth=ax_lwidth;
+    
+    cbar=colorbar('SouthOutside');
+    cbar.TickLabelInterpreter='latex';
+    cbar.Label.Interpreter='latex';
+    cbar.Label.String='$\Delta \mathrm{B}$ [mG]';
+    cbar.Label.FontSize=fontsize;
+end
+
+%% integrated G
+%% vis: G (integrated sum)
+for ii=1:n_tau
+    figname=sprintf('Gsum_%0.2fms',tau(ii));
+    h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    
+    [vazf,velf,tGf]=autofill_cent_symm(vaz,vel,squeeze(G_sum(ii,:,:)));
+    tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),tGf,'eckert4','texturemap');
+    
+    % annotation
+    ax=gca;
+    set(ax,'Layer','Top');
+    ax.FontSize=fontsize;
+    ax.LineWidth=ax_lwidth;
+        
+    titlestr=sprintf('%s%0.2f %s','$\tau=$',tau(ii),'ms');  % label expparam
+    title(titlestr);
+    
+    cbar=colorbar('SouthOutside');
+    cbar.TickLabelInterpreter='latex';
+    cbar.Label.Interpreter='latex';
+    cbar.Label.String='$\bar{g}^{(2)}$';
+    cbar.Label.FontSize=fontsize;
+end
+
+%% vis: uncertainty of G 
+for ii=1:n_tau    
+    figname=sprintf('Gsum_unc_%0.2fms',tau(ii));
+    h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    
+    [vazf,velf,tGerrf]=autofill_cent_symm(vaz,vel,squeeze(G_sum_se(ii,:,:)));
+    tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),tGerrf,'eckert4','texturemap');
+    
+    mu_seG=meanall(G_sum_se(ii,:,:));
+    sig_seG=stdall(G_sum_se(ii,:,:));
+    
+    % annotation
+    ax=gca;
+    set(ax,'Layer','Top');
+    ax.FontSize=fontsize;
+    ax.LineWidth=ax_lwidth;
+
+    titlestr=sprintf('%s%0.2f %s; %s%0.1g(%0.1g)','$\tau=$',tau(ii),'ms',...
+        '$\overline{\mathrm{SE}}=$',mu_seG,sig_seG);  % label expparam
+    title(titlestr);
+
+    cbar=colorbar('SouthOutside');
+    cbar.TickLabelInterpreter='latex';
+    cbar.Label.Interpreter='latex';
+    cbar.Label.String='$\mathrm{SE}(\bar{g}^{(2)})$';
+    cbar.Label.FontSize=fontsize;
+end
+
+%% statistics
+% TODO:
+%   azim-elev is latlon grid which gives a *non-uniform* sampling
+%
+
+for ii=1:n_tau
+    figname=sprintf('hist_Gsum_%0.2fms',tau(ii));
+    h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    
+    thist=histogram(G_sum(ii,:,:,:),'Normalization','pdf');
+%     thist.LineWidth=ax_lwidth;
+    
+    hold on;
+    % Gaussian fit
+    tmu=meanall(G_sum(ii,:,:,:));
+    tsigma=stdall(G_sum(ii,:,:,:));
+    ax_xlim=xlim;
+    x=linspace(ax_xlim(1),ax_xlim(2));
+    y=exp(-(x-mu).^2./(2*sigma^2))./(sigma*sqrt(2*pi));
+    str_gauss=sprintf('%s(%0.2g,%0.1g)','$(\mu,\sigma)=$',tmu,tsigma);
+    p_gauss=plot(x,y,'LineWidth',line_wid,...
+        'DisplayName',str_gauss);
+    
+    % annotation
+    ax=gca;
+    set(ax,'Layer','Top');
+    ax.FontSize=fontsize;
+%     ax.LineWidth=ax_lwidth;
+    
+    titlestr=sprintf('%s%0.2f %s','$\tau=$',tau(ii),'ms');  % label expparam
+    title(titlestr);
+    
+    xlabel('$\bar{g}^{(2)}$');
+    ylabel('Norm frac lat-lon zones');
+    
+    lgd=legend(p_gauss);
 end
