@@ -2,18 +2,24 @@
 % DKS
 % 2018-11-06
 
+tic
+
 %% CONFIGS
 % data file
 %   contains spin,momentum resolved vectors
 fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\exp4_20181029.mat';
+
+% save
+do_save_figs=true;
+dir_save='C:\Users\HE BEC\Dropbox\PhD\thesis\projects\maggrad\Gint_unif_20181114';
 
 % k-modes
 alpha=pi/8;                 % cone half-angle
 lim_az=[0,pi];              % limit of azim angle (exc +pi)
 phi_max=pi/4;
 lim_el=[-phi_max,phi_max];
-n_az=18;   %24;                	% equispaced bins
-n_el=11;   %15;
+n_az=24;                	% equispaced bins
+n_el=15;
 az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
 el_disp=deg2rad([-30,0,30]);    % elev/lat zones to display
 
@@ -29,7 +35,7 @@ bs_frac=0.5;
 bs_nrep=10;
 
 % FIT
-do_fit=false;
+do_fit=true;
 
 % He*
 C_gymag=2.8e6;     % gyromagnetic ratio (gamma) [Hz/G]
@@ -69,15 +75,15 @@ load(fdata);
 
 %% PROTOTYPE: reduce data
 warning('Reducing data for speed.');
-% k_tau{1}=k_tau{1}(1:3000,:);
+k_tau{1}=k_tau{1}(1:3000,:);
 
 % warning('DEBUG ONLY!!!!');
 % k_tau=cellfun(@(k) k(1:100,:),k_tau,'UniformOutput',false);
 
-% TEST K-ALIGNMENT SENSITIVITY
-IDX_TAU=4;
-k_tau={k_tau{IDX_TAU}};
-tau=tau(IDX_TAU);
+% % TEST K-ALIGNMENT SENSITIVITY
+% IDX_TAU=4;
+% k_tau={k_tau{IDX_TAU}};
+% tau=tau(IDX_TAU);
 
 %% k-modes
 Vaz=linspace(lim_az(1),lim_az(2),n_az+1);
@@ -218,7 +224,7 @@ for ii=1:naz_disp
     figname=sprintf('B0_tevo_polar_%0.0f',rad2deg(taz));
     
     % figure
-    figure('Name',figname,...
+    h=figure('Name',figname,...
         'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
     hold on;
     
@@ -253,11 +259,20 @@ for ii=1:naz_disp
     title(titlestr);
     lgd=legend(pleg,'Location','EastOutside');
     title(lgd,'Latitude $\phi$ (deg)');
+    
+    % save fig
+    if do_save_figs
+        savefigname=sprintf('fig_%s_%s',h.Name,getdatetimestr);
+        fpath=fullfile(dir_save,savefigname);
+        
+        saveas(h,strcat(fpath,'.fig'),'fig');
+        print(h,strcat(fpath,'.svg'),'-dsvg');
+    end
 end
 
 %% vis: Equatorial distribution
 figname='B0_tevo_eqt';
-figure('Name',figname,...
+h=figure('Name',figname,...
     'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
 hold on;
 
@@ -294,6 +309,15 @@ title(titlestr);
 lgd=legend(pleg,'Location','EastOutside');
 title(lgd,'Azimuth $\theta$ (deg)');
 
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',h.Name,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
 %% vis: deltaB (asymmetry measure) around halo: t-indep model (2D PROJ MAP)
 if do_fit
     h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
@@ -320,6 +344,15 @@ if do_fit
     cbar.Label.Interpreter='latex';
     cbar.Label.String='$\Delta \mathrm{B}$ [mG]';
     cbar.Label.FontSize=fontsize;
+    
+    % save fig
+    if do_save_figs
+        savefigname=sprintf('fig_%s_%s',h.Name,getdatetimestr);
+        fpath=fullfile(dir_save,savefigname);
+        
+        saveas(h,strcat(fpath,'.fig'),'fig');
+        print(h,strcat(fpath,'.svg'),'-dsvg');
+    end
 end
 
 %% integrated G
@@ -345,6 +378,15 @@ for ii=1:n_tau
     cbar.Label.Interpreter='latex';
     cbar.Label.String='$\bar{g}^{(2)}$';
     cbar.Label.FontSize=fontsize;
+    
+    % save fig
+    if do_save_figs
+        savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+        fpath=fullfile(dir_save,savefigname);
+        
+        saveas(h,strcat(fpath,'.fig'),'fig');
+        print(h,strcat(fpath,'.svg'),'-dsvg');
+    end
 end
 
 %% vis: uncertainty of G 
@@ -373,6 +415,15 @@ for ii=1:n_tau
     cbar.Label.Interpreter='latex';
     cbar.Label.String='$\mathrm{SE}(\bar{g}^{(2)})$';
     cbar.Label.FontSize=fontsize;
+    
+    % save fig
+    if do_save_figs
+        savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+        fpath=fullfile(dir_save,savefigname);
+        
+        saveas(h,strcat(fpath,'.fig'),'fig');
+        print(h,strcat(fpath,'.svg'),'-dsvg');
+    end
 end
 
 %% statistics
@@ -393,7 +444,7 @@ for ii=1:n_tau
     tsigma=stdall(G_sum(ii,:,:,:));
     ax_xlim=xlim;
     x=linspace(ax_xlim(1),ax_xlim(2));
-    y=exp(-(x-mu).^2./(2*sigma^2))./(sigma*sqrt(2*pi));
+    y=exp(-(x-tmu).^2./(2*tsigma^2))./(tsigma*sqrt(2*pi));
     str_gauss=sprintf('%s(%0.2g,%0.1g)','$(\mu,\sigma)=$',tmu,tsigma);
     p_gauss=plot(x,y,'LineWidth',line_wid,...
         'DisplayName',str_gauss);
@@ -411,4 +462,16 @@ for ii=1:n_tau
     ylabel('Norm frac lat-lon zones');
     
     lgd=legend(p_gauss);
+    
+    % save fig
+    if do_save_figs
+        savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+        fpath=fullfile(dir_save,savefigname);
+        
+        saveas(h,strcat(fpath,'.fig'),'fig');
+        print(h,strcat(fpath,'.svg'),'-dsvg');
+    end
 end
+
+%% End of script
+toc
