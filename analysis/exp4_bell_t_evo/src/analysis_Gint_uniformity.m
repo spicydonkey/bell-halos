@@ -210,8 +210,8 @@ if do_fit
     % diff B field
     om_fit=1e3*mdl_tevo.fit_par;        % fitted omega [rad/s]
     om_se_fit=1e3*mdl_tevo.fit_par_se;
-    deltaB=2*pi*om_fit/C_gymag;        % diff in B-field strength [G]
-    deltaB_se=2*pi*om_se_fit/C_gymag;   % standard error (fit)
+    deltaB=om_fit/(2*pi*C_gymag);        % diff in B-field strength [G]
+    deltaB_se=om_se_fit/(2*pi*C_gymag);   % standard error (fit)
     
     %% cull outliers
     % get outliers: fit uncertainty more than 1sig from median    
@@ -219,7 +219,7 @@ if do_fit
 %     n_sig_outlier=0.3;
 %     dx_outlier=n_sig_outlier*std(deltaB_se(:));
     % B) hard limit
-    dx_outlier=1e-3;        % hard bound
+    dx_outlier=1e-3/(2*pi)^2;        % hard bound
     
     b_fit_outlier=abs(deltaB_se-median(deltaB_se(:)))>dx_outlier;    
 

@@ -210,9 +210,8 @@ B0_fit=cellfun(@(f) feval(f,tau0_fit),mdl_tevo.fit,'UniformOutput',false);
 % diff B field 
 om_fit=1e3*mdl_tevo.fit_par;        % fitted omega [rad/s]
 om_se_fit=1e3*mdl_tevo.fit_par_se;
-deltaB=2*pi*om_fit/C_gymag;        % diff in B-field strength [G]
-deltaB_se=2*pi*om_se_fit/C_gymag;   % standard error (fit)
-
+deltaB=om_fit/(2*pi*C_gymag);        % diff in B-field strength [G]
+deltaB_se=om_se_fit/(2*pi*C_gymag);   % standard error (fit)
 
 %% vis: corrected parity - ALL
 %%% ALL
