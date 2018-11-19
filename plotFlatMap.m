@@ -1,13 +1,15 @@
-function h = plotFlatMap(lat,lon,Z,axproj,dispType)
+function mapimg = plotFlatMap(lat,lon,Z,axproj,dispType)
 % H = PLOTFLATMAP(LAT,LON,Z,AXPROJ)
 %
 % plot spherical map on a 2D plane
 %
 % LAT, LON should be in degrees
 %
+% NaN is transparent
+%
 %   dispType
-%   	'texturemap'    NaN as minimum value; smooth
-%       'surface'       NaN transparent; no smooth
+%   	'texturemap'    no smooth
+%       'surface'       smooth
 %
 
 % input checking
@@ -35,12 +37,19 @@ switch axproj
         warning('axproj should be set to either "eckert4" or "rect".');
 end
 % draw data like map
-h=geoshow(lat,lon,Z,'DisplayType',dispType);
+mapimg=geoshow(lat,lon,Z,'DisplayType',dispType);
 
 % default annotations
 colormap('magma');
 % hcb=colorbar('Southoutside');
 % hcb.TickLabelInterpreter='latex';
 % hcb.Label.Interpreter='latex';
+
+%% NaN to transparent
+if dispType=='texturemap'
+    mapimg.AlphaDataMapping='none';     % interpet alpha values as transparency values
+    mapimg.FaceAlpha='texturemap';      % Indicate that the transparency can be different each pixel
+    mapimg.AlphaData=double(~isnan(Z)); % set transparency matrix: NaN-->1, else-->0.
+end
 
 end
