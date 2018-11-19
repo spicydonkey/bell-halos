@@ -6,7 +6,7 @@
 %
 
 %%% EXP1 pi/2 rotation
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_1.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_1.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_3.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_5.m';
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_viol\src\config_7.m';
@@ -19,6 +19,12 @@ config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp1_bell_max_
 
 %%% pi/4 Y-rotation (higher mocc)
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ideal_global_rotation_v4\src\config_1.m';
+
+
+%%% EXPX: X-rotation <JyJy>
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_x1.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_x2.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_x3.m';
 
 
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
@@ -65,7 +71,6 @@ xlabel('x');
 ylabel('y');
 zlabel('z');
 view([0,0]);
-
 
 
 %% distinguish mF and capture halo
@@ -256,7 +261,6 @@ end
 scatter_halo(k_halo_filt);
 
 
-
 %% categorise data by exp-params
 k_par=cell(1,nparam);
 if nparam>1
@@ -428,7 +432,7 @@ end
 %
 
 %%% CONFIG
-n_frac_samp=0.2;       % 1/5
+n_frac_samp=0.2;       % 0.2
 n_subset=20;                    % no. of bootstrap repeats
 %   NOTE: unclear at the moment how config affects analysis
 
@@ -494,14 +498,14 @@ g2_mean=cell(size(g2_bootstrap));
 g2_sdev=cell(size(g2_bootstrap));
 for ii=1:nparam
     g2_mean{ii}=cellfun(@(x) mean(x,4,'omitnan'),g2_bootstrap{ii},'UniformOutput',false);
-    g2_sdev{ii}=cellfun(@(x) std(x,[],4,'omitnan'),g2_bootstrap{ii},'UniformOutput',false);
+    g2_sdev{ii}=cellfun(@(x) sqrt(n_frac_samp)*std(x,[],4,'omitnan'),g2_bootstrap{ii},'UniformOutput',false);
 end
 
 E_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E_samp);
-E_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E_samp);
+E_bootstrap_sdev=cellfun(@(x) sqrt(n_frac_samp)*std(x,'omitnan'),E_samp);
 
 E0_bootstrap_mean=cellfun(@(x) mean(x,'omitnan'),E0_samp);
-E0_bootstrap_sdev=cellfun(@(x) std(x,'omitnan'),E0_samp);
+E0_bootstrap_sdev=cellfun(@(x) sqrt(n_frac_samp)*std(x,'omitnan'),E0_samp);
 
 %%% diplay some output
 par_T'
