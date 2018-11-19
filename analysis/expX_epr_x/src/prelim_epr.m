@@ -30,8 +30,9 @@ f_pos=[0.2,0.2,0.2,0.3];
 f_pos_wide=[0.2,0.2,0.25,0.3];
 f_ren='painters';
 
+cviridis=viridis(5);
 [c,cl,cd]=palette(3);
-% c_gray=0.6*ones(1,3);
+c_gray=0.8*ones(1,3);
 line_sty={'-','--',':','-.'};
 mark_typ={'o','s','^','d'};
 str_mm={'$x$','$y$','$z$'};
@@ -152,6 +153,37 @@ cbar.Label.String='$\Delta_{\mathrm{inf}} S_{z}^{(B)} \Delta_{\mathrm{inf}} S_{x
 cbar.Label.FontSize=fontsize;
 
 
+%% vis: histogram EPR-steering parameter
+figname=sprintf('EPR_histogram');
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+
+H=histogram(S_epr(:),'Normalization','pdf');
+H.FaceColor=cviridis(4,:);
+H.FaceAlpha=1;      % opaque
+hold on;
+
+% EPR-steering limit
+ax=gca;
+ax_ylim=ax.YLim;
+ax_xlim=ax.XLim;
+p_epr=patch([ax_xlim(1),S_epr_lim,S_epr_lim,ax_xlim(1)],...
+    [ax_ylim(1),ax_ylim(1),ax_ylim(2),ax_ylim(2)],...
+    c_gray,'EdgeColor','none');
+uistack(p_epr,'bottom');
+text(S_epr_lim,mean(ax_ylim),sprintf('EPR-steering'),...
+    'HorizontalAlignment','center','VerticalAlignment','bottom',...
+    'Rotation',90,'FontSize',fontsize-1);
+
+
+% annotation
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+xlabel('Inferred uncertainty $\Delta_{\mathrm{inf}} S_{z}^{(B)} \Delta_{\mathrm{inf}} S_{x}^{(B)}$');
+ylabel('PDF');
+% lgd=legend(H);    
+
+
 %% vis: collective momenta
 figname=sprintf('collective_momenta');
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
@@ -171,6 +203,9 @@ ax.FontSize=fontsize;
 xlabel('Collective spin measurement');
 ylabel('PDF');
 lgd=legend(H);    
+
+
+
 
 %%
 % %% vis
