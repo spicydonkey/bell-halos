@@ -10,6 +10,10 @@
 % fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_20181119\k_yy_20181119.mat';
 fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_20181119\k_mm_20181119.mat';
 
+% OUTPUT
+do_save_figs=false;
+dir_save='C:\Users\HE BEC\Dropbox\phd\thesis\projects\maggrad+epr\epr\prelim_20181119';
+
 % k-mode (A,B - spherically opposite)
 alpha=0.08;
 
@@ -30,7 +34,7 @@ f_pos=[0.2,0.2,0.2,0.3];
 f_pos_wide=[0.2,0.2,0.25,0.3];
 f_ren='painters';
 
-cviridis=viridis(5);
+cviridis=viridis(3);
 [c,cl,cd]=palette(3);
 c_gray=0.8*ones(1,3);
 line_sty={'-','--',':','-.'};
@@ -69,12 +73,13 @@ nel_disp=length(iel_disp);
 
 
 %% main
+n_M=numel(g_inf);       % number of measurement configurations
 % preallocate
-Jm_AB=cell(numel(g_inf),n_az,n_el);
-std_Jm_AB=NaN(numel(g_inf),n_az,n_el);
-n_det_events=NaN(numel(g_inf),n_az,n_el);
+Jm_AB=cell(n_M,n_az,n_el);
+std_Jm_AB=NaN(n_M,n_az,n_el);
+n_det_events=NaN(n_M,n_az,n_el);
 
-for mm=1:numel(g_inf)      % for measurement configuration
+for mm=1:n_M      % for measurement configuration
     tk=k_mm{mm};
     
     progressbar();
@@ -121,17 +126,143 @@ for mm=1:numel(g_inf)      % for measurement configuration
     end
 end
 
+%% Statistics
+val_Jm_AB=unique(cat(1,Jm_AB{:}));      % unique inf coll meas outcome
+% # events for each unique outcome
+N_Jm_AB=arrayfun(@(j) cellfun(@(x) equalCount(x,j),Jm_AB),val_Jm_AB,'UniformOutput',false);
+
+% summary
+Navg_Jm_AB=cellfun(@(n) mean(reshape(n,n_M,[]),2),N_Jm_AB,'UniformOutput',false);
+Nstd_Jm_AB=cellfun(@(n) std(reshape(n,n_M,[]),[],2),N_Jm_AB,'UniformOutput',false);
+nsamp_Jm_AB=cellfun(@(n) size(reshape(n,n_M,[]),2),N_Jm_AB);
+
+Navg_Jm_AB=cat(2,Navg_Jm_AB{:});
+Nstd_Jm_AB=cat(2,Nstd_Jm_AB{:});
+Nse_Jm_AB=Nstd_Jm_AB./sqrt(nsamp_Jm_AB);
+% NOTE:  indexing: MM X JJ
+
+% normalise
+Ntot_Jm_AB=sum(Navg_Jm_AB,2);
+navg_Jm_AB=Navg_Jm_AB./Ntot_Jm_AB;
+nstd_Jm_AB=Nstd_Jm_AB./Ntot_Jm_AB;
+nse_Jm_AB=Nse_Jm_AB./Ntot_Jm_AB;
+
 
 %% EPR-steering
-S_epr_lim=1/4;      % EPR-steering bound (spin-1/2)
-S_epr=squeeze(std_Jm_AB(1,:,:).*std_Jm_AB(3,:,:));       % [Jx^B,Jz^B] EPR-S parameter
+Sepr_lim=1/4;      % EPR-steering bound (spin-1/2)
+Sepr=squeeze(std_Jm_AB(1,:,:).*std_Jm_AB(3,:,:));       % [Jx^B,Jz^B] EPR-S parameter
+
+% statistics
+Sepr_avg = mean(Sepr(:),'omitnan');
+Sepr_std = std(Sepr(:),'omitnan');
+nsamp_Sepr=sum(~isnan(Sepr(:)));
+Sepr_se = Sepr_std/sqrt(nsamp_Sepr);
+
+str_stat_epr=sprintf('%s%0.2g %s %0.1g','$\overline{\mathcal{S}}=$',...
+    Sepr_avg,'$\pm$',Sepr_se);      % summary
+
+%% VIS
+%% vis: histogram of post-selected detection events
+figname=sprintf('hist_numps');
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+
+hold on;
+H=[];
+for mm=1:3
+    H(mm)=histogram(n_det_events(mm,:,:),...
+        'BinWidth',1,...
+        'FaceColor',cviridis(mm,:),...
+        'Normalization','pdf','DisplayName',str_mm{mm});
+end
+
+% annotation
+ax=gca;
+box on;
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+lgd=legend(H);
+xlabel('\# events (post-selected)');
+ylabel('PDF');
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
+%% vis: collective meas around different modes
+figname=sprintf('coll_spin');
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+
+H=barwitherr(nse_Jm_AB',navg_Jm_AB','XData',val_Jm_AB);
+
+for mm=1:3
+    H(mm).DisplayName=str_mm{mm};
+    H(mm).FaceColor=cviridis(mm,:);
+end
+
+% annotation
+ax=gca;
+box on;
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+xlabel('Inferred collective spin $C_{i}$');
+ylabel('PDF');
+lgd=legend(H);
+ax.XTick=val_Jm_AB;
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
+%% vis: histogram of inferred std
+figname=sprintf('hist_infstd');
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+
+hold on;
+H=[];
+for mm=1:3
+    H(mm)=histogram(std_Jm_AB(mm,:,:),...
+        'BinWidth',0.025,...
+        'FaceColor',cviridis(mm,:),...
+        'Normalization','pdf','DisplayName',str_mm{mm});
+end
+
+% annotation
+ax=gca;
+box on;
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+lgd=legend(H);
+xlabel('Inferred uncertainty $\Delta_{\mathrm{inf}} S_{i}^{(B)}$');
+ylabel('PDF');
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
 
 %% vis: EPR-steering
 figname=sprintf('EPR');
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
 % inversion symmetry
-[vaz_sym,vel_sym,S_epr_sym]=autofill_cent_symm(vaz,vel,S_epr);
+[vaz_sym,vel_sym,S_epr_sym]=autofill_cent_symm(vaz,vel,Sepr);
 
 p=plotFlatMap(rad2deg(vel_sym),rad2deg(vaz_sym),S_epr_sym,'eckert4','texturemap');
 colormap('viridis');
@@ -142,9 +273,7 @@ set(ax,'Layer','Top');
 ax.FontSize=fontsize;
 ax.LineWidth=ax_lwidth;
 
-% titlestr=sprintf('%s%0.2f %s; %s%0.1g(%0.1g)','$\tau=$',tau(ii),'ms',...
-%     '$\overline{\mathrm{SE}}=$',mu_seG,sig_seG);  % label expparam
-% title(titlestr);
+title(str_stat_epr);
 
 cbar=colorbar('SouthOutside');
 cbar.TickLabelInterpreter='latex';
@@ -152,59 +281,60 @@ cbar.Label.Interpreter='latex';
 cbar.Label.String='$\Delta_{\mathrm{inf}} S_{z}^{(B)} \Delta_{\mathrm{inf}} S_{x}^{(B)}$';
 cbar.Label.FontSize=fontsize;
 
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
 
 %% vis: histogram EPR-steering parameter
 figname=sprintf('EPR_histogram');
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-H=histogram(S_epr(:),'Normalization','pdf');
-H.FaceColor=cviridis(4,:);
+H=histogram(Sepr(:),'Normalization','pdf');
+H.FaceColor=cviridis(2,:);
 H.FaceAlpha=1;      % opaque
 hold on;
 
 % EPR-steering limit
 ax=gca;
+box on;
 ax_ylim=ax.YLim;
 ax_xlim=ax.XLim;
-p_epr=patch([ax_xlim(1),S_epr_lim,S_epr_lim,ax_xlim(1)],...
+p_epr=patch([ax_xlim(1),Sepr_lim,Sepr_lim,ax_xlim(1)],...
     [ax_ylim(1),ax_ylim(1),ax_ylim(2),ax_ylim(2)],...
     c_gray,'EdgeColor','none');
 uistack(p_epr,'bottom');
-text(S_epr_lim,mean(ax_ylim),sprintf('EPR-steering'),...
+text(Sepr_lim,mean(ax_ylim),sprintf('EPR-steering'),...
     'HorizontalAlignment','center','VerticalAlignment','bottom',...
     'Rotation',90,'FontSize',fontsize-1);
 
+% summary
+errbar_y=mean(ax.YLim);
+ebar_Sepr=errorbar(Sepr_avg,errbar_y,Sepr_std,'horizontal',...
+    'LineWidth',line_wid,'Marker','o',...
+    'DisplayName','$\mu \pm \sigma$');
+xlim(ax_xlim);
 
 % annotation
 set(ax,'Layer','Top');
 ax.FontSize=fontsize;
 % ax.LineWidth=ax_lwidth;
-xlabel('Inferred uncertainty $\Delta_{\mathrm{inf}} S_{z}^{(B)} \Delta_{\mathrm{inf}} S_{x}^{(B)}$');
+xlabel('Inf. unc. product $\mathcal{S} = \Delta_{\mathrm{inf}} S_{z}^{(B)} \Delta_{\mathrm{inf}} S_{x}^{(B)}$');
 ylabel('PDF');
-% lgd=legend(H);    
+% lgd=legend(ebar_Sepr);    
 
-
-%% vis: collective momenta
-figname=sprintf('collective_momenta');
-h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
-
-hold on;
-H=[];
-for ii=1:numel(g_inf)
-    H(ii)=histogram(cat(1,Jm_AB{ii,:,:}),'Normalization','pdf',...
-        'DisplayName',str_mm{ii});
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
 end
-
-% annotation
-ax=gca;
-set(ax,'Layer','Top');
-ax.FontSize=fontsize;
-% ax.LineWidth=ax_lwidth;
-xlabel('Collective spin measurement');
-ylabel('PDF');
-lgd=legend(H);    
-
-
 
 
 %%
