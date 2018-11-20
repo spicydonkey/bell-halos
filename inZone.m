@@ -1,4 +1,4 @@
-function [bool_inzone, n] =inZone(th_1,phi_1,th_2,ph_2,dpsi)
+function [bool_inzone, n_in] =inZone(th_1,phi_1,th_2,ph_2,dpsi)
 % [BOOL_INZONE, N] = INZONE(AZIM,ELEV,THETA,PHI,DPSI)
 %
 %   gets indices to spherical zones (defined by azim-elev grid) in the
@@ -13,5 +13,6 @@ psi=diffAngleSph(th_1,phi_1,th_2,ph_2);
 
 % evaluate logical condition
 bool_inzone=psi<dpsi;
+n_in=sum(bool_inzone(:));
 
 end
