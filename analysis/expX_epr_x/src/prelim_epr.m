@@ -5,14 +5,17 @@
 %
 
 %% CONFIGS
-% fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_20181119\k_zz_20181119.mat';
-% fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_20181119\k_xx_20181119.mat';
-% fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_20181119\k_yy_20181119.mat';
-fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_20181119\k_mm_20181119.mat';
+% 2018-11-19: first run X,Y,Z data (logbook 8 p93)
+% fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_20181119\k_mm_20181119.mat';
 
+% 2018-11-20: X,Z data includes other experiments (L8 p93)
+fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_20181119\k_mm_comb_20181120.mat';
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OUTPUT
-do_save_figs=false;
-dir_save='C:\Users\HE BEC\Dropbox\phd\thesis\projects\maggrad+epr\epr\prelim_20181119';
+do_save_figs=true;
+dir_save='C:\Users\HE BEC\Dropbox\phd\thesis\projects\maggrad+epr\epr\prelim_20181120';
 
 % k-mode (A,B - spherically opposite)
 alpha=0.08;
@@ -150,7 +153,9 @@ nse_Jm_AB=Nse_Jm_AB./Ntot_Jm_AB;
 
 %% EPR-steering
 Sepr_lim=1/4;      % EPR-steering bound (spin-1/2)
-Sepr=squeeze(std_Jm_AB(1,:,:).*std_Jm_AB(3,:,:));       % [Jx^B,Jz^B] EPR-S parameter
+Sepr=squeeze(std_Jm_AB(1,:,:).*std_Jm_AB(3,:,:));       % [Jx^B,Jz^B]
+% Sepr=squeeze(std_Jm_AB(1,:,:).*std_Jm_AB(2,:,:));       % [Jx^B,Jy^B]
+% Sepr=squeeze(std_Jm_AB(2,:,:).*std_Jm_AB(3,:,:));       % [Jy^B,Jz^B]
 
 % statistics
 Sepr_avg = mean(Sepr(:),'omitnan');
@@ -160,6 +165,7 @@ Sepr_se = Sepr_std/sqrt(nsamp_Sepr);
 
 str_stat_epr=sprintf('%s%0.2g %s %0.1g','$\overline{\mathcal{S}}=$',...
     Sepr_avg,'$\pm$',Sepr_se);      % summary
+
 
 %% VIS
 %% vis: histogram of post-selected detection events
@@ -294,7 +300,7 @@ end
 figname=sprintf('EPR_histogram');
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-H=histogram(Sepr(:),'Normalization','pdf');
+H=histogram(Sepr(:),'BinWidth',0.025,'Normalization','pdf');
 H.FaceColor=cviridis(2,:);
 H.FaceAlpha=1;      % opaque
 hold on;
@@ -326,6 +332,7 @@ ax.FontSize=fontsize;
 xlabel('Inf. unc. product $\mathcal{S} = \Delta_{\mathrm{inf}} S_{z}^{(B)} \Delta_{\mathrm{inf}} S_{x}^{(B)}$');
 ylabel('PDF');
 % lgd=legend(ebar_Sepr);    
+ylim(ax_ylim);
 
 % save fig
 if do_save_figs
