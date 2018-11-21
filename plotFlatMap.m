@@ -46,7 +46,7 @@ colormap('magma');
 % hcb.Label.Interpreter='latex';
 
 %% NaN to transparent
-if dispType=='texturemap'
+if strcmp(dispType,'texturemap')
     mapimg.AlphaDataMapping='none';     % interpet alpha values as transparency values
     mapimg.FaceAlpha='texturemap';      % Indicate that the transparency can be different each pixel
     mapimg.AlphaData=double(~isnan(Z)); % set transparency matrix: NaN-->1, else-->0.
