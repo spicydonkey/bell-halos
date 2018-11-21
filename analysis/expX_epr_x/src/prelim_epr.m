@@ -121,27 +121,36 @@ for mm=1:n_M      % for measurement configuration
         tstd_Jm_AB=std(tJm_AB);             % variation in coll meas of spin
         
         % store
-        Jm_AB{mm,iaz,iel}=tJm_AB;
-        n_det_events(mm,iaz,iel)=tn_det_events;
-        std_Jm_AB(mm,iaz,iel)=tstd_Jm_AB;
+        Jm_AB{mm,iaz,iel}=tJm_AB;           % collective meas
+        n_det_events(mm,iaz,iel)=tn_det_events;     % num. samples
+        std_Jm_AB(mm,iaz,iel)=tstd_Jm_AB;           % sample variation
         
         progressbar(kk/n_zone);
     end
 end
 
 %% Statistics
+%%% lat-lon grid
+weight_azel=@(th,phi) cos(phi);
+w_azel=arrayfun(@(t,p) weight_azel(t,p),vaz,vel);
+
+%%% 
 val_Jm_AB=unique(cat(1,Jm_AB{:}));      % unique inf coll meas outcome
 % # events for each unique outcome
 N_Jm_AB=arrayfun(@(j) cellfun(@(x) equalCount(x,j),Jm_AB),val_Jm_AB,'UniformOutput',false);
+% NOTE: indexing: JJ X (MM X az X el)
 
-% summary
-Navg_Jm_AB=cellfun(@(n) mean(reshape(n,n_M,[]),2),N_Jm_AB,'UniformOutput',false);
-Nstd_Jm_AB=cellfun(@(n) std(reshape(n,n_M,[]),[],2),N_Jm_AB,'UniformOutput',false);
+% statistical estimates: lat-lon weighted mean/std
+Navg_Jm_AB=cellfun(@(n) sum((w_azel(:)').*reshape(n,n_M,[]),2)/sum(w_azel(:)),...
+    N_Jm_AB,'UniformOutput',false);
+Nstd_Jm_AB=cellfun(@(n) std(reshape(n,n_M,[]),w_azel(:),2),...
+    N_Jm_AB,'UniformOutput',false);
+
 nsamp_Jm_AB=cellfun(@(n) size(reshape(n,n_M,[]),2),N_Jm_AB);
 
 Navg_Jm_AB=cat(2,Navg_Jm_AB{:});
 Nstd_Jm_AB=cat(2,Nstd_Jm_AB{:});
-Nse_Jm_AB=Nstd_Jm_AB./sqrt(nsamp_Jm_AB);
+Nse_Jm_AB=Nstd_Jm_AB./sqrt(nsamp_Jm_AB);        % NOTE: modes aren't independent samples
 % NOTE:  indexing: MM X JJ
 
 % normalise
@@ -157,28 +166,54 @@ Sepr=squeeze(std_Jm_AB(1,:,:).*std_Jm_AB(3,:,:));       % [Jx^B,Jz^B]
 % Sepr=squeeze(std_Jm_AB(1,:,:).*std_Jm_AB(2,:,:));       % [Jx^B,Jy^B]
 % Sepr=squeeze(std_Jm_AB(2,:,:).*std_Jm_AB(3,:,:));       % [Jy^B,Jz^B]
 
-% statistics
-Sepr_avg = mean(Sepr(:),'omitnan');
-Sepr_std = std(Sepr(:),'omitnan');
-nsamp_Sepr=sum(~isnan(Sepr(:)));
-Sepr_se = Sepr_std/sqrt(nsamp_Sepr);
+% inversion symmetry
+[vaz_sym,vel_sym,Sepr_sym]=autofill_cent_symm(vaz,vel,Sepr);
+w_azel_sym=arrayfun(@(t,p) weight_azel(t,p),vaz_sym,vel_sym);   % filled weights
 
+%%% statistics
+b_nan=isnan(Sepr_sym);
+nsamp_Sepr=sum(~b_nan(:));
+
+% latlon-weighted estimates
+Sepr_avg = sumall(w_azel_sym.*Sepr_sym,'omitnan')/sum(w_azel_sym(~b_nan));
+Sepr_std = std(Sepr_sym(:),w_azel_sym(:),'omitnan');    % mode variability
+
+Sepr_se = Sepr_std/sqrt(nsamp_Sepr);      % CARE!
+%   NOTE: modes are not independent samples!
+
+% summary
 str_stat_epr=sprintf('%s%0.2g %s %0.1g','$\overline{\mathcal{S}}=$',...
-    Sepr_avg,'$\pm$',Sepr_se);      % summary
-
+    Sepr_avg,'$\pm$',Sepr_se);
 
 %% VIS
-%% vis: histogram of post-selected detection events
+% %% vis: histogram of post-selected detection events
+
+% config
+hist_ndet.wbin=1;
+hist_ndet.ed=0:hist_ndet.wbin:10*ceil(max(n_det_events(:))/10);
+hist_ndet.mid=hist_ndet.ed(1:end-1)+0.5*diff(hist_ndet.ed);
+hist_ndet.nbin=numel(hist_ndet.mid);
+
+hist_ndet.n_wt=NaN(hist_ndet.nbin,3);
+for mm=1:n_M
+    % weighted histogram
+    hist_ndet.n_wt(:,mm)=histcn(reshape(n_det_events(mm,:,:),[],1),...
+        hist_ndet.ed,'AccumData',w_azel(:));
+    % normalise to PDF
+    hist_ndet.n_wt=hist_ndet.n_wt./(sum(hist_ndet.n_wt,1)*hist_ndet.wbin);
+end
+
+%figure
 figname=sprintf('hist_numps');
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
 hold on;
-H=[];
-for mm=1:3
-    H(mm)=histogram(n_det_events(mm,:,:),...
-        'BinWidth',1,...
-        'FaceColor',cviridis(mm,:),...
-        'Normalization','pdf','DisplayName',str_mm{mm});
+hist_ndet.bar={};
+for mm=1:n_M
+    hist_ndet.bar{mm}=bar(hist_ndet.mid,hist_ndet.n_wt(:,mm),...
+        'BarWidth',1,...
+        'FaceColor',cviridis(mm,:),'FaceAlpha',0.6,...
+        'DisplayName',str_mm{mm});
 end
 
 % annotation
@@ -187,7 +222,7 @@ box on;
 set(ax,'Layer','Top');
 ax.FontSize=fontsize;
 % ax.LineWidth=ax_lwidth;
-lgd=legend(H);
+lgd=legend([hist_ndet.bar{:}]);
 xlabel('\# events (post-selected)');
 ylabel('PDF');
 
@@ -204,11 +239,15 @@ end
 figname=sprintf('coll_spin');
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-H=barwitherr(nse_Jm_AB',navg_Jm_AB','XData',val_Jm_AB);
+% H=barwitherr(nse_Jm_AB',navg_Jm_AB','XData',val_Jm_AB);
+[Hbar,Herr]=barwitherr(nstd_Jm_AB',navg_Jm_AB','XData',val_Jm_AB);
 
-for mm=1:3
-    H(mm).DisplayName=str_mm{mm};
-    H(mm).FaceColor=cviridis(mm,:);
+for mm=1:n_M
+    Hbar(mm).DisplayName=str_mm{mm};
+    Hbar(mm).FaceColor=cviridis(mm,:);
+    Hbar(mm).FaceAlpha=0.6;
+    
+%     set(Herr(mm),'LineWidth',1.2);
 end
 
 % annotation
@@ -219,8 +258,9 @@ ax.FontSize=fontsize;
 % ax.LineWidth=ax_lwidth;
 xlabel('Inferred collective spin $C_{i}$');
 ylabel('PDF');
-lgd=legend(H);
+lgd=legend(Hbar);
 ax.XTick=val_Jm_AB;
+axis tight;
 
 % save fig
 if do_save_figs
@@ -232,16 +272,32 @@ if do_save_figs
 end
 
 %% vis: histogram of inferred std
+% config
+hist_infunc.wbin=0.025;
+hist_infunc.ed=0:hist_infunc.wbin:1;
+hist_infunc.mid=hist_infunc.ed(1:end-1)+0.5*diff(hist_infunc.ed);
+hist_infunc.nbin=numel(hist_infunc.mid);
+
+hist_infunc.n_wt=NaN(hist_infunc.nbin,3);
+for mm=1:n_M
+    % weighted histogram
+    hist_infunc.n_wt(:,mm)=histcn(reshape(std_Jm_AB(mm,:,:),[],1),...
+        hist_infunc.ed,'AccumData',w_azel(:));
+    % normalise to PDF
+    hist_infunc.n_wt=hist_infunc.n_wt./(sum(hist_infunc.n_wt,1)*hist_infunc.wbin);
+end
+
+% figure
 figname=sprintf('hist_infstd');
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
 hold on;
-H=[];
-for mm=1:3
-    H(mm)=histogram(std_Jm_AB(mm,:,:),...
-        'BinWidth',0.025,...
-        'FaceColor',cviridis(mm,:),...
-        'Normalization','pdf','DisplayName',str_mm{mm});
+hist_infunc.bar={};
+for mm=1:n_M
+    hist_infunc.bar{mm}=bar(hist_infunc.mid,hist_infunc.n_wt(:,mm),...
+        'BarWidth',1,...
+        'FaceColor',cviridis(mm,:),'FaceAlpha',0.6,...
+        'DisplayName',str_mm{mm});
 end
 
 % annotation
@@ -250,9 +306,10 @@ box on;
 set(ax,'Layer','Top');
 ax.FontSize=fontsize;
 % ax.LineWidth=ax_lwidth;
-lgd=legend(H);
+lgd=legend([hist_infunc.bar{:}]);
 xlabel('Inferred uncertainty $\Delta_{\mathrm{inf}} S_{i}^{(B)}$');
 ylabel('PDF');
+
 
 % save fig
 if do_save_figs
@@ -267,10 +324,7 @@ end
 figname=sprintf('EPR');
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-% inversion symmetry
-[vaz_sym,vel_sym,S_epr_sym]=autofill_cent_symm(vaz,vel,Sepr);
-
-p=plotFlatMap(rad2deg(vel_sym),rad2deg(vaz_sym),S_epr_sym,'eckert4','texturemap');
+p=plotFlatMap(rad2deg(vel_sym),rad2deg(vaz_sym),Sepr_sym,'eckert4','texturemap');
 colormap('viridis');
 
 % annotation
@@ -293,17 +347,30 @@ if do_save_figs
     fpath=fullfile(dir_save,savefigname);
     
     saveas(h,strcat(fpath,'.fig'),'fig');
-    print(h,strcat(fpath,'.svg'),'-dsvg');
+%     print(h,strcat(fpath,'.svg'),'-dsvg');
+    print(h,strcat(fpath,'.png'),'-dpng','-r300');
 end
 
 %% vis: histogram EPR-steering parameter
+% config
+hist_epr.wbin=0.01;
+hist_epr.ed=0:hist_epr.wbin:max(Sepr_sym(:));
+hist_epr.mid=hist_epr.ed(1:end-1)+0.5*diff(hist_epr.ed);
+hist_epr.nbin=numel(hist_epr.mid);
+
+% weighted histogram
+hist_epr.n_wt=histcn(Sepr_sym(:),hist_epr.ed,'AccumData',w_azel_sym(:));
+% normalise to PDF
+hist_epr.n_wt=hist_epr.n_wt/(sum(hist_epr.n_wt)*hist_epr.wbin);
+
+%%% figure
 figname=sprintf('EPR_histogram');
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
-
-H=histogram(Sepr(:),'BinWidth',0.025,'Normalization','pdf');
-H.FaceColor=cviridis(2,:);
-H.FaceAlpha=1;      % opaque
 hold on;
+
+hist_epr.bar=bar(hist_epr.mid,hist_epr.n_wt,...
+    'BarWidth',1,...
+    'FaceColor',cviridis(2,:),'FaceAlpha',1);
 
 % EPR-steering limit
 ax=gca;
@@ -321,7 +388,8 @@ text(Sepr_lim,mean(ax_ylim),sprintf('EPR-steering'),...
 % summary
 errbar_y=mean(ax.YLim);
 ebar_Sepr=errorbar(Sepr_avg,errbar_y,Sepr_std,'horizontal',...
-    'LineWidth',line_wid,'Marker','o',...
+    'LineWidth',line_wid,'Color',c(2,:),'LineWidth',1.5,...
+    'Marker','o','MarkerFaceColor',cl(2,:),'MarkerSize',7,...
     'DisplayName','$\mu \pm \sigma$');
 xlim(ax_xlim);
 
@@ -342,51 +410,3 @@ if do_save_figs
     saveas(h,strcat(fpath,'.fig'),'fig');
     print(h,strcat(fpath,'.svg'),'-dsvg');
 end
-
-
-%%
-% %% vis
-% %% observer
-% h=figure;
-%
-% subplot(1,2,1);
-% hold on;
-% H(1)=histogram(n_A(:,1),'DisplayName','$\uparrow$');
-% H(2)=histogram(n_A(:,2),'DisplayName','$\downarrow$');
-%
-% xlabel('$N_{m}$');
-% ylabel('\# observations');
-% lgd=legend(H);
-% title('Alice');
-%
-% subplot(1,2,2);
-% hold on;
-% H(1)=histogram(n_B(:,1),'DisplayName','$\uparrow$');
-% H(2)=histogram(n_B(:,2),'DisplayName','$\downarrow$');
-%
-% xlabel('$N_{m}$');
-% ylabel('\# observations');
-% lgd=legend(H);
-% title('Bob');
-%
-% %% angular momentum
-% h=figure;
-% hold on;
-%
-% H(1)=histogram(Jn_A,'DisplayName','Alice');
-% H(2)=histogram(Jn_B,'DisplayName','Bob');
-%
-% xlabel('Angular momentum $J_{i}$');
-% ylabel('\# observations');
-% lgd=legend(H);
-%
-% %% tot atoms
-% h=figure;
-% hold on;
-%
-% H(1)=histogram(ntot_A,'DisplayName','Alice');
-% H(2)=histogram(ntot_B,'DisplayName','Bob');
-%
-% xlabel('$N_{\uparrow} + N_{\downarrow}$');
-% ylabel('\# observations');
-% lgd=legend(H);
