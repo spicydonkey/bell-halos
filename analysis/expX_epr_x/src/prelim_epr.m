@@ -43,7 +43,7 @@ f_pos_wide=[0.2,0.2,0.25,0.3];
 f_ren='painters';
 
 cviridis=viridis(3);
-[c,cl,cd]=palette(3);
+[col,coll,cold]=palette(3);
 c_gray=0.8*ones(1,3);
 line_sty={'-','--',':','-.'};
 mark_typ={'o','s','^','d'};
@@ -119,6 +119,12 @@ for mm=1:n_M      % for measurement configuration
         % post-selection: single-atom detection at A/B
         b_1atom_k=cellfun(@(n) n==1, Ntot, 'UniformOutput',false);
         b_1atom=and(b_1atom_k{:});
+%         %%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%         % WARNING: SKIPPING POST SELECTION
+%         warning('SKIPPING post-selection');
+%         N_ps=N;
+%         %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
         
         N_ps=cellfun(@(x) x(b_1atom,:),N,'UniformOutput',false);
         
@@ -157,7 +163,7 @@ Navg_Jm_AB=cellfun(@(n) sum((w_azel(:)').*reshape(n,n_M,[]),2)/sum(w_azel(:)),..
 Nstd_Jm_AB=cellfun(@(n) std(reshape(n,n_M,[]),w_azel(:),2),...
     N_Jm_AB,'UniformOutput',false);
 
-nsamp_Jm_AB=cellfun(@(n) size(reshape(n,n_M,[]),2),N_Jm_AB);
+nsamp_Jm_AB=cellfun(@(n) size(reshape(n,n_M,[]),2),N_Jm_AB)';       % num of "mode" samples for each unique coll meas
 
 Navg_Jm_AB=cat(2,Navg_Jm_AB{:});
 Nstd_Jm_AB=cat(2,Nstd_Jm_AB{:});
@@ -398,8 +404,8 @@ text(Sepr_lim,mean(ax_ylim),sprintf('EPR-steering'),...
 % summary
 errbar_y=mean(ax.YLim);
 ebar_Sepr=errorbar(Sepr_avg,errbar_y,Sepr_std,'horizontal',...
-    'LineWidth',line_wid,'Color',c(2,:),'LineWidth',1.5,...
-    'Marker','o','MarkerFaceColor',cl(2,:),'MarkerSize',7,...
+    'LineWidth',line_wid,'Color',col(2,:),'LineWidth',1.5,...
+    'Marker','o','MarkerFaceColor',coll(2,:),'MarkerSize',7,...
     'DisplayName','$\mu \pm \sigma$');
 xlim(ax_xlim);
 
