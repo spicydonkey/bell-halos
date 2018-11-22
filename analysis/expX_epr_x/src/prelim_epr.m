@@ -14,19 +14,22 @@ fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_201
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OUTPUT
-do_save_figs=true;
+do_save_figs=false;
+% dir_save='C:\Users\HE BEC\Dropbox\phd\thesis\projects\maggrad+epr\epr\prelim_20181121';
 dir_save='C:\Users\HE BEC\Dropbox\phd\thesis\projects\maggrad+epr\epr\prelim_20181122_misalignment';
 
 % k-mode (A,B - spherically opposite)
-alpha=0.08;
+theta_corr=0.04;        % correlation length in polar angle
+alpha=2*theta_corr;
 
-dAB_bb=[4*alpha,0];        % Alice-Bob mode misalignment from BB condition (az,el)
+% dAB_bb=[4*alpha,0];        % Alice-Bob mode misalignment from BB condition (az,el)
+dAB_bb=[0,0];
 
-n_az=40;                	% equispaced bins
-n_el=20;
+n_az=20;                	% equispaced bins
+n_el=10;
 
-az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
-el_disp=deg2rad([-30,0,30]);    % elev/lat zones to display
+% az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
+% el_disp=deg2rad([-30,0,30]);    % elev/lat zones to display
 
 % EPR-steering
 %   Note: symmetry from the post-selected spin-1/2 condition (RHS of
@@ -232,7 +235,7 @@ ax.FontSize=fontsize;
 % ax.LineWidth=ax_lwidth;
 lgd=legend([hist_ndet.bar{:}]);
 xlabel('\# events (post-selected)');
-ylabel('PDF');
+ylabel('Mode density');
 
 % save fig
 if do_save_figs
@@ -265,7 +268,7 @@ set(ax,'Layer','Top');
 ax.FontSize=fontsize;
 % ax.LineWidth=ax_lwidth;
 xlabel('Inferred collective spin $C_{i}$');
-ylabel('PDF');
+ylabel('Probability');
 lgd=legend(Hbar);
 ax.XTick=val_Jm_AB;
 axis tight;
@@ -316,8 +319,7 @@ ax.FontSize=fontsize;
 % ax.LineWidth=ax_lwidth;
 lgd=legend([hist_infunc.bar{:}]);
 xlabel('Inferred uncertainty $\Delta_{\mathrm{inf}} S_{i}^{(B)}$');
-ylabel('PDF');
-
+ylabel('Mode density');
 
 % save fig
 if do_save_figs
@@ -406,7 +408,8 @@ set(ax,'Layer','Top');
 ax.FontSize=fontsize;
 % ax.LineWidth=ax_lwidth;
 xlabel('Inf. unc. product $\mathcal{S} = \Delta_{\mathrm{inf}} S_{z}^{(B)} \Delta_{\mathrm{inf}} S_{x}^{(B)}$');
-ylabel('PDF');
+% ylabel('PDF');
+ylabel('Mode density');
 % lgd=legend(ebar_Sepr);    
 ylim(ax_ylim);
 
