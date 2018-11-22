@@ -15,10 +15,12 @@ fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\expX_epr_x\prelim_201
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % OUTPUT
 do_save_figs=true;
-dir_save='C:\Users\HE BEC\Dropbox\phd\thesis\projects\maggrad+epr\epr\prelim_20181120';
+dir_save='C:\Users\HE BEC\Dropbox\phd\thesis\projects\maggrad+epr\epr\prelim_20181122_misalignment';
 
 % k-mode (A,B - spherically opposite)
 alpha=0.08;
+
+dAB_bb=[4*alpha,0];        % Alice-Bob mode misalignment from BB condition (az,el)
 
 n_az=40;                	% equispaced bins
 n_el=20;
@@ -76,6 +78,11 @@ nel_disp=length(iel_disp);
 
 
 %% main
+if ~exist('dAB_bb','var')
+    dAB_bb=[0,0];       % no misalignment
+    warning('dAB_bb is undefined. setting to default.');
+end
+
 n_M=numel(g_inf);       % number of measurement configurations
 % preallocate
 Jm_AB=cell(n_M,n_az,n_el);
@@ -92,8 +99,9 @@ for mm=1:n_M      % for measurement configuration
         taz=vaz(kk);
         tel=vel(kk);
         
-        zone_k{1}=[taz,tel];       % az-el vector to A
-        zone_k{2}=[taz+pi,-tel];   % B: sph-opposite to A
+        zone_k{1}=[taz,tel];       % az-el vector to Alice (mode A)
+%         zone_k{2}=[taz+pi,-tel];   % B: sph-opposite to A
+        zone_k{2}=[taz+pi,-tel] + dAB_bb;   % Bob (mode B)
         
         % get num counts in A/B
         N=cell(1,2);        % spin-resolved numbers in A/B
