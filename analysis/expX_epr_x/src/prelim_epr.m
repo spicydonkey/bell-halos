@@ -103,7 +103,6 @@ for mm=1:n_M      % for measurement configuration
         tel=vel(kk);
         
         zone_k{1}=[taz,tel];       % az-el vector to Alice (mode A)
-%         zone_k{2}=[taz+pi,-tel];   % B: sph-opposite to A
         zone_k{2}=[taz+pi,-tel] + dAB_bb;   % Bob (mode B)
         
         % get num counts in A/B
@@ -116,17 +115,21 @@ for mm=1:n_M      % for measurement configuration
             Ntot{ii}=sum(N{ii},2);      % get total counts
         end
         
-        % post-selection: single-atom detection at A/B
-        b_1atom_k=cellfun(@(n) n==1, Ntot, 'UniformOutput',false);
-        b_1atom=and(b_1atom_k{:});
+        %%% post-selection: 
+%         %   pair (single-atom) detection at A-B
+%         b_pair=cellfun(@(n) n==1, Ntot, 'UniformOutput',false);
+%         b_postsel=and(b_pair{:});
+                
 %         %%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%         % WARNING: SKIPPING POST SELECTION
+%         % WARNING: NEW POST-SELECTION
 %         warning('SKIPPING post-selection');
 %         N_ps=N;
 %         %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %   DETECTION (>= single-atom) detection at A-B
+        b_det=cellfun(@(n) n>0, Ntot, 'UniformOutput',false);
+        b_postsel=and(b_det{:});
         
-        
-        N_ps=cellfun(@(x) x(b_1atom,:),N,'UniformOutput',false);
+        N_ps=cellfun(@(x) x(b_postsel,:),N,'UniformOutput',false);
         
         % angular momentum
         %   0.5*(N_up - N_down)
