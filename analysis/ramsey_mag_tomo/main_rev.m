@@ -324,19 +324,25 @@ clear h_zxy*;       % clear figs
 T=par_comp{3};      % T_delay between two pulses [s]
 n_shot=cellfun(@(x) size(x,1),k_par,'UniformOutput',false);     % num shots each param
 
-Nmf=cellfun(@(x) shotSize(x),k_par,'UniformOutput',false);      % num in mJ halos
+%%% ATOM NUMBERS
+Nmf_shot=cellfun(@(x) shotSize(x),k_par,'UniformOutput',false);      % num in mJ halos
 
 % statistics
-Nmf_avg=cellfun(@(n) mean(n,1),Nmf,'UniformOutput',false);      % avg num in mJ halo
-Nmf_std=cellfun(@(n) std(n,0,1),Nmf,'UniformOutput',false);     % std num in mJ halos
+Nmf_avg=cellfun(@(n) mean(n,1),Nmf_shot,'UniformOutput',false);      % avg num in mJ halo
+Nmf_std=cellfun(@(n) std(n,0,1),Nmf_shot,'UniformOutput',false);     % std num in mJ halos
 Nmf_se=cellfun(@(s,N) s/sqrt(N),Nmf_std,n_shot,'UniformOutput',false);  % serr num in mJ halos
 
-% pop fraction
-p=cellfun(@(n) n/sum(n),Nmf_avg,'UniformOutput',false);         % pop fraction mJ=1/0
+%%% pop fraction
+p_shot=cellfun(@(n) n./sum(n,2),Nmf_shot,'UniformOutput',false);
+p_avg=cellfun(@(x) mean(x,1),p_shot,'UniformOutput',false);
+p_std=cellfun(@(x) std(x,0,1),p_shot,'UniformOutput',false);
+p_se=cellfun(@(s,N) s/sqrt(N),p_std,n_shot,'UniformOutput',false);
 
 
 %% Model fit: Ramsey
-P_ramsey=arrayfun(@(I) cat(1,p{1,I,:}),1:ncomp(2),'UniformOutput',false);
+P_ramsey=arrayfun(@(I) cat(1,p_avg{1,I,:}),1:ncomp(2),'UniformOutput',false);
+Pstd_ramsey=arrayfun(@(I) cat(1,p_std{1,I,:}),1:ncomp(2),'UniformOutput',false);
+Perr_ramsey=arrayfun(@(I) cat(1,p_se{1,I,:}),1:ncomp(2),'UniformOutput',false);
 
 % config model
 ramsey_mdl='y~c+amp*cos(om*x+phi)';
@@ -372,7 +378,7 @@ hold on;
 for ii=1:ncomp(1)
     for jj=1:ncomp(2)
         subplot(ncomp(1),ncomp(2),sub2ind(ncomp([2,1]),jj,ii));
-        tp=cat(1,p{ii,jj,:});
+        tp=cat(1,p_avg{ii,jj,:});
         
         hold on;
         for kk=1:2
@@ -406,14 +412,15 @@ xx=1e6*linspace(min(T),max(T));     % x-axis range for fitted curve
 for ii=1:ncomp(2)
     subplot(1,ncomp(2),ii);
     tp=P_ramsey{ii};
+%     tperr=Pstd_ramsey{ii};
+    tperr=Perr_ramsey{ii};
     
     hold on;
-    for jj=1:2
-        pexp=plot(1e6*T,tp(:,jj),...
-            'Color',clvir(jj,:),'LineStyle','none',...   %'LineWidth',line_wid,...
-            'Marker',mark_typ{jj},'MarkerEdgeColor',cvir(jj,:),'MarkerFaceColor',clvir(jj,:),...       %'MarkerSize',mark_siz,...
-            'DisplayName',str_ss{jj});
-        
+    for jj=1:2        
+        pexp=ploterr(1e6*T,tp(:,jj),[],tperr(:,jj),mark_typ{jj},'hhxy',0);
+            set(pexp(1),'MarkerFaceColor',clvir(jj,:),'MarkerEdgeColor',cvir(jj,:),...
+                'DisplayName',str_ss{jj});
+            set(pexp(2),'Color',cvir(jj,:));
         yy=feval(ramsey_fit{jj,ii},xx);
         pfit=plot(xx,yy,'LineStyle',line_sty{jj},'Color',clvir(jj,:));
         uistack(pfit,'bottom');
