@@ -47,20 +47,22 @@ run('config_v1');
 % load logfile
 param_log=load_logfile(configs.path.paramlog);
 param_array = paramlog2array(param_log);
-%   format: ID, T_PULSE, PHI, T_DELAY
+%   format: ID, T_PULSE, PHI_DELAY, T_DELAY
 
 % get unique param-vecs and tag each shot with param-ID
 [params,~,Ipar] = unique(flip(param_array(:,2:end),2),'rows');
 params=flip(params,2);
 % sorted such that the Ith param (vec) can be binned into
-%   T_PULSE X PHI X T_DELAY (3D) shaped array
+%   T_PULSE X PHI_DELAY X T_DELAY (3D) shaped array
 
 param_id=param_array(:,1);
 nparam=size(params,1);      % number of unique param-set
 
 par_comp=arrayfun(@(c) unique(params(:,c)), 1:size(params,2),'UniformOutput',false);    % unique param-vec components
 ncomp=cellfun(@(x) numel(x), par_comp);  % unique num vals for each comps in the set of param vecs
-% ncomp=arrayfun(@(c) numel(unique(params(:,c))), 1:size(params,2));  % unique num vals for each comps in the set of param vecs
+npar_pulse=ncomp(1);
+npar_phidelay=ncomp(2);
+npar_tdelay=ncomp(3);
 
 % group shot-ids by exp-param
 id_in_param=cell(ncomp);
@@ -353,7 +355,7 @@ ramsey_par0=[0.5,2*pi*1.5,0,0.5];
 ramsey_fit=arrayfun(@(I) cellfun(@(P) fitnlm(1e6*T,P(:,I),ramsey_mdl,ramsey_par0,'CoefficientNames',ramsey_cname),P_ramsey,'UniformOutput',false),...
     1:2,'UniformOutput',false);
 ramsey_fit=cat(1,ramsey_fit{:});
-% format: MJ X PHI
+% format: MJ X PHI_DELAY
 
 % get params
 ramsey_fpar=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),ramsey_fit),...
@@ -363,7 +365,7 @@ ramsey_fpar=cat(3,ramsey_fpar{:});
 ramsey_fparerr=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),ramsey_fit),...
     1:numel(ramsey_cname),'UniformOutput',false);
 ramsey_fparerr=cat(3,ramsey_fparerr{:});
-% MJ X PHI X PAR#
+% MJ X PHI_DELAY X PAR#
 
 % get freq
 om_ramsey=ramsey_fpar(:,:,2);
@@ -442,3 +444,56 @@ for ii=1:ncomp(2)
     xlim(1e6*[min(T),max(T)]+[-0.1,0.1]);
     ylim([-0.05,1.05]);
 end
+
+%% MODE RESOLVED RAMSEY
+%%% construct spatial zones at latlon grid + solid angle
+alpha=pi/8;         % half-cone angle
+lim_az=[0,2*pi];    % no inversion symmetry
+phi_max=pi/4;       
+lim_el=[-phi_max,phi_max];
+
+n_az=24;                	% equispaced bins
+n_el=6;
+
+az=linspace(lim_az(1),lim_az(2),n_az+1);
+az=az(1:end-1);
+el=linspace(lim_el(1),lim_el(2),n_el);
+
+[gaz,gel]=ndgrid(az,el);    % az-el grid
+n_zone=numel(gaz);
+
+[~,iel_0]=min(abs(el));        % idx to ~zero elev angle (equator)
+
+%%% get atom numbers in regions
+k_ramsey=squeeze(k_par(1,:,:));     % halo k-vectors Ramsey exp
+N_mode=cell(ncomp(2),ncomp(3));     % num atoms in zone categorise by exp param
+% N_mode=NaN(cat(2,ncomp(2),ncomp(3),size(gaz),size(tN{1})));     % num atoms in zone categorise by exp param
+
+for ii=1:numel(k_ramsey)
+    tk=k_ramsey{ii};        % exp data for this param
+    [iph,iT]=ind2sub([npar_phidelay,npar_tdelay],ii);
+    
+    % get num in zone/shot
+    tN=arrayfun(@(th,ph) cellfun(@(x) size(inCone(x,th,ph,alpha),1),tk),...
+        gaz,gel,'UniformOutput',false);     
+    
+    % format into multi-dim array: AZ X EL X SHOT X MJ
+    ttN=NaN(cat(2,size(gaz),size(tN{1})));
+    for jj=1:n_zone
+        [iaz,iel]=ind2sub([n_az,n_el],jj);
+        
+        ttN(iaz,iel,:,:)=tN{iaz,iel};
+    end
+    N_mode{ii}=ttN;
+end
+% clearvars tN ttN;
+
+% pop fraction
+p_shot_mode=cellfun(@(x) x./sum(x,4),N_mode,'UniformOutput',false);
+p_avg_mode=cellfun(@(x) mean(x,3),p_shot_mode,'UniformOutput',false);
+% TODO - tidy into nice array structure to access PHI_DELAY, T_DELAY
+
+
+%%% analyse Ramsey
+
+
