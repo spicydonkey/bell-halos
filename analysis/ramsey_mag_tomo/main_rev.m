@@ -25,11 +25,13 @@ f_ren='painters';
 
 cvir=viridis(3);
 clvir=colshades(cvir);
+cvir2=viridis(4);
+clvir2=colshades(cvir2);
 [col,coll,cold]=palette(3);
 c_gray=0.8*ones(1,3);
 line_sty={'-','--',':','-.'};
 mark_typ={'o','s','^','d'};
-str_mm={'$x$','$y$','$z$'};
+% str_mm={'$x$','$y$','$z$'};
 str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
 % str_ss={'$m_J = 1$','$m_J = 0$'};
 % str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
@@ -373,6 +375,8 @@ omerr_ramsey=ramsey_fparerr(:,:,2);
 
 % magnetic field
 B=1e6*om_ramsey/(2*pi*C_gymag);
+Berr=1e6*omerr_ramsey/(2*pi*C_gymag);
+
 
 %% VIS: Phase & T_delay 
 figname='two_pulse';
@@ -449,13 +453,13 @@ end
 
 %% MODE RESOLVED RAMSEY
 %%% construct spatial zones at latlon grid + solid angle
-alpha=pi/8;         % half-cone angle
+alpha=pi/10;         % half-cone angle
 lim_az=[-pi,pi];    % no inversion symmetry
 phi_max=pi/4;       
 lim_el=[-phi_max,phi_max];
 
-n_az=24;                	% equispaced bins
-n_el=6;
+n_az=40;                	% equispaced bins
+n_el=11;
 
 az_disp=deg2rad(0:90:270);     % azim sections (great circles) to display
 % el_disp=deg2rad(-30:30:30);    % elev/lat zones to display
@@ -475,7 +479,6 @@ n_zone=numel(gaz);
 %%% get atom numbers in regions
 k_ramsey=squeeze(k_par(1,:,:));     % halo k-vectors Ramsey exp
 N_mode=cell(ncomp(2),ncomp(3));     % num atoms in zone categorise by exp param
-% N_mode=NaN(cat(2,ncomp(2),ncomp(3),size(gaz),size(tN{1})));     % num atoms in zone categorise by exp param
 
 for ii=1:numel(k_ramsey)
     tk=k_ramsey{ii};        % exp data for this param
@@ -539,6 +542,7 @@ omerr_ramsey_mode=ramsey_fparerr_mode(:,:,:,:,2);
 
 % magnetic field
 B_mode=1e6*om_ramsey_mode/(2*pi*C_gymag);
+Berr_mode=1e6*omerr_ramsey_mode/(2*pi*C_gymag);
 
 %% VIS: Mode-resolved Ramsey fringe
 figname='ramsey_fringe_mode';
@@ -607,4 +611,36 @@ cbar.FontSize=fontsize;
 colormap('viridis');
 
 %% VIS: Magnetic tomography: equatorial
+figname='B_equatorial_tomography';
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
+B_eq=B_mode(:,:,iel_0,idx_mJ);      % magnetic field around equator
+Berr_eq=Berr_mode(:,:,iel_0,idx_mJ);      
+
+hold on;
+pleg=NaN(npar_phidelay,1);
+for ii=1:npar_phidelay
+    tp=ploterr(rad2deg(az),B_eq(ii,:),[],Berr_eq(ii,:),'o');
+    set(tp(1),'Marker',mark_typ{ii},...
+        'MarkerFaceColor',clvir2(ii,:),'MarkerEdgeColor',cvir2(ii,:),...
+        'DisplayName',num2str(rad2deg(par_comp{2}(ii)),3));
+    set(tp(2),'Color',cvir2(ii,:));
+    pleg(ii)=tp(1);
+end
+
+% annotation
+box on;
+ax=gca;
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+ax.LineWidth=ax_lwidth;
+
+title('Equatorial tomography $\phi=0$');
+
+xlabel('Azimuthal angle $\theta$ [$^\circ$]');
+ylabel('Magnetic field $B$ [G]');
+
+xlim([0,360]);
+ylim([0.52,0.545]);
+
+% lgd=legend(pleg);
