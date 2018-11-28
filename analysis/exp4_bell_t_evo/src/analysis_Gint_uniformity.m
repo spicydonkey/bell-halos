@@ -413,20 +413,40 @@ if do_fit
 end
 
 %% VIS: tomography: equatorial
-figname='dB_equatorial_tomography';
-h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+%%% configs
+p_xlim=[0,180];     % periodic BC
+idx_col=2;          % red
 
+%%% DATA
 dB_eq=deltaB_filt(:,iel_0);      % delta magnetic field around equator
 dBerr_eq=deltaB_se_filt(:,iel_0);      
 
+% fit
+sine_mdl='y~c+amp*cos(2*x+phi)';      % periodic boundary condition fixes OMEGA
+sine_cname={'amp','phi','c'};
+sine_par0=[0.05,0,0.1];
+
+fit_dB_eq=fitnlm(Vaz,1e3*dB_eq,sine_mdl,sine_par0,'CoefficientNames',sine_cname);
+xx=linspace(0,pi,1e3);
+yy=feval(fit_dB_eq,xx);
+
+%%% PLOT
+figname='dB_equatorial_tomography';
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+
 hold on;
+
+% data
 tp=ploterr(rad2deg(Vaz),1e3*dB_eq,[],1e3*dBerr_eq,'o','hhxy',0);
-set(tp(1),'Marker',mark_typ{2},...
-    'MarkerFaceColor',cl(2,:),'MarkerEdgeColor',c(2,:),...
+set(tp(1),'Marker','o',...
+    'MarkerFaceColor',cl(idx_col,:),'MarkerEdgeColor',c(idx_col,:),...
     'DisplayName','');
-set(tp(2),'Color',c(2,:));
+set(tp(2),'Color',c(idx_col,:));
 pleg=tp(1);
 
+% fit
+pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',c(idx_col,:),'LineWidth',line_wid);
+uistack(pfit,'bottom');
 
 % annotation
 box on;
@@ -438,10 +458,10 @@ ax.LineWidth=ax_lwidth;
 title('Equatorial tomography $\phi=0$');
 
 xlabel('Azimuthal angle $\theta$ [$^\circ$]');
-ylabel('$\Delta B$ [mG]');
+ylabel('$\Delta \mathrm{B}$ [mG]');
 
 % axis tight;
-xlim([0,180]);
+xlim(p_xlim);
 ax.XTick=0:45:180;
 
 % lgd=legend(pleg);
