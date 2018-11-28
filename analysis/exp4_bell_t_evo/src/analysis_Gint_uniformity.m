@@ -219,9 +219,11 @@ if do_fit
 %     n_sig_outlier=0.3;
 %     dx_outlier=n_sig_outlier*std(deltaB_se(:));
     % B) hard limit
-    dx_outlier=1e-3/(2*pi)^2;        % hard bound
+%     dx_outlier=1e-3/(2*pi)^2;        % hard bound
+    dx_outlier=Inf;
     
-    b_fit_outlier=abs(deltaB_se-median(deltaB_se(:)))>dx_outlier;    
+%     b_fit_outlier=abs(deltaB_se-median(deltaB_se(:)))>dx_outlier;    
+    b_fit_outlier=isoutlier(deltaB_se);
 
     % outliers to NaN
     deltaB_filt=deltaB;
@@ -408,6 +410,49 @@ if do_fit
         saveas(h,strcat(fpath,'.fig'),'fig');
         print(h,strcat(fpath,'.svg'),'-dsvg');
     end
+end
+
+%% VIS: tomography: equatorial
+figname='dB_equatorial_tomography';
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+
+dB_eq=deltaB_filt(:,iel_0);      % delta magnetic field around equator
+dBerr_eq=deltaB_se_filt(:,iel_0);      
+
+hold on;
+tp=ploterr(rad2deg(Vaz),1e3*dB_eq,[],1e3*dBerr_eq,'o','hhxy',0);
+set(tp(1),'Marker',mark_typ{2},...
+    'MarkerFaceColor',cl(2,:),'MarkerEdgeColor',c(2,:),...
+    'DisplayName','');
+set(tp(2),'Color',c(2,:));
+pleg=tp(1);
+
+
+% annotation
+box on;
+ax=gca;
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+ax.LineWidth=ax_lwidth;
+
+title('Equatorial tomography $\phi=0$');
+
+xlabel('Azimuthal angle $\theta$ [$^\circ$]');
+ylabel('$\Delta B$ [mG]');
+
+% axis tight;
+xlim([0,180]);
+ax.XTick=0:45:180;
+
+% lgd=legend(pleg);
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
 end
 
 
