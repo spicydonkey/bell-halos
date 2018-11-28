@@ -14,6 +14,10 @@
 %
 
 %% CONFIGS
+% save
+do_save_figs=true;
+dir_save='C:\Users\HE BEC\Dropbox\PhD\thesis\projects\maggrad+epr\ramsey\prelim_20181128';
+
 % He*
 C_gymag=2.8e6;     % gyromagnetic ratio (gamma) [Hz/G]
 
@@ -413,6 +417,15 @@ for ii=1:ncomp(1)
     end
 end
 
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
 %% VIS: Ramsey fringe
 figname='ramsey_fringe';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
@@ -454,17 +467,26 @@ for ii=1:ncomp(2)
     ylim([-0.05,1.05]);
 end
 
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
 %% MODE RESOLVED RAMSEY
 %%% construct spatial zones at latlon grid + solid angle
-alpha=pi/10;         % half-cone angle
+alpha=pi/20;         % half-cone angle
 lim_az=[-pi,pi];    % no inversion symmetry
 phi_max=pi/4;       
 lim_el=[-phi_max,phi_max];
 
-n_az=40;                	% equispaced bins
-n_el=11;
+n_az=80;                	% equispaced bins
+n_el=21;
 
-az_disp=deg2rad(0:90:270);     % azim sections (great circles) to display
+az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
 % el_disp=deg2rad(-30:30:30);    % elev/lat zones to display
 
 az=linspace(lim_az(1),lim_az(2),n_az+1);
@@ -543,9 +565,24 @@ om_ramsey_mode=ramsey_fpar_mode(:,:,:,:,2);
 omerr_ramsey_mode=ramsey_fparerr_mode(:,:,:,:,2);
 % PHI_DELAY X AZ X EL X MJ
 
+% outlier to NaN
+b_outlier=isoutlier(om_ramsey_mode);    % find outlier by Med Abs Dev
+om_ramsey_mode_raw=om_ramsey_mode;      % store original raw data set
+omerr_ramsey_mode_raw=omerr_ramsey_mode;
+om_ramsey_mode(b_outlier)=NaN;          % outlier --> NaN
+omerr_ramsey_mode(b_outlier)=NaN;
+
+om_mode_0=squeeze(mean(om_ramsey_mode,1,'omitnan'));   % mode-resolved L-freq avgd thru PHI_DELAY
+n_samp=squeeze(sum(~b_outlier,1));       % num exp samples to average over
+omerr_mode_0=sqrt(squeeze(sum(omerr_ramsey_mode.^2,1,'omitnan')))./n_samp;
+
 % magnetic field
 B_mode=1e6*om_ramsey_mode/(2*pi*C_gymag);
 Berr_mode=1e6*omerr_ramsey_mode/(2*pi*C_gymag);
+
+B_mode_0=1e6*om_mode_0/(2*pi*C_gymag);          % average PHI_DELAY exp params
+Berr_mode_0=1e6*omerr_mode_0/(2*pi*C_gymag);
+
 
 %% VIS: Mode-resolved Ramsey fringe
 figname='ramsey_fringe_mode';
@@ -591,27 +628,50 @@ for ii=1:naz_disp
     ylim([-0.05,1.05]);
 end
 
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
 %% VIS: Magnetometry
 idx_mJ=1;       % just use fit param from mJ=1
 
 figname='halo_magnetometry';
-h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.35,0.5],'Renderer',f_ren);
 
-tp=plotFlatMapWrappedRad(gaz,gel,squeeze(B_mode(idx_phi_disp,:,:,idx_mJ)),'eckert4','texturemap');
+for ii=1:npar_phidelay
+    subplot(2,2,ii);
+    
+    tp=plotFlatMapWrappedRad(gaz,gel,squeeze(B_mode(ii,:,:,idx_mJ)),'eckert4','texturemap');
+    
+    % annotation
+    ax=gca;
+    set(ax,'Layer','Top');
+    % ax.FontSize=fontsize;
+    % ax.LineWidth=ax_lwidth;
+    
+    cbar=colorbar('SouthOutside');
+    cbar.TickLabelInterpreter='latex';
+    cbar.Label.Interpreter='latex';
+    cbar.Label.String='Magnetic field $B$ [G]';
+    cbar.Label.FontSize=fontsize;
+    cbar.FontSize=fontsize;
+    colormap('viridis');
+end
 
-% annotation
-ax=gca;
-set(ax,'Layer','Top');
-% ax.FontSize=fontsize;
-% ax.LineWidth=ax_lwidth;
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.png'),'-dpng','-r300');
+end
 
-cbar=colorbar('SouthOutside');
-cbar.TickLabelInterpreter='latex';
-cbar.Label.Interpreter='latex';
-cbar.Label.String='Magnetic field $B$ [G]';
-cbar.Label.FontSize=fontsize;
-cbar.FontSize=fontsize;
-colormap('viridis');
 
 %% VIS: Magnetic tomography: equatorial
 figname='B_equatorial_tomography';
@@ -623,7 +683,7 @@ Berr_eq=Berr_mode(:,:,iel_0,idx_mJ);
 hold on;
 pleg=NaN(npar_phidelay,1);
 for ii=1:npar_phidelay
-    tp=ploterr(rad2deg(az),B_eq(ii,:),[],Berr_eq(ii,:),'o');
+    tp=ploterr(rad2deg(az),B_eq(ii,:),[],Berr_eq(ii,:),'o','hhxy',0);
     set(tp(1),'Marker',mark_typ{ii},...
         'MarkerFaceColor',clvir2(ii,:),'MarkerEdgeColor',cvir2(ii,:),...
         'DisplayName',num2str(rad2deg(par_comp{2}(ii)),3));
@@ -643,7 +703,93 @@ title('Equatorial tomography $\phi=0$');
 xlabel('Azimuthal angle $\theta$ [$^\circ$]');
 ylabel('Magnetic field $B$ [G]');
 
-xlim(rad2deg([min(az),max(az)]));
-ylim([0.52,0.545]);
+xlim([-180,180]);
+ax.XTick=-180:90:180;
+% ylim([0.52,0.545]);
 
 % lgd=legend(pleg);
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
+
+%% VIS: Magnetometry (PHI-avg)
+figname='halo_magnetometry_phi0';
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+
+tp=plotFlatMapWrappedRad(gaz,gel,B_mode_0(:,:,idx_mJ),'eckert4','texturemap');
+
+% annotation
+ax=gca;
+set(ax,'Layer','Top');
+% ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+
+cbar=colorbar('SouthOutside');
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
+cbar.Label.String='Magnetic field $B$ [G]';
+cbar.Label.FontSize=fontsize;
+cbar.FontSize=fontsize;
+colormap('viridis');
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.png'),'-dpng','-r300');
+end
+
+
+%% VIS: Magnetic tomography: equatorial (PHI-avg)
+figname='B_equatorial_tomography_phi0';
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+
+B_eq_0=B_mode_0(:,iel_0,idx_mJ);      % magnetic field around equator
+Berr_eq_0=Berr_mode_0(:,iel_0,idx_mJ);      
+
+hold on;
+tp=ploterr(rad2deg(az),B_eq_0,[],Berr_eq_0,'o','hhxy',0);
+set(tp(1),'Marker',mark_typ{2},...
+    'MarkerFaceColor',clvir2(2,:),'MarkerEdgeColor',cvir2(2,:),...
+    'DisplayName',num2str(rad2deg(par_comp{2}(2)),3));
+set(tp(2),'Color',cvir2(2,:));
+pleg=tp(1);
+
+
+% annotation
+box on;
+ax=gca;
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+ax.LineWidth=ax_lwidth;
+
+title('Equatorial tomography $\phi=0$');
+
+xlabel('Azimuthal angle $\theta$ [$^\circ$]');
+ylabel('Magnetic field $B$ [G]');
+
+% axis tight;
+xlim([-180,180]);
+xlim([-180,180]);
+ax.XTick=-180:90:180;
+% ylim([0.52,0.545]);
+
+% lgd=legend(pleg);
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
