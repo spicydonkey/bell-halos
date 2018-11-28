@@ -371,8 +371,10 @@ ramsey_fparerr=cat(3,ramsey_fparerr{:});
 om_ramsey=ramsey_fpar(:,:,2);
 omerr_ramsey=ramsey_fparerr(:,:,2);
 
-%% data vis
-%% Phase & T_delay 
+% magnetic field
+B=1e6*om_ramsey/(2*pi*C_gymag);
+
+%% VIS: Phase & T_delay 
 figname='two_pulse';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.3],'Renderer',f_ren);
 hold on;
@@ -404,12 +406,12 @@ for ii=1:ncomp(1)
     end
 end
 
-%% Ramsey fringe
+%% VIS: Ramsey fringe
 figname='ramsey_fringe';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
 hold on;
 
-xx=1e6*linspace(min(T),max(T));     % x-axis range for fitted curve
+xx=1e6*linspace(min(T),max(T),1e3);     % x-axis range for fitted curve
 
 for ii=1:ncomp(2)
     subplot(1,ncomp(2),ii);
@@ -420,9 +422,9 @@ for ii=1:ncomp(2)
     hold on;
     for jj=1:2        
         pexp=ploterr(1e6*T,tp(:,jj),[],tperr(:,jj),mark_typ{jj},'hhxy',0);
-            set(pexp(1),'MarkerFaceColor',clvir(jj,:),'MarkerEdgeColor',cvir(jj,:),...
-                'DisplayName',str_ss{jj});
-            set(pexp(2),'Color',cvir(jj,:));
+        set(pexp(1),'MarkerFaceColor',clvir(jj,:),'MarkerEdgeColor',cvir(jj,:),...
+            'DisplayName',str_ss{jj});
+        set(pexp(2),'Color',cvir(jj,:));
         yy=feval(ramsey_fit{jj,ii},xx);
         pfit=plot(xx,yy,'LineStyle',line_sty{jj},'Color',clvir(jj,:));
         uistack(pfit,'bottom');
@@ -448,16 +450,22 @@ end
 %% MODE RESOLVED RAMSEY
 %%% construct spatial zones at latlon grid + solid angle
 alpha=pi/8;         % half-cone angle
-lim_az=[0,2*pi];    % no inversion symmetry
+lim_az=[-pi,pi];    % no inversion symmetry
 phi_max=pi/4;       
 lim_el=[-phi_max,phi_max];
 
 n_az=24;                	% equispaced bins
 n_el=6;
 
+az_disp=deg2rad(0:90:270);     % azim sections (great circles) to display
+% el_disp=deg2rad(-30:30:30);    % elev/lat zones to display
+
 az=linspace(lim_az(1),lim_az(2),n_az+1);
 az=az(1:end-1);
 el=linspace(lim_el(1),lim_el(2),n_el);
+
+[~,iaz_disp]=arrayfun(@(x) min(abs(az-x)),az_disp);     % idx to displayable azim
+naz_disp=length(iaz_disp);
 
 [gaz,gel]=ndgrid(az,el);    % az-el grid
 n_zone=numel(gaz);
@@ -491,9 +499,112 @@ end
 % pop fraction
 p_shot_mode=cellfun(@(x) x./sum(x,4),N_mode,'UniformOutput',false);
 p_avg_mode=cellfun(@(x) mean(x,3),p_shot_mode,'UniformOutput',false);
-% TODO - tidy into nice array structure to access PHI_DELAY, T_DELAY
+p_std_mode=cellfun(@(x) std(x,0,3),p_shot_mode,'UniformOutput',false);
+n_shot_mode=cellfun(@(x) size(x,3), p_shot_mode);
 
+% form into multidim array: PHI_DELAY X T_DELAY X AZ X EL X [] X MJ
+p_avg_mode=cell2mat(cellfun(@(a) reshape(a,[1,1,size(a)]),p_avg_mode,'UniformOutput',false));
+p_std_mode=cell2mat(cellfun(@(a) reshape(a,[1,1,size(a)]),p_std_mode,'UniformOutput',false));
 
-%%% analyse Ramsey
+p_se_mode=p_std_mode./sqrt(n_shot_mode);        % standard error
 
+%% analyse Ramsey fringe for all modes and exp params
+ramsey_fit_mode=cell(npar_phidelay,n_az,n_el,2);
+% format: PHI_DELAY X AZ X EL X MJ
+for ii=1:npar_phidelay
+    for jj=1:n_zone
+        [iaz,iel]=ind2sub([n_az,n_el],jj);
+        for kk=1:2
+            tP=p_avg_mode(ii,:,iaz,iel,1,kk);       % pop oscillation
+            ramsey_fit_mode{ii,iaz,iel,kk}=fitnlm(1e6*T,tP,ramsey_mdl,...
+                ramsey_par0,'CoefficientNames',ramsey_cname);
+        end
+    end
+end
+
+% get fit params
+ramsey_fpar_mode=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),ramsey_fit_mode),...
+    1:numel(ramsey_cname),'UniformOutput',false);
+ramsey_fpar_mode=cat(ndims(ramsey_fpar_mode{1})+1,ramsey_fpar_mode{:});
+
+ramsey_fparerr_mode=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),ramsey_fit_mode),...
+    1:numel(ramsey_cname),'UniformOutput',false);
+ramsey_fparerr_mode=cat(ndims(ramsey_fparerr_mode{1})+1,ramsey_fparerr_mode{:});
+% PHI_DELAY X AZ X EL X MJ X PAR#
+
+% get freq
+om_ramsey_mode=ramsey_fpar_mode(:,:,:,:,2);
+omerr_ramsey_mode=ramsey_fparerr_mode(:,:,:,:,2);
+% PHI_DELAY X AZ X EL X MJ
+
+% magnetic field
+B_mode=1e6*om_ramsey_mode/(2*pi*C_gymag);
+
+%% VIS: Mode-resolved Ramsey fringe
+figname='ramsey_fringe_mode';
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+hold on;
+
+xx=1e6*linspace(min(T),max(T),1e3);     % x-axis range for fitted curve
+
+idx_phi_disp=1;
+
+for ii=1:naz_disp
+    iaz=iaz_disp(ii);
+    tp=squeeze(p_avg_mode(idx_phi_disp,:,iaz,iel_0,1,:));   % T X MJ
+    tperr=squeeze(p_se_mode(idx_phi_disp,:,iaz,iel_0,1,:));
+    
+    subplot(1,naz_disp,ii);
+    hold on;
+    for jj=1:2
+        pexp=ploterr(1e6*T,tp(:,jj),[],tperr(:,jj),mark_typ{jj},'hhxy',0);
+        set(pexp(1),'MarkerFaceColor',clvir(jj,:),'MarkerEdgeColor',cvir(jj,:),...
+            'DisplayName',str_ss{jj});
+        set(pexp(2),'Color',cvir(jj,:));
+        
+        yy=feval(ramsey_fit_mode{idx_phi_disp,iaz,iel_0,jj},xx);
+        pfit=plot(xx,yy,'LineStyle',line_sty{jj},'Color',clvir(jj,:));
+        uistack(pfit,'bottom');
+    end
+    titlestr=sprintf('%s %0.0f','$\theta=$',rad2deg(az(iaz)));
+    title(titlestr);
+    
+    % annotate subplot
+    ax=gca;
+    box on;
+    ax_ylim=ax.YLim;
+    ax_xlim=ax.XLim;
+    
+    set(ax,'Layer','Top');
+    ax.FontSize=fontsize;
+    ax.LineWidth=ax_lwidth;
+    xlabel('Pulse delay $T~[\mu s]$');
+    ylabel('Pop fraction $P$');
+    xlim(1e6*[min(T),max(T)]+[-0.1,0.1]);
+    ylim([-0.05,1.05]);
+end
+
+%% VIS: Magnetometry
+idx_mJ=1;       % just use fit param from mJ=1
+
+figname='halo_magnetometry';
+h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+
+tp=plotFlatMapWrappedRad(gaz,gel,squeeze(B_mode(idx_phi_disp,:,:,idx_mJ)),'eckert4','texturemap');
+
+% annotation
+ax=gca;
+set(ax,'Layer','Top');
+% ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+
+cbar=colorbar('SouthOutside');
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
+cbar.Label.String='Magnetic field $B$ [G]';
+cbar.Label.FontSize=fontsize;
+cbar.FontSize=fontsize;
+colormap('viridis');
+
+%% VIS: Magnetic tomography: equatorial
 
