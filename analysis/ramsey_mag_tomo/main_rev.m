@@ -407,6 +407,9 @@ for ii=1:ncomp(1)
         ax.LineWidth=ax_lwidth;
         xlabel('$T~[\mu s]$');
         ylabel('$P$');
+        
+        xlim(1e6*[min(T),max(T)]+[-0.1,0.1]);
+        ylim([-0.05,1.05]);
     end
 end
 
@@ -640,7 +643,7 @@ title('Equatorial tomography $\phi=0$');
 xlabel('Azimuthal angle $\theta$ [$^\circ$]');
 ylabel('Magnetic field $B$ [G]');
 
-xlim([0,360]);
+xlim(rad2deg([min(az),max(az)]));
 ylim([0.52,0.545]);
 
 % lgd=legend(pleg);
