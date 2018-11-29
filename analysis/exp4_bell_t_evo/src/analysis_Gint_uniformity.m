@@ -247,6 +247,57 @@ end
 %% DATA VISUALISATION
 [cc,ccl,ccd]=palette(n_zone);
 
+%% vis: G2 tevo
+figname=sprintf('Gint_tevo');
+h=figure('Name',figname,...
+    'Units',f_units,'Position',[0.2 0.2 0.55 0.2],'Renderer',f_ren);
+
+for ii=1:naz_disp
+    iaz=iaz_disp(ii);
+    taz=Vaz(iaz);
+    
+    tG=squeeze(G_int(:,iaz,iel_0,:))-1;         % g2-1
+    tGerr=squeeze(G_int_se(:,iaz,iel_0,:));     % stderr
+    tGnorm=0.5*(sum(tG,2)+tG(:,3));     % normaliser
+    tG0=tG./tGnorm;
+    tGerr0=tGerr./tGnorm;
+        
+    % figure
+    subplot(1,naz_disp,ii);
+    hold on;
+    pleg=NaN(3,1);
+    for jj=1:3
+        tp=ploterr(tau,tG0(:,jj),[],tGerr0(:,jj),'o-','hhxy',0);
+        set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,'Marker',mark_typ{jj},...
+            'MarkerFaceColor',cltheme(jj,:),'Color',ctheme(jj,:),'DisplayName',str_ss{jj});
+        set(tp(2),'LineWidth',line_wid,'Color',ctheme(jj,:));
+        pleg(jj)=tp(1);
+    end
+    
+    box on;
+    ax=gca;
+    set(ax,'Layer','Top');
+    xlabel('$\tau~[\textrm{ms}]$');
+    ylabel('$\mathcal{G}^{(2)}$');
+    ax.FontSize=fontsize;
+    
+    xlim([0.7,1.8]);
+    ylim([-0.3,1.7]);
+%     ax.LineWidth=1.2;
+    titlestr=sprintf('%s %0.0f%s','$\theta=$',rad2deg(taz),'$^\circ$');
+    title(titlestr);
+end
+% lgd=legend(pleg,'Location','EastOutside');
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
 %% vis: G2 momentum integrated
 for ii=1:n_tau
     % figure
@@ -362,7 +413,8 @@ xlabel('$\tau~[\textrm{ms}]$');
 ylabel('Parity $\bar{\mathcal{B}}_{xx}$');
 ax.FontSize=fontsize;
 ax.LineWidth=1.2;
-ylim([-1.2,1.2]);
+% ylim([-1.2,1.2]);
+ylim([-1.5,1.5]);
 titlestr=sprintf('Equator (%s %0.2g)','$\phi=$',Vel(iel_0));
 title(titlestr);
 lgd=legend(pleg,'Location','SouthWest');
