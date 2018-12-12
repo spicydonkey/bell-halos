@@ -21,18 +21,27 @@ f_units='normalized';
 f_pos=[0.2,0.2,0.2,0.3];
 f_ren='painters';
 
-[c,cl,cd]=palette(3);
-% c_gray=0.6*ones(1,3);
+%%% build color palette (blue,red,black,green)
+[c,cl,cd]=palette(4);
+% third color to black
+c(4,:)=c(3,:);
+cl(4,:)=cl(3,:);
+c_gray=0.6*ones(1,3);
+c(3,:)=[0,0,0]; 
+cl(3,:)=c_gray;
+
+
 % line_sty={'-','--',':'};
-mark_typ={'o','^','d','s'};
+mark_typ={'o','s','^','d'};
 % str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
 % str_ss={'$m_J = 1$','$m_J = 0$'};
 % str_ss={'$m_J = 1$','$m_J = 0$','$m_J = -1$'};
+str_ss={'$1$','$0$','$-1$'};
 % str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
-mark_siz=7;
-line_wid=1.5;
-fontsize=12;
-ax_lwidth=1.2;
+mark_siz=6;
+line_wid=1.3;
+fontsize=11.5;
+ax_lwidth=1;
 
 %% load config
 run(config_name);
@@ -556,17 +565,23 @@ hold on;
 % lineProps.col={cl(idx_mJ,:)};
 % tfitted=mseb(1e6*tt,pp,P_errfrac.*pp,lineProps,1);
 
-% momentum zone variability
+% % momentum zone variability
+% for ii=1:2
+%     pp=feval(fit_rabi_halo{ii},tt);
+%     lineProps.col={cl(ii,:)};
+%     
+%     if ii==1
+%         p_err=errfrac_amp.*(1-pp);
+%     elseif ii==2
+%         p_err=errfrac_amp.*pp;
+%     end
+%     tfitted=mseb(1e6*tt,pp,p_err,lineProps,1);
+% end
+
+% fit
 for ii=1:2
     pp=feval(fit_rabi_halo{ii},tt);
-    lineProps.col={cl(ii,:)};
-    
-    if ii==1
-        p_err=errfrac_amp.*(1-pp);
-    elseif ii==2
-        p_err=errfrac_amp.*pp;
-    end
-    tfitted=mseb(1e6*tt,pp,p_err,lineProps,1);
+    plot(1e6*tt,pp,'-','Color',c(ii,:),'LineWidth',line_wid);
 end
 
 %%% data
@@ -576,7 +591,7 @@ for ii=1:n_mf
 %     th=ploterr(tau_rot,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
     set(th(1),'color',c(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
         'MarkerSize',mark_siz,'MarkerFaceColor',cl(ii,:),...
-        'DisplayName',num2str(configs.mf(ii).mf));
+        'DisplayName',str_ss{ii});
     set(th(2),'color',c(ii,:),'LineWidth',line_wid);
     
     h(ii)=th(1);
@@ -585,6 +600,7 @@ end
 % annotations
 box on;
 ax=gca;
+set(ax,'Layer','Top');     % graphics axes should be always on top
 ax.LineWidth=ax_lwidth;
 ax.FontSize=fontsize;
 set(ax,'Layer','Top');     % graphics axes should be always on top
@@ -598,9 +614,10 @@ xlabel('Pulse duration [$\mu$s]');
 % ylabel('$P$');
 ylabel('Population fraction $P$');
 
-lgd=legend(h,'Location','East');
+% lgd=legend(h,'Location','East');
 % title(lgd,'$m_J$');
-set(lgd,'FontSize',fontsize-1);
+% set(lgd,'FontSize',fontsize-1);
+% lgd.Box='off';
 
 h=gcf;
 h.Renderer=f_ren;
