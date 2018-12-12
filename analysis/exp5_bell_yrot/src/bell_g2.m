@@ -164,8 +164,10 @@ uistack(p_B_sm,'bottom');
 
 %%% Theory
 % Bell+: Ideal rotation
+B_theory_psiplus=@(theta) -cos(2*theta);        % theoretical model of diagonal correlator for Psi+
 th=linspace(lim_th(1),lim_th(2),1e3);
-B_th_psi=-cos(2*th);
+% B_th_psi=-cos(2*th);
+B_th_psi=B_theory_psiplus(th);
 p_B_psi=plot(th,B_th_psi,'Color',0.2*ones(1,3),'LineStyle','- -','LineWidth',line_wid,...
     'DisplayName','$\vert\Psi^+\rangle$');
 uistack(p_B_psi,'bottom');
@@ -197,14 +199,14 @@ uistack(p_bogo,'bottom');      % this should REALLY be bottom - to not cover any
 
 text(0,0.5*(B_bogo_max+1),sprintf('Nonlocal (QM)'),'FontSize',fontsize-1,'VerticalAlignment','middle');
 
-% BELOW
-p_bogo_2=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-    [ax.YLim(1),ax.YLim(1),-B_bogo_max,-B_bogo_max],...
-    c_bogo,...
-    'EdgeColor','none');
-uistack(p_bogo_2,'bottom');      
-set(gca,'Layer','Top');
-% text(0,-0.5*(B_bogo_max+1),sprintf('Nonlocal (QM)'),'FontSize',fontsize-1,'VerticalAlignment','middle');
+% % BELOW
+% p_bogo_2=patch([ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+%     [ax.YLim(1),ax.YLim(1),-B_bogo_max,-B_bogo_max],...
+%     c_bogo,...
+%     'EdgeColor','none');
+% uistack(p_bogo_2,'bottom');      
+% set(gca,'Layer','Top');
+% % text(0,-0.5*(B_bogo_max+1),sprintf('Nonlocal (QM)'),'FontSize',fontsize-1,'VerticalAlignment','middle');
 
 % %%%% QENT
 % B_cent=0.5*(max(B)+min(B));   % centre value
@@ -250,6 +252,15 @@ set(tp(2),'LineWidth',line_wid,'DisplayName','');
 tp=plot(Th_epr_fit,S_epr_fit,'Color',c(1,:),'LineWidth',line_wid,...
     'LineStyle','-');
 uistack(tp,'bottom');
+
+% Theory
+% Bell+: Ideal rotation
+S_theory_psiplus=@(th) abs(B_theory_psiplus(th)-B_theory_psiplus(th+pi/2));        % theoretical model of diagonal correlator for Psi+
+th=linspace(min(Th_epr_fit),max(Th_epr_fit),1e3);
+S_th_psiplus=S_theory_psiplus(th);
+p_S_psiplus=plot(th,S_th_psiplus,'Color',0.2*ones(1,3),'LineStyle','- -','LineWidth',line_wid,...
+    'DisplayName','$\vert\Psi^+\rangle$');
+uistack(p_S_psiplus,'bottom');
 
 box on;
 ax=gca;
