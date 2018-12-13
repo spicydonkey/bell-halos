@@ -14,18 +14,26 @@ f_units='normalized';
 f_pos=[0.2,0.2,0.2,0.3];
 f_ren='painters';
 
-[c,cl,cd]=palette(3);
-% c_gray=0.6*ones(1,3);
+
+%%% build color palette (blue,red,black,green)
+[c,cl,cd]=palette(4);
+% third color to black
+c(4,:)=c(3,:);
+cl(4,:)=cl(3,:);
+c_gray=0.6*ones(1,3);
+c(3,:)=[0,0,0]; 
+cl(3,:)=c_gray;
+
 % line_sty={'-','--',':'};
-mark_typ={'o','^','d','s'};
+mark_typ={'o','s','^','d'};
 % str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
 % str_ss={'$m_J = 1$','$m_J = 0$'};
 % str_ss={'$m_J = 1$','$m_J = 0$','$m_J = -1$'};
 % str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
-mark_siz=7;
-line_wid=1.5;
-fontsize=12;
-ax_lwidth=1.2;
+mark_siz=6;
+line_wid=1.3;
+fontsize=11.5;
+ax_lwidth=1;
 
 
 %% load config
@@ -528,7 +536,7 @@ hold on;
 % Fitted model
 for ii=1:2
     pp=feval(fit_ramsey_halo{ii},tt);
-    pfit=plot(tt,pp,'Color',cl(ii,:),'LineWidth',line_wid,'LineStyle','-');
+    pfit=plot(tt,pp,'Color',c(ii,:),'LineWidth',line_wid,'LineStyle','-');
 end
 
 % DATA
@@ -552,9 +560,9 @@ set(ax,'Layer','Top');     % graphics axes should be always on top
 xlabel('Relative phase $\phi$');
 ylabel('Population fraction $P$');
 
-lgd=legend(h,'Location','East');
+% lgd=legend(h,'Location','East');
 % title(lgd,'$m_J$');
-set(lgd,'FontSize',fontsize-1);
+% set(lgd,'FontSize',fontsize-1);
 
 xlim([0-2*pi/25,2*pi+2*pi/25]);
 xticks(0:pi/2:2*pi);

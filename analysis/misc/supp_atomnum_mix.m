@@ -68,8 +68,16 @@ end
 
 %% vis
 % grahics configs
-[c0,clight,cdark]=palette(4);
-mark_ss={'o','s','^','d'};
+% build color palette (blue,red,black,green)
+[c,cl,cd]=palette(4);
+% third color to black
+c(4,:)=c(3,:);
+cl(4,:)=cl(3,:);
+c_gray=0.6*ones(1,3);
+c(3,:)=[0,0,0]; 
+cl(3,:)=c_gray;
+
+mark_typ={'o','s','^','d'};
 mark_siz=8;
 line_wid=2;
 str_ss={'$m_J=1$','$m_J=0$','$m_J=-1$','loss'};
@@ -79,17 +87,20 @@ hfig.Renderer='painters';
 hold on;
 pleg=NaN(1,4);      % data for legend
 for ii=1:4
-    tp=myploterr(1e6*par_T,Navg(:,ii),[],Nse(:,ii),mark_ss{ii},c0(ii,:));  
-    set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,'DisplayName',str_ss{ii});
+    tp=ploterr(1e6*par_T,Navg(:,ii),[],Nse(:,ii),'o','hhxy',0);
+    set(tp(1),'color',c(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+        'MarkerSize',mark_siz,'MarkerFaceColor',cl(ii,:),...
+        'DisplayName',str_ss{ii});
+    set(tp(2),'color',c(ii,:),'LineWidth',line_wid);
     pleg(ii)=tp(1);     % line data to show in legend
-    set(tp(2),'LineWidth',line_wid,'DisplayName','');
     
     % fit
-    tpfit=plot(1e6*tau_fit,Nfit(ii,:),'LineWidth',2.2,'Color',0.5*(c0(ii,:)+clight(ii,:)));
+    tpfit=plot(1e6*tau_fit,Nfit(ii,:),'LineWidth',line_wid,'Color',c(ii,:));        %0.5*(c(ii,:)+cl(ii,:))
     uistack(tpfit,'bottom');
 end
 
 ax=gca;
+set(ax,'Layer','Top');     % graphics axes should be always on top
 axis tight;
 lgd=legend(pleg);
 lgd.FontSize=11;
