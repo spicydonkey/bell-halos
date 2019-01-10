@@ -4,7 +4,7 @@
 
 %% CONFIGS
 % data file
-fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\exp4_20181029.mat';
+fdata='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\exp4_tevo\exp4_20181029.mat';
 
 % capture region - "central symmetry"!
 alpha=pi/10; % pi/8;        % cone half-angle
