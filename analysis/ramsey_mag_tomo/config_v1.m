@@ -10,8 +10,7 @@ vz=exp_param.vz;
 
 
 %% CONFIGS
-% configs.path.base='\\AMPLPC29\Users\TDC_user\ProgramFiles\my_read_tdc_gui_v1.0.1\dld_output\bell_global\20180326\pulse_phase_delay';
-configs.path.base='C:\Users\HE BEC\bell_data\pulse_phase_delay';
+configs.path.base='C:\Users\HE BEC\data\halo_metrology\pulse_phase_delay';
 configs.path.data=configs.path.base;
 
 configs.path.out=fullfile(configs.path.base,'out');

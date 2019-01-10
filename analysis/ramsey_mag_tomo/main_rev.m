@@ -15,8 +15,8 @@
 
 %% CONFIGS
 % save
-do_save_figs=true;
-dir_save='C:\Users\HE BEC\Dropbox\PhD\thesis\projects\maggrad+epr\ramsey\prelim_20181128';
+do_save_figs=false;
+dir_save='C:\Users\HE BEC\Dropbox\phd\projects\maggrad+epr\ramsey\prelim_20181128';
 
 % He*
 C_gymag=2.8e6;     % gyromagnetic ratio (gamma) [Hz/G]
@@ -330,27 +330,55 @@ clear h_zxy*;       % clear figs
 %% ANALYSIS
 %% Ramsey fringes
 T=par_comp{3};      % T_delay between two pulses [s]
+phi=par_comp{2};    % phase delay of 2nd pi/2 pulse (rad)
+
 n_shot=cellfun(@(x) size(x,1),k_par,'UniformOutput',false);     % num shots each param
 
 %%% ATOM NUMBERS
-Nmf_shot=cellfun(@(x) shotSize(x),k_par,'UniformOutput',false);      % num in mJ halos
+Nm_shot=cellfun(@(x) shotSize(x),k_par,'UniformOutput',false);      % num in mJ halos
 
 % statistics
-Nmf_avg=cellfun(@(n) mean(n,1),Nmf_shot,'UniformOutput',false);      % avg num in mJ halo
-Nmf_std=cellfun(@(n) std(n,0,1),Nmf_shot,'UniformOutput',false);     % std num in mJ halos
-Nmf_se=cellfun(@(s,N) s/sqrt(N),Nmf_std,n_shot,'UniformOutput',false);  % serr num in mJ halos
+Nm_avg=cellfun(@(n) mean(n,1),Nm_shot,'UniformOutput',false);      % avg num in mJ halo
+Nm_std=cellfun(@(n) std(n,0,1),Nm_shot,'UniformOutput',false);     % std num in mJ halos
+Nm_se=cellfun(@(s,N) s/sqrt(N),Nm_std,n_shot,'UniformOutput',false);  % serr num in mJ halos
 
-%%% pop fraction
-p_shot=cellfun(@(n) n./sum(n,2),Nmf_shot,'UniformOutput',false);
-p_avg=cellfun(@(x) mean(x,1),p_shot,'UniformOutput',false);
-p_std=cellfun(@(x) std(x,0,1),p_shot,'UniformOutput',false);
-p_se=cellfun(@(s,N) s/sqrt(N),p_std,n_shot,'UniformOutput',false);
+N_tot=cellfun(@(n) sum(n),Nm_avg);     % avg total atom num det'd (mJ summed)
+N_tot_avg=mean(N_tot,3);                % avg total atom num det'd (T avg'd)
 
+%%% pop fraction (pop frac per spin comp)
+pm_shot=cellfun(@(n) n./sum(n,2),Nm_shot,'UniformOutput',false);
+pm_avg=cellfun(@(x) mean(x,1),pm_shot,'UniformOutput',false);
+pm_std=cellfun(@(x) std(x,0,1),pm_shot,'UniformOutput',false);
+pm_se=cellfun(@(s,N) s/sqrt(N),pm_std,n_shot,'UniformOutput',false);
+
+%%% Population (inversion): P = p_up - p_down
+P_shot=cellfun(@(n) (n(:,1)-n(:,2))./sum(n,2),Nm_shot,'UniformOutput',false);   
+P_avg=cellfun(@(x) mean(x,1),P_shot,'UniformOutput',false);
+P_std=cellfun(@(x) std(x,0,1),P_shot,'UniformOutput',false);
+P_se=cellfun(@(s,N) s/sqrt(N),P_std,n_shot,'UniformOutput',false);
+
+% TODO
+P_ramsey=arrayfun(@(I) cat(1,P_avg{1,I,:}),1:ncomp(2),'UniformOutput',false);
+P_std_ramsey=arrayfun(@(I) cat(1,P_std{1,I,:}),1:ncomp(2),'UniformOutput',false);
+P_err_ramsey=arrayfun(@(I) cat(1,P_se{1,I,:}),1:ncomp(2),'UniformOutput',false);
+
+figname='2_pi/2_pulse_with_delay';
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4],'Renderer','Painters');
+hold on;
+for ii=1:ncomp(2)
+    plot(1e6*T,P_ramsey{ii},'o-');
+end
+box on;
+xlabel('$\tau$ ($\mu$s)');
+ylabel('P');
+lgd=legend(num2str(phi/pi),'Location','East');
+title(lgd,'$\phi/\pi$');
 
 %% Model fit: Ramsey
-P_ramsey=arrayfun(@(I) cat(1,p_avg{1,I,:}),1:ncomp(2),'UniformOutput',false);
-Pstd_ramsey=arrayfun(@(I) cat(1,p_std{1,I,:}),1:ncomp(2),'UniformOutput',false);
-Perr_ramsey=arrayfun(@(I) cat(1,p_se{1,I,:}),1:ncomp(2),'UniformOutput',false);
+%%% pop fraction: p±
+p_ramsey=arrayfun(@(I) cat(1,pm_avg{1,I,:}),1:ncomp(2),'UniformOutput',false);
+p_std_ramsey=arrayfun(@(I) cat(1,pm_std{1,I,:}),1:ncomp(2),'UniformOutput',false);
+p_err_ramsey=arrayfun(@(I) cat(1,pm_se{1,I,:}),1:ncomp(2),'UniformOutput',false);
 
 % config model
 ramsey_mdl='y~c+amp*cos(om*x+phi)';
@@ -358,7 +386,7 @@ ramsey_cname={'amp','om','phi','c'};
 ramsey_par0=[0.5,2*pi*1.5,0,0.5];
 
 % fit
-ramsey_fit=arrayfun(@(I) cellfun(@(P) fitnlm(1e6*T,P(:,I),ramsey_mdl,ramsey_par0,'CoefficientNames',ramsey_cname),P_ramsey,'UniformOutput',false),...
+ramsey_fit=arrayfun(@(I) cellfun(@(P) fitnlm(1e6*T,P(:,I),ramsey_mdl,ramsey_par0,'CoefficientNames',ramsey_cname),p_ramsey,'UniformOutput',false),...
     1:2,'UniformOutput',false);
 ramsey_fit=cat(1,ramsey_fit{:});
 % format: MJ X PHI_DELAY
@@ -390,7 +418,7 @@ hold on;
 for ii=1:ncomp(1)
     for jj=1:ncomp(2)
         subplot(ncomp(1),ncomp(2),sub2ind(ncomp([2,1]),jj,ii));
-        tp=cat(1,p_avg{ii,jj,:});
+        tp=cat(1,pm_avg{ii,jj,:});
         
         hold on;
         for kk=1:2
@@ -435,9 +463,9 @@ xx=1e6*linspace(min(T),max(T),1e3);     % x-axis range for fitted curve
 
 for ii=1:ncomp(2)
     subplot(1,ncomp(2),ii);
-    tp=P_ramsey{ii};
+    tp=p_ramsey{ii};
 %     tperr=Pstd_ramsey{ii};
-    tperr=Perr_ramsey{ii};
+    tperr=p_err_ramsey{ii};
     
     hold on;
     for jj=1:2        
@@ -478,13 +506,13 @@ end
 
 %% MODE RESOLVED RAMSEY
 %%% construct spatial zones at latlon grid + solid angle
-alpha=pi/20;         % half-cone angle
+alpha=pi/10;         % half-cone angle
 lim_az=[-pi,pi];    % no inversion symmetry
 phi_max=pi/4;       
 lim_el=[-phi_max,phi_max];
 
-n_az=80;                	% equispaced bins
-n_el=21;
+n_az=20;                	% equispaced bins
+n_el=5;
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
 % el_disp=deg2rad(-30:30:30);    % elev/lat zones to display
@@ -657,7 +685,7 @@ for ii=1:npar_phidelay
     cbar=colorbar('SouthOutside');
     cbar.TickLabelInterpreter='latex';
     cbar.Label.Interpreter='latex';
-    cbar.Label.String='Magnetic field $B$ [G]';
+    cbar.Label.String='Magnetic field $\mathrm{B}$ [G]';
     cbar.Label.FontSize=fontsize;
     cbar.FontSize=fontsize;
     colormap('viridis');
@@ -701,7 +729,7 @@ ax.LineWidth=ax_lwidth;
 title('Equatorial tomography $\phi=0$');
 
 xlabel('Azimuthal angle $\theta$ [$^\circ$]');
-ylabel('Magnetic field $B$ [G]');
+ylabel('Magnetic field $\mathrm{B}$ [G]');
 
 xlim([-180,180]);
 ax.XTick=-180:90:180;
@@ -734,7 +762,7 @@ set(ax,'Layer','Top');
 cbar=colorbar('SouthOutside');
 cbar.TickLabelInterpreter='latex';
 cbar.Label.Interpreter='latex';
-cbar.Label.String='Magnetic field $B$ [G]';
+cbar.Label.String='Magnetic field $\mathrm{B}$ [G]';
 cbar.Label.FontSize=fontsize;
 cbar.FontSize=fontsize;
 colormap('viridis');
@@ -775,7 +803,7 @@ ax.LineWidth=ax_lwidth;
 title('Equatorial tomography $\phi=0$');
 
 xlabel('Azimuthal angle $\theta$ [$^\circ$]');
-ylabel('Magnetic field $B$ [G]');
+ylabel('Magnetic field $\mathrm{B}$ [G]');
 
 % axis tight;
 xlim([-180,180]);
