@@ -16,7 +16,7 @@
 %% CONFIGS
 % save
 do_save_figs=false;
-dir_save='C:\Users\HE BEC\Dropbox\phd\projects\maggrad+epr\ramsey\prelim_20181128';
+dir_save='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\ramsey\prelim_20181128';
 
 % He*
 C_gymag=2.8e6;     % gyromagnetic ratio (gamma) [Hz/G]
@@ -357,7 +357,7 @@ P_avg=cellfun(@(x) mean(x,1),P_shot,'UniformOutput',false);
 P_std=cellfun(@(x) std(x,0,1),P_shot,'UniformOutput',false);
 P_se=cellfun(@(s,N) s/sqrt(N),P_std,n_shot,'UniformOutput',false);
 
-% TODO
+% TODO 20190110
 P_ramsey=arrayfun(@(I) cat(1,P_avg{1,I,:}),1:ncomp(2),'UniformOutput',false);
 P_std_ramsey=arrayfun(@(I) cat(1,P_std{1,I,:}),1:ncomp(2),'UniformOutput',false);
 P_err_ramsey=arrayfun(@(I) cat(1,P_se{1,I,:}),1:ncomp(2),'UniformOutput',false);
