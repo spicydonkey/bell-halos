@@ -369,6 +369,7 @@ p_halo_ramsey_err=arrayfun(@(I) cat(1,pm_halo_se{1,I,:}),1:ncomp(2),'UniformOutp
 mramsey_mdl='y~c+amp*cos(om*x+phi)';
 mramsey_cname={'amp','om','phi','c'};
 mramsey_par0=[0.5,2*pi*1.5,0,0.5];
+idx_om_mramsey=find(cellfun(@(s) strcmp(s,'om'),mramsey_cname)==1);
 
 % fit
 mramsey_fit=arrayfun(@(I) cellfun(@(P) fitnlm(1e6*T,P(:,I),mramsey_mdl,mramsey_par0,'CoefficientNames',mramsey_cname),p_halo_ramsey,'UniformOutput',false),...
@@ -387,8 +388,8 @@ mramsey_fparerr=cat(3,mramsey_fparerr{:});
 % MJ X PHI_DELAY X PAR#
 
 % get freq
-om_mramsey=mramsey_fpar(:,:,2);
-omerr_mramsey=mramsey_fparerr(:,:,2);
+om_mramsey=mramsey_fpar(:,:,idx_om_mramsey);
+omerr_mramsey=mramsey_fparerr(:,:,idx_om_mramsey);
 
 % magnetic field
 B_mramsey=1e6*om_mramsey/(2*pi*C_gymag);
@@ -417,6 +418,7 @@ P_halo_ramsey_err=arrayfun(@(I) cat(1,P_halo_se{1,I,:}),1:ncomp(2),'UniformOutpu
 Pramsey_mdl='y~amp*cos(om*x+phi)';
 Pramsey_cname={'amp','om','phi'};
 Pramsey_par0=[0.5,2*pi*1.5,0];
+idx_om_Pramsey=find(cellfun(@(s) strcmp(s,'om'),Pramsey_cname)==1);
 
 % fit
 Pramsey_fit=cellfun(@(P) fitnlm(1e6*T,P,Pramsey_mdl,Pramsey_par0,'CoefficientNames',Pramsey_cname),P_halo_ramsey,'UniformOutput',false);
@@ -432,11 +434,11 @@ Pramsey_fparerr=cat(1,Pramsey_fparerr{:});
 %format: PAR# X PHI_DELAY
 
 % get freq
-om_Pramsey=Pramsey_fpar(2,:);         % 2nd index to OMEGA
-omerr_Pramsey=Pramsey_fparerr(2,:);
+om_Pramsey=Pramsey_fpar(idx_om_Pramsey,:);
+omerr_Pramsey=Pramsey_fparerr(idx_om_Pramsey,:);
 
 % magnetic field
-B_Pramsey=1e6*om_Pramsey/(2*pi*C_gymag);
+Bk_Pramsey=1e6*om_Pramsey/(2*pi*C_gymag);
 Berr_Pramsey=1e6*omerr_Pramsey/(2*pi*C_gymag);
 
 
@@ -575,8 +577,9 @@ if do_save_figs
 end
 
 
-%% MODE RESOLVED RAMSEY
-%%% construct spatial zones at latlon grid + solid angle
+%% atom number distribution: nk_m
+%%% Spatial zones
+% construct spatial zones at latlon grid + solid angle
 alpha=pi/10;         % half-cone angle
 lim_az=[-pi,pi];    % no inversion symmetry
 phi_max=pi/4;       
@@ -599,6 +602,7 @@ naz_disp=length(iaz_disp);
 n_zone=numel(gaz);
 
 [~,iel_0]=min(abs(el));        % idx to ~zero elev angle (equator)
+
 
 %%% get atom numbers in regions
 k_ramsey=squeeze(k_par(1,:,:));     % halo k-vectors Ramsey exp
@@ -623,79 +627,138 @@ for ii=1:numel(k_ramsey)
 end
 % clearvars tN ttN;
 
+
+%% k-resolved Pm
 % pop fraction
-p_shot_mode=cellfun(@(x) x./sum(x,4),N_mode,'UniformOutput',false);
-p_avg_mode=cellfun(@(x) mean(x,3),p_shot_mode,'UniformOutput',false);
-p_std_mode=cellfun(@(x) std(x,0,3),p_shot_mode,'UniformOutput',false);
-n_shot_mode=cellfun(@(x) size(x,3), p_shot_mode);
+pm_k_shot=cellfun(@(x) x./sum(x,4),N_mode,'UniformOutput',false);
+pm_k_avg=cellfun(@(x) mean(x,3),pm_k_shot,'UniformOutput',false);
+pm_k_std=cellfun(@(x) std(x,0,3),pm_k_shot,'UniformOutput',false);
+n_k_shot=cellfun(@(x) size(x,3), pm_k_shot);
 
 % form into multidim array: PHI_DELAY X T_DELAY X AZ X EL X [] X MJ
-p_avg_mode=cell2mat(cellfun(@(a) reshape(a,[1,1,size(a)]),p_avg_mode,'UniformOutput',false));
-p_std_mode=cell2mat(cellfun(@(a) reshape(a,[1,1,size(a)]),p_std_mode,'UniformOutput',false));
+pm_k_avg=cell2mat(cellfun(@(a) reshape(a,[1,1,size(a)]),pm_k_avg,'UniformOutput',false));
+pm_k_std=cell2mat(cellfun(@(a) reshape(a,[1,1,size(a)]),pm_k_std,'UniformOutput',false));
 
-p_se_mode=p_std_mode./sqrt(n_shot_mode);        % standard error
+pm_k_se=pm_k_std./sqrt(n_k_shot);        % standard error
 
-%% analyse Ramsey fringe for all modes and exp params
-ramsey_fit_mode=cell(npar_phidelay,n_az,n_el,2);
+%% Pop-inversion k-resolved
+P_k_shot=cellfun(@(x) (x(:,:,:,1)-x(:,:,:,2))./sum(x,4),N_mode,'UniformOutput',false);
+P_k_avg=cellfun(@(x) mean(x,3),P_k_shot,'UniformOutput',false);
+P_k_std=cellfun(@(x) std(x,0,3),P_k_shot,'UniformOutput',false);
+% n_k_shot=cellfun(@(x) size(x,3), P_k_shot);
+
+% form into multidim array: PHI_DELAY X T_DELAY X AZ X EL
+P_k_avg=cell2mat(cellfun(@(a) reshape(a,[1,1,size(a)]),P_k_avg,'UniformOutput',false));
+P_k_std=cell2mat(cellfun(@(a) reshape(a,[1,1,size(a)]),P_k_std,'UniformOutput',false));
+
+P_k_se=P_k_std./sqrt(n_k_shot);        % standard error
+
+
+%% Ramsey analysis: k-resolved Pm
+mramsey_fit_mode=cell(npar_phidelay,n_az,n_el,2);
 % format: PHI_DELAY X AZ X EL X MJ
 for ii=1:npar_phidelay
     for jj=1:n_zone
         [iaz,iel]=ind2sub([n_az,n_el],jj);
         for kk=1:2
-            tP=p_avg_mode(ii,:,iaz,iel,1,kk);       % pop oscillation
-            ramsey_fit_mode{ii,iaz,iel,kk}=fitnlm(1e6*T,tP,mramsey_mdl,...
+            tP=pm_k_avg(ii,:,iaz,iel,1,kk);       % pop oscillation
+            mramsey_fit_mode{ii,iaz,iel,kk}=fitnlm(1e6*T,tP,mramsey_mdl,...
                 mramsey_par0,'CoefficientNames',mramsey_cname);
         end
     end
 end
 
 % get fit params
-ramsey_fpar_mode=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),ramsey_fit_mode),...
+mramsey_fpar_mode=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),mramsey_fit_mode),...
     1:numel(mramsey_cname),'UniformOutput',false);
-ramsey_fpar_mode=cat(ndims(ramsey_fpar_mode{1})+1,ramsey_fpar_mode{:});
+mramsey_fpar_mode=cat(ndims(mramsey_fpar_mode{1})+1,mramsey_fpar_mode{:});
 
-ramsey_fparerr_mode=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),ramsey_fit_mode),...
+mramsey_fparerr_mode=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),mramsey_fit_mode),...
     1:numel(mramsey_cname),'UniformOutput',false);
-ramsey_fparerr_mode=cat(ndims(ramsey_fparerr_mode{1})+1,ramsey_fparerr_mode{:});
+mramsey_fparerr_mode=cat(ndims(mramsey_fparerr_mode{1})+1,mramsey_fparerr_mode{:});
 % PHI_DELAY X AZ X EL X MJ X PAR#
 
 % get freq
-om_ramsey_mode=ramsey_fpar_mode(:,:,:,:,2);
-omerr_ramsey_mode=ramsey_fparerr_mode(:,:,:,:,2);
+om_mramsey_mode=mramsey_fpar_mode(:,:,:,:,idx_om_mramsey);
+omerr_mramsey_mode=mramsey_fparerr_mode(:,:,:,:,idx_om_mramsey);
 % PHI_DELAY X AZ X EL X MJ
 
 % outlier to NaN
-b_outlier=isoutlier(om_ramsey_mode);    % find outlier by Med Abs Dev
-om_ramsey_mode_raw=om_ramsey_mode;      % store original raw data set
-omerr_ramsey_mode_raw=omerr_ramsey_mode;
-om_ramsey_mode(b_outlier)=NaN;          % outlier --> NaN
-omerr_ramsey_mode(b_outlier)=NaN;
+b_outlier=isoutlier(om_mramsey_mode);    % find outlier by Med Abs Dev
+om_mramsey_mode_raw=om_mramsey_mode;      % store original raw data set
+omerr_mramsey_mode_raw=omerr_mramsey_mode;
+om_mramsey_mode(b_outlier)=NaN;          % outlier --> NaN
+omerr_mramsey_mode(b_outlier)=NaN;
 
-om_mode_0=squeeze(mean(om_ramsey_mode,1,'omitnan'));   % mode-resolved L-freq avgd thru PHI_DELAY
+om_mramsey_mode_0=squeeze(mean(om_mramsey_mode,1,'omitnan'));   % mode-resolved L-freq avgd thru PHI_DELAY
 n_samp=squeeze(sum(~b_outlier,1));       % num exp samples to average over
-omerr_mode_0=sqrt(squeeze(sum(omerr_ramsey_mode.^2,1,'omitnan')))./n_samp;
+omerr_mramsey_mode_0=sqrt(squeeze(sum(omerr_mramsey_mode.^2,1,'omitnan')))./n_samp;
 
 % magnetic field
-B_mode=1e6*om_ramsey_mode/(2*pi*C_gymag);
-Berr_mode=1e6*omerr_ramsey_mode/(2*pi*C_gymag);
+B_mramsey_mode=1e6*om_mramsey_mode/(2*pi*C_gymag);
+Berr_mramsey_mode=1e6*omerr_mramsey_mode/(2*pi*C_gymag);
 
-B_mode_0=1e6*om_mode_0/(2*pi*C_gymag);          % average PHI_DELAY exp params
-Berr_mode_0=1e6*omerr_mode_0/(2*pi*C_gymag);
+B_mramsey_mode_0=1e6*om_mramsey_mode_0/(2*pi*C_gymag);          % average PHI_DELAY exp params
+Berr_mramsey_mode_0=1e6*omerr_mramsey_mode_0/(2*pi*C_gymag);
 
 
-%% VIS: Mode-resolved Ramsey fringe
-figname='ramsey_fringe_mode';
+%% Ramsey analysis: k-resolved P (inv)
+Pramseyk_fit=cell(npar_phidelay,n_az,n_el);
+% format: PHI_DELAY X AZ X EL
+for ii=1:npar_phidelay
+    for jj=1:n_zone
+        [iaz,iel]=ind2sub([n_az,n_el],jj);
+        tP=P_k_avg(ii,:,iaz,iel);       % pop oscillation
+        Pramseyk_fit{ii,iaz,iel}=fitnlm(1e6*T,tP,Pramsey_mdl,...
+            Pramsey_par0,'CoefficientNames',Pramsey_cname);
+    end
+end
+
+% get fit params
+Pramseyk_fpar=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),Pramseyk_fit),...
+    1:numel(Pramsey_cname),'UniformOutput',false);
+Pramseyk_fpar=cat(ndims(Pramseyk_fpar{1})+1,Pramseyk_fpar{:});
+
+Pramseyk_fparerr=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),Pramseyk_fit),...
+    1:numel(Pramsey_cname),'UniformOutput',false);
+Pramseyk_fparerr=cat(ndims(Pramseyk_fparerr{1})+1,Pramseyk_fparerr{:});
+% PHI_DELAY X AZ X EL X PAR#
+
+% get freq
+omk_Pramsey=Pramseyk_fpar(:,:,:,idx_om_Pramsey);
+omerrk_Pramsey=Pramseyk_fparerr(:,:,:,idx_om_Pramsey);
+% PHI_DELAY X AZ X EL
+
+% outlier to NaN
+b_outlier=isoutlier(omk_Pramsey);    % find outlier by Med Abs Dev
+omk_Pramsey_raw=omk_Pramsey;      % store original raw data set
+omerrk_Pramsey_raw=omerrk_Pramsey;
+omk_Pramsey(b_outlier)=NaN;          % outlier --> NaN
+omerrk_Pramsey(b_outlier)=NaN;
+
+omk_Pramsey_0=squeeze(mean(omk_Pramsey,1,'omitnan'));   % mode-resolved L-freq avgd thru PHI_DELAY
+n_samp=squeeze(sum(~b_outlier,1));       % num exp samples to average over
+omerrk_Pramsey_0=sqrt(squeeze(sum(omerrk_Pramsey.^2,1,'omitnan')))./n_samp;
+
+% magnetic field
+Bk_Pramsey=1e6*omk_Pramsey/(2*pi*C_gymag);
+Berrk_Pramsey=1e6*omerrk_Pramsey/(2*pi*C_gymag);
+
+Bk_Pramsey_0=1e6*omk_Pramsey_0/(2*pi*C_gymag);          % average PHI_DELAY exp params
+Berrk_Pramsey_0=1e6*omerrk_Pramsey_0/(2*pi*C_gymag);
+
+
+%% VIS: Mode-resolved Ramsey fringe: Pm
+figname='mramsey_fringe_mode';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
 hold on;
 
 xx=1e6*linspace(min(T),max(T),1e3);     % x-axis range for fitted curve
 
-idx_phi_disp=1;
-
 for ii=1:naz_disp
     iaz=iaz_disp(ii);
-    tp=squeeze(p_avg_mode(idx_phi_disp,:,iaz,iel_0,1,:));   % T X MJ
-    tperr=squeeze(p_se_mode(idx_phi_disp,:,iaz,iel_0,1,:));
+    tp=squeeze(pm_k_avg(idx_phi0,:,iaz,iel_0,1,:));   % T X MJ
+    tperr=squeeze(pm_k_se(idx_phi0,:,iaz,iel_0,1,:));
     
     subplot(1,naz_disp,ii);
     hold on;
@@ -705,7 +768,7 @@ for ii=1:naz_disp
             'DisplayName',str_ss{jj});
         set(pexp(2),'Color',cvir(jj,:));
         
-        yy=feval(ramsey_fit_mode{idx_phi_disp,iaz,iel_0,jj},xx);
+        yy=feval(mramsey_fit_mode{idx_phi0,iaz,iel_0,jj},xx);
         pfit=plot(xx,yy,'LineStyle',line_sty{jj},'Color',clvir(jj,:));
         uistack(pfit,'bottom');
     end
@@ -721,8 +784,8 @@ for ii=1:naz_disp
     set(ax,'Layer','Top');
     ax.FontSize=fontsize;
     ax.LineWidth=ax_lwidth;
-    xlabel('Pulse delay $T~[\mu s]$');
-    ylabel('Pop fraction $P$');
+    xlabel('pulse delay $\tau~(\mu s)$');
+    ylabel('pop fraction $P_i$');
     xlim(1e6*[min(T),max(T)]+[-0.1,0.1]);
     ylim([-0.05,1.05]);
 end
@@ -736,16 +799,68 @@ if do_save_figs
     print(h,strcat(fpath,'.svg'),'-dsvg');
 end
 
-%% VIS: Magnetometry
+%% VIS: Mode-resolved Ramsey fringe: P
+% c_az=viridis(naz_disp);
+c_az=palette(naz_disp);
+cl_az=colshades(c_az);
+
+figname='Pramsey_fringe_mode';
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+hold on;
+
+xx=1e6*linspace(min(T),max(T),1e3);     % x-axis range for fitted curve
+
+pleg=[];
+for ii=1:naz_disp
+    iaz=iaz_disp(ii);
+    tp=squeeze(P_k_avg(idx_phi0,:,iaz,iel_0));
+    tperr=squeeze(P_k_se(idx_phi0,:,iaz,iel_0));
+    
+    pexp=ploterr(1e6*T,tp,[],tperr,mark_typ{ii},'hhxy',0);
+    set(pexp(1),'MarkerFaceColor',cl_az(ii,:),'MarkerEdgeColor',c_az(ii,:),...
+        'DisplayName',num2str(az(iaz)/pi));
+    set(pexp(2),'Color',c_az(ii,:));
+    pleg(ii)=pexp(1);
+    
+    yy=feval(Pramsey_fit_mode{idx_phi0,iaz,iel_0},xx);
+    pfit=plot(xx,yy,'LineStyle',line_sty{ii},'Color',c_az(ii,:));
+    uistack(pfit,'bottom');
+    
+    % annotate subplot
+    ax=gca;
+    box on;
+    ax_ylim=ax.YLim;
+    ax_xlim=ax.XLim;
+    
+    set(ax,'Layer','Top');
+    ax.FontSize=fontsize;
+    ax.LineWidth=ax_lwidth;
+    xlabel('pulse delay $\tau~(\mu s)$');
+    ylabel('$P$');
+end
+
+lgd=legend(pleg);
+title(lgd,'$\theta/\pi$');
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
+%% VIS: Magnetometry: Pm
 idx_mJ=1;       % just use fit param from mJ=1
 
-figname='halo_magnetometry';
+figname='halo_magnetometry_Pm';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.35,0.5],'Renderer',f_ren);
 
 for ii=1:npar_phidelay
     subplot(2,2,ii);
     
-    tp=plotFlatMapWrappedRad(gaz,gel,squeeze(B_mode(ii,:,:,idx_mJ)),'eckert4','texturemap');
+    tp=plotFlatMapWrappedRad(gaz,gel,squeeze(B_mramsey_mode(ii,:,:,idx_mJ)),'eckert4','texturemap');
     
     % annotation
     ax=gca;
@@ -756,11 +871,82 @@ for ii=1:npar_phidelay
     cbar=colorbar('SouthOutside');
     cbar.TickLabelInterpreter='latex';
     cbar.Label.Interpreter='latex';
-    cbar.Label.String='Magnetic field $\mathrm{B}$ [G]';
+    cbar.Label.String='magnetic field $\mathrm{B}$ (G)';
     cbar.Label.FontSize=fontsize;
     cbar.FontSize=fontsize;
     colormap('viridis');
 end
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.png'),'-dpng','-r300');
+end
+
+%% VIS: Magnetometry: P (all PHI)
+figname='halo_magnetometry_P_phi';
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.35,0.5],'Renderer',f_ren);
+
+for ii=1:npar_phidelay
+    subplot(2,2,ii);
+    
+%     tp=plotFlatMapWrappedRad(gaz,gel,squeeze(B_Pramsey_mode(ii,:,:)),'eckert4','texturemap');
+    tp=plotFlatMapWrappedRad(gaz,gel,squeeze(B_Pramsey_mode(ii,:,:)),'rect','texturemap');
+    
+    % annotation
+    ax=gca;
+    set(ax,'Layer','Top');
+    % ax.FontSize=fontsize;
+    % ax.LineWidth=ax_lwidth;
+    
+    cbar=colorbar('SouthOutside');
+    cbar.TickLabelInterpreter='latex';
+    cbar.Label.Interpreter='latex';
+    cbar.Label.String='Magnetic field $\mathrm{B}$ (G)';
+    cbar.Label.FontSize=fontsize;
+    cbar.FontSize=fontsize;
+    colormap('viridis');
+end
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.png'),'-dpng','-r300');
+end
+
+%% VIS: Magnetometry: P (PHI=0)
+figname='halo_magnetometry_P';
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+
+
+tp=plotFlatMapWrappedRad(gaz,gel,squeeze(B_Pramsey_mode(idx_phi0,:,:)),'rect','texturemap');
+% TODO
+% for rect projection, just use SURF/IMAGESC?
+
+% annotation
+ax=gca;
+set(ax,'Layer','Top');
+box on;
+% grid on;
+ax.FontSize=fontsize;
+ax.LineWidth=ax_lwidth;
+
+xlabel('$\theta$ (deg)');
+ylabel('$\phi$ (deg)');
+
+cbar=colorbar('eastoutside');
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
+cbar.Label.String='Magnetic field $\mathrm{B}$ (G)';
+cbar.Label.FontSize=fontsize;
+cbar.FontSize=fontsize;
+colormap('viridis');
 
 % save fig
 if do_save_figs
@@ -776,13 +962,13 @@ end
 figname='B_equatorial_tomography';
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-B_eq=B_mode(:,:,iel_0,idx_mJ);      % magnetic field around equator
-Berr_eq=Berr_mode(:,:,iel_0,idx_mJ);      
+Bk_eq=B_mramsey_mode(:,:,iel_0,idx_mJ);      % magnetic field around equator
+Bkerr_eq=Berr_mramsey_mode(:,:,iel_0,idx_mJ);      
 
 hold on;
 pleg=NaN(npar_phidelay,1);
 for ii=1:npar_phidelay
-    tp=ploterr(rad2deg(az),B_eq(ii,:),[],Berr_eq(ii,:),'o','hhxy',0);
+    tp=ploterr(rad2deg(az),Bk_eq(ii,:),[],Bkerr_eq(ii,:),'o','hhxy',0);
     set(tp(1),'Marker',mark_typ{ii},...
         'MarkerFaceColor',clvir2(ii,:),'MarkerEdgeColor',cvir2(ii,:),...
         'DisplayName',num2str(rad2deg(par_comp{2}(ii)),3));
@@ -818,11 +1004,54 @@ if do_save_figs
 end
 
 
+%% VIS: Magnetic tomography: equatorial: P
+figname='B_equatorial_tomography_P';
+% h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+
+Bk_eq=B_Pramsey_mode(idx_phi0,:,iel_0);      % magnetic field around equator
+Bkerr_eq=Berr_Pramsey_mode(idx_phi0,:,iel_0);      
+
+hold on;
+
+% tp=ploterr(rad2deg(az),Bk_eq,[],Bkerr_eq,'o','hhxy',0);
+tp=ploterr(az/pi,Bk_eq,[],Bkerr_eq,'o','hhxy',0);       
+set(tp(1),'Marker',mark_typ{1},...
+    'MarkerFaceColor',clvir2(1,:),'MarkerEdgeColor',cvir2(1,:),...
+    'DisplayName','');
+set(tp(2),'Color',cvir2(1,:));
+
+% annotation
+box on;
+ax=gca;
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+ax.LineWidth=ax_lwidth;
+
+% xlabel('$\theta$ (deg)');
+xlabel('$\theta/\pi$');
+ylabel('Magnetic field $\mathrm{B}$ (G)');
+
+% xlim([-180,180]);
+% ax.XTick=-180:90:180;
+
+% lgd=legend(pleg);
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
+
 %% VIS: Magnetometry (PHI-avg)
 figname='halo_magnetometry_phi0';
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-tp=plotFlatMapWrappedRad(gaz,gel,B_mode_0(:,:,idx_mJ),'eckert4','texturemap');
+tp=plotFlatMapWrappedRad(gaz,gel,B_mramsey_mode_0(:,:,idx_mJ),'eckert4','texturemap');
 
 % annotation
 ax=gca;
@@ -852,8 +1081,8 @@ end
 figname='B_equatorial_tomography_phi0';
 h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-B_eq_0=B_mode_0(:,iel_0,idx_mJ);      % magnetic field around equator
-Berr_eq_0=Berr_mode_0(:,iel_0,idx_mJ);      
+B_eq_0=B_mramsey_mode_0(:,iel_0,idx_mJ);      % magnetic field around equator
+Berr_eq_0=Berr_mramsey_mode_0(:,iel_0,idx_mJ);      
 
 hold on;
 tp=ploterr(rad2deg(az),B_eq_0,[],Berr_eq_0,'o','hhxy',0);
