@@ -331,83 +331,113 @@ clear h_zxy*;       % clear figs
 %% Ramsey fringes
 T=par_comp{3};      % T_delay between two pulses [s]
 phi=par_comp{2};    % phase delay of 2nd pi/2 pulse (rad)
+idx_phi0=find(phi==0);     % two-pi/2-pulse (Ramsey) dataset with phi=0
 
 n_shot=cellfun(@(x) size(x,1),k_par,'UniformOutput',false);     % num shots each param
 
-%%% ATOM NUMBERS
-Nm_shot=cellfun(@(x) shotSize(x),k_par,'UniformOutput',false);      % num in mJ halos
+%%% ATOM NUMBERS - halo integrated
+Nm_halo_shot=cellfun(@(x) shotSize(x),k_par,'UniformOutput',false);      % num in mJ halos
 
 % statistics
-Nm_avg=cellfun(@(n) mean(n,1),Nm_shot,'UniformOutput',false);      % avg num in mJ halo
-Nm_std=cellfun(@(n) std(n,0,1),Nm_shot,'UniformOutput',false);     % std num in mJ halos
-Nm_se=cellfun(@(s,N) s/sqrt(N),Nm_std,n_shot,'UniformOutput',false);  % serr num in mJ halos
+Nm_halo_avg=cellfun(@(n) mean(n,1),Nm_halo_shot,'UniformOutput',false);      % avg num in mJ halo
+Nm_halo_std=cellfun(@(n) std(n,0,1),Nm_halo_shot,'UniformOutput',false);     % std num in mJ halos
+Nm_halo_se=cellfun(@(s,N) s/sqrt(N),Nm_halo_std,n_shot,'UniformOutput',false);  % serr num in mJ halos
 
-N_tot=cellfun(@(n) sum(n),Nm_avg);     % avg total atom num det'd (mJ summed)
-N_tot_avg=mean(N_tot,3);                % avg total atom num det'd (T avg'd)
+N_halo_tot=cellfun(@(n) sum(n),Nm_halo_avg);     % avg total atom num det'd (mJ summed)
+N_halo_tot_avg=mean(N_halo_tot,3);                % avg total atom num det'd (T avg'd)
 
 %%% pop fraction (pop frac per spin comp)
-pm_shot=cellfun(@(n) n./sum(n,2),Nm_shot,'UniformOutput',false);
-pm_avg=cellfun(@(x) mean(x,1),pm_shot,'UniformOutput',false);
-pm_std=cellfun(@(x) std(x,0,1),pm_shot,'UniformOutput',false);
-pm_se=cellfun(@(s,N) s/sqrt(N),pm_std,n_shot,'UniformOutput',false);
+pm_halo_shot=cellfun(@(n) n./sum(n,2),Nm_halo_shot,'UniformOutput',false);
+pm_halo_avg=cellfun(@(x) mean(x,1),pm_halo_shot,'UniformOutput',false);
+pm_halo_std=cellfun(@(x) std(x,0,1),pm_halo_shot,'UniformOutput',false);
+pm_halo_se=cellfun(@(s,N) s/sqrt(N),pm_halo_std,n_shot,'UniformOutput',false);
 
 %%% Population (inversion): P = p_up - p_down
-P_shot=cellfun(@(n) (n(:,1)-n(:,2))./sum(n,2),Nm_shot,'UniformOutput',false);   
-P_avg=cellfun(@(x) mean(x,1),P_shot,'UniformOutput',false);
-P_std=cellfun(@(x) std(x,0,1),P_shot,'UniformOutput',false);
-P_se=cellfun(@(s,N) s/sqrt(N),P_std,n_shot,'UniformOutput',false);
+P_halo_shot=cellfun(@(n) (n(:,1)-n(:,2))./sum(n,2),Nm_halo_shot,'UniformOutput',false);   
+P_halo_avg=cellfun(@(x) mean(x,1),P_halo_shot,'UniformOutput',false);
+P_halo_std=cellfun(@(x) std(x,0,1),P_halo_shot,'UniformOutput',false);
+P_halo_se=cellfun(@(s,N) s/sqrt(N),P_halo_std,n_shot,'UniformOutput',false);
 
-% TODO 20190110
-P_ramsey=arrayfun(@(I) cat(1,P_avg{1,I,:}),1:ncomp(2),'UniformOutput',false);
-P_std_ramsey=arrayfun(@(I) cat(1,P_std{1,I,:}),1:ncomp(2),'UniformOutput',false);
-P_err_ramsey=arrayfun(@(I) cat(1,P_se{1,I,:}),1:ncomp(2),'UniformOutput',false);
-
-figname='2_pi/2_pulse_with_delay';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4],'Renderer','Painters');
-hold on;
-for ii=1:ncomp(2)
-    plot(1e6*T,P_ramsey{ii},'o-');
-end
-box on;
-xlabel('$\tau$ ($\mu$s)');
-ylabel('P');
-lgd=legend(num2str(phi/pi),'Location','East');
-title(lgd,'$\phi/\pi$');
 
 %% Model fit: Ramsey
-%%% pop fraction: p±
-p_ramsey=arrayfun(@(I) cat(1,pm_avg{1,I,:}),1:ncomp(2),'UniformOutput',false);
-p_std_ramsey=arrayfun(@(I) cat(1,pm_std{1,I,:}),1:ncomp(2),'UniformOutput',false);
-p_err_ramsey=arrayfun(@(I) cat(1,pm_se{1,I,:}),1:ncomp(2),'UniformOutput',false);
+%%% pop fraction per spin comp: p±
+p_halo_ramsey=arrayfun(@(I) cat(1,pm_halo_avg{1,I,:}),1:ncomp(2),'UniformOutput',false);
+p_halo_ramsey_std=arrayfun(@(I) cat(1,pm_halo_std{1,I,:}),1:ncomp(2),'UniformOutput',false);
+p_halo_ramsey_err=arrayfun(@(I) cat(1,pm_halo_se{1,I,:}),1:ncomp(2),'UniformOutput',false);
 
 % config model
-ramsey_mdl='y~c+amp*cos(om*x+phi)';
-ramsey_cname={'amp','om','phi','c'};
-ramsey_par0=[0.5,2*pi*1.5,0,0.5];
+mramsey_mdl='y~c+amp*cos(om*x+phi)';
+mramsey_cname={'amp','om','phi','c'};
+mramsey_par0=[0.5,2*pi*1.5,0,0.5];
 
 % fit
-ramsey_fit=arrayfun(@(I) cellfun(@(P) fitnlm(1e6*T,P(:,I),ramsey_mdl,ramsey_par0,'CoefficientNames',ramsey_cname),p_ramsey,'UniformOutput',false),...
+mramsey_fit=arrayfun(@(I) cellfun(@(P) fitnlm(1e6*T,P(:,I),mramsey_mdl,mramsey_par0,'CoefficientNames',mramsey_cname),p_halo_ramsey,'UniformOutput',false),...
     1:2,'UniformOutput',false);
-ramsey_fit=cat(1,ramsey_fit{:});
+mramsey_fit=cat(1,mramsey_fit{:});
 % format: MJ X PHI_DELAY
 
 % get params
-ramsey_fpar=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),ramsey_fit),...
-    1:numel(ramsey_cname),'UniformOutput',false);
-ramsey_fpar=cat(3,ramsey_fpar{:});
+mramsey_fpar=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),mramsey_fit),...
+    1:numel(mramsey_cname),'UniformOutput',false);
+mramsey_fpar=cat(3,mramsey_fpar{:});
 
-ramsey_fparerr=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),ramsey_fit),...
-    1:numel(ramsey_cname),'UniformOutput',false);
-ramsey_fparerr=cat(3,ramsey_fparerr{:});
+mramsey_fparerr=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),mramsey_fit),...
+    1:numel(mramsey_cname),'UniformOutput',false);
+mramsey_fparerr=cat(3,mramsey_fparerr{:});
 % MJ X PHI_DELAY X PAR#
 
 % get freq
-om_ramsey=ramsey_fpar(:,:,2);
-omerr_ramsey=ramsey_fparerr(:,:,2);
+om_mramsey=mramsey_fpar(:,:,2);
+omerr_mramsey=mramsey_fparerr(:,:,2);
 
 % magnetic field
-B=1e6*om_ramsey/(2*pi*C_gymag);
-Berr=1e6*omerr_ramsey/(2*pi*C_gymag);
+B_mramsey=1e6*om_mramsey/(2*pi*C_gymag);
+Berr_mramsey=1e6*omerr_mramsey/(2*pi*C_gymag);
+
+%% Ramsey model - Pop-inversion
+%%% halo-integrated pop-inversion signal
+P_halo_ramsey=arrayfun(@(I) cat(1,P_halo_avg{1,I,:}),1:ncomp(2),'UniformOutput',false);
+P_halo_ramsey_std=arrayfun(@(I) cat(1,P_halo_std{1,I,:}),1:ncomp(2),'UniformOutput',false);
+P_halo_ramsey_err=arrayfun(@(I) cat(1,P_halo_se{1,I,:}),1:ncomp(2),'UniformOutput',false);
+
+% figname='2_pi/2_pulse_with_delay';
+% h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4],'Renderer','Painters');
+% hold on;
+% for ii=1:ncomp(2)
+%     plot(1e6*T,P_halo_ramsey{ii},'o-');
+% end
+% box on;
+% xlabel('$\tau$ ($\mu$s)');
+% ylabel('P');
+% lgd=legend(num2str(phi/pi),'Location','East');
+% title(lgd,'$\phi/\pi$');
+
+%%% model
+% define
+Pramsey_mdl='y~amp*cos(om*x+phi)';
+Pramsey_cname={'amp','om','phi'};
+Pramsey_par0=[0.5,2*pi*1.5,0];
+
+% fit
+Pramsey_fit=cellfun(@(P) fitnlm(1e6*T,P,Pramsey_mdl,Pramsey_par0,'CoefficientNames',Pramsey_cname),P_halo_ramsey,'UniformOutput',false);
+
+% get params
+Pramsey_fpar=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),Pramsey_fit),...
+    1:numel(Pramsey_cname),'UniformOutput',false);
+Pramsey_fpar=cat(1,Pramsey_fpar{:});
+
+Pramsey_fparerr=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),Pramsey_fit),...
+    1:numel(Pramsey_cname),'UniformOutput',false);
+Pramsey_fparerr=cat(1,Pramsey_fparerr{:});
+%format: PAR# X PHI_DELAY
+
+% get freq
+om_Pramsey=Pramsey_fpar(2,:);         % 2nd index to OMEGA
+omerr_Pramsey=Pramsey_fparerr(2,:);
+
+% magnetic field
+B_Pramsey=1e6*om_Pramsey/(2*pi*C_gymag);
+Berr_Pramsey=1e6*omerr_Pramsey/(2*pi*C_gymag);
 
 
 %% VIS: Phase & T_delay 
@@ -418,7 +448,7 @@ hold on;
 for ii=1:ncomp(1)
     for jj=1:ncomp(2)
         subplot(ncomp(1),ncomp(2),sub2ind(ncomp([2,1]),jj,ii));
-        tp=cat(1,pm_avg{ii,jj,:});
+        tp=cat(1,pm_halo_avg{ii,jj,:});
         
         hold on;
         for kk=1:2
@@ -455,7 +485,7 @@ if do_save_figs
 end
 
 %% VIS: Ramsey fringe
-figname='ramsey_fringe';
+figname='mramsey_fringe';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
 hold on;
 
@@ -463,9 +493,9 @@ xx=1e6*linspace(min(T),max(T),1e3);     % x-axis range for fitted curve
 
 for ii=1:ncomp(2)
     subplot(1,ncomp(2),ii);
-    tp=p_ramsey{ii};
+    tp=p_halo_ramsey{ii};
 %     tperr=Pstd_ramsey{ii};
-    tperr=p_err_ramsey{ii};
+    tperr=p_halo_ramsey_err{ii};
     
     hold on;
     for jj=1:2        
@@ -473,11 +503,11 @@ for ii=1:ncomp(2)
         set(pexp(1),'MarkerFaceColor',clvir(jj,:),'MarkerEdgeColor',cvir(jj,:),...
             'DisplayName',str_ss{jj});
         set(pexp(2),'Color',cvir(jj,:));
-        yy=feval(ramsey_fit{jj,ii},xx);
+        yy=feval(mramsey_fit{jj,ii},xx);
         pfit=plot(xx,yy,'LineStyle',line_sty{jj},'Color',clvir(jj,:));
         uistack(pfit,'bottom');
     end
-    titlestr=sprintf('%s %0.3g(%0.1g) MHz','$f_L=$',om_ramsey(1,ii)/(2*pi),omerr_ramsey(1,ii)/(2*pi));
+    titlestr=sprintf('%s %0.3g(%0.1g) MHz','$f_L=$',om_mramsey(1,ii)/(2*pi),omerr_mramsey(1,ii)/(2*pi));
     title(titlestr);
     
     % annotate subplot
@@ -490,7 +520,7 @@ for ii=1:ncomp(2)
     ax.FontSize=fontsize;
     ax.LineWidth=ax_lwidth;
     xlabel('Pulse delay $T~[\mu s]$');
-    ylabel('Pop fraction $P$');
+    ylabel('Pop fraction $P_i$');
     xlim(1e6*[min(T),max(T)]+[-0.1,0.1]);
     ylim([-0.05,1.05]);
 end
@@ -503,6 +533,47 @@ if do_save_figs
     saveas(h,strcat(fpath,'.fig'),'fig');
     print(h,strcat(fpath,'.svg'),'-dsvg');
 end
+
+
+%% VIS: Ramsey fringe (pop-inv)
+figname='Pramsey_fringe';
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+hold on;
+
+pexp=ploterr(1e6*T,P_halo_ramsey{idx_phi0},...
+    [],P_halo_ramsey_err{idx_phi0},'o','hhxy',0);
+set(pexp(1),'MarkerFaceColor',clvir(1,:),'MarkerEdgeColor',cvir(1,:));
+set(pexp(2),'Color',cvir(1,:));
+
+xx=1e6*linspace(min(T),max(T),1e3);     % x-axis range for fitted curve
+yy=feval(Pramsey_fit{idx_phi0},xx);
+pfit=plot(xx,yy,'LineStyle',line_sty{1},'Color',clvir(1,:));
+uistack(pfit,'bottom');
+
+titlestr=sprintf('%s %0.3g(%0.1g) MHz','$f_L=$',om_mramsey(1,idx_phi0)/(2*pi),omerr_mramsey(1,idx_phi0)/(2*pi));
+title(titlestr);
+
+% annotate subplot
+ax=gca;
+box on;
+ax_ylim=ax.YLim;
+ax_xlim=ax.XLim;
+
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+ax.LineWidth=ax_lwidth;
+xlabel('pulse delay $\tau~(\mu s)$');
+ylabel('$P$');
+
+% save fig
+if do_save_figs
+    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+    fpath=fullfile(dir_save,savefigname);
+    
+    saveas(h,strcat(fpath,'.fig'),'fig');
+    print(h,strcat(fpath,'.svg'),'-dsvg');
+end
+
 
 %% MODE RESOLVED RAMSEY
 %%% construct spatial zones at latlon grid + solid angle
@@ -572,19 +643,19 @@ for ii=1:npar_phidelay
         [iaz,iel]=ind2sub([n_az,n_el],jj);
         for kk=1:2
             tP=p_avg_mode(ii,:,iaz,iel,1,kk);       % pop oscillation
-            ramsey_fit_mode{ii,iaz,iel,kk}=fitnlm(1e6*T,tP,ramsey_mdl,...
-                ramsey_par0,'CoefficientNames',ramsey_cname);
+            ramsey_fit_mode{ii,iaz,iel,kk}=fitnlm(1e6*T,tP,mramsey_mdl,...
+                mramsey_par0,'CoefficientNames',mramsey_cname);
         end
     end
 end
 
 % get fit params
 ramsey_fpar_mode=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),ramsey_fit_mode),...
-    1:numel(ramsey_cname),'UniformOutput',false);
+    1:numel(mramsey_cname),'UniformOutput',false);
 ramsey_fpar_mode=cat(ndims(ramsey_fpar_mode{1})+1,ramsey_fpar_mode{:});
 
 ramsey_fparerr_mode=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),ramsey_fit_mode),...
-    1:numel(ramsey_cname),'UniformOutput',false);
+    1:numel(mramsey_cname),'UniformOutput',false);
 ramsey_fparerr_mode=cat(ndims(ramsey_fparerr_mode{1})+1,ramsey_fparerr_mode{:});
 % PHI_DELAY X AZ X EL X MJ X PAR#
 
