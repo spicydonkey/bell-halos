@@ -515,7 +515,9 @@ naz_disp=length(iaz_disp);
 [gaz,gel]=ndgrid(az,el);    % az-el grid
 n_zone=numel(gaz);
 
-[~,iel_0]=min(abs(el));        % idx to ~zero elev angle (equator)
+% idx to ~0 angle (equator for elev)
+[~,iaz_0]=min(abs(az));
+[~,iel_0]=min(abs(el));
 
 
 %% n,P distribution
@@ -702,19 +704,45 @@ B_Pramsey_eq=1e6*om_Pramsey_eq/(2*pi*C_gymag);
 Berr_Pramsey_eq=1e6*omerr_Pramsey_eq/(2*pi*C_gymag);
 
 
+%% regions to display Ramsey signal
+loc_disp=[];    % row-array of (Iaz,Iel)-location to display
+azel_disp=[];   % (az,el)
+
+%%% theta,phi=(0,0)
+loc_disp=cat(1,loc_disp,[iaz_0,iel_0]);
+azel_disp=cat(1,azel_disp,[az(iaz_0),el(iel_0)]);
+
+%%% max
+Bk_max=max(Bk_Pramsey(:));
+[iaz_Bmax,iel_Bmax]=find(Bk_Pramsey==Bk_max);
+
+loc_disp=cat(1,loc_disp,[iaz_Bmax,iel_Bmax]);
+azel_disp=cat(1,azel_disp,[az(iaz_Bmax),el(iel_Bmax)]);
+
+%%% min
+Bk_min=min(Bk_Pramsey(:));
+[iaz_Bmin,iel_Bmin]=find(Bk_Pramsey==Bk_min);
+
+loc_disp=cat(1,loc_disp,[iaz_Bmin,iel_Bmin]);
+azel_disp=cat(1,azel_disp,[az(iaz_Bmin),el(iel_Bmin)]);
+
+% summary
+n_loc_disp=size(loc_disp,1);        % num of locations to display
+
+
 %% VIS: Mode-resolved Ramsey fringe: Pm
 figname='mramsey_fringe_mode';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
 hold on;
 
-xx=1e6*linspace(min(tau),max(tau),1e3);     % x-axis range for fitted curve
-
-for ii=1:naz_disp
-    iaz=iaz_disp(ii);
-    tp=squeeze(pm_k_avg(:,iaz,iel_0,:));   % T X MJ
-    tperr=squeeze(pm_k_se(:,iaz,iel_0,:));
+for ii=1:n_loc_disp
+    iazel=loc_disp(ii,:);
+    tazel=azel_disp(ii,:);
+        
+    tp=squeeze(pm_k_avg(:,iazel(1),iazel(2),:));   % T X MJ
+    tperr=squeeze(pm_k_se(:,iazel(1),iazel(2),:));
     
-    subplot(1,naz_disp,ii);
+    subplot(1,n_loc_disp,ii);
     hold on;
     for jj=1:2
         pexp=ploterr(1e6*tau,tp(:,jj),[],tperr(:,jj),mark_typ{jj},'hhxy',0);
@@ -722,11 +750,12 @@ for ii=1:naz_disp
             'DisplayName',str_ss{jj});
         set(pexp(2),'Color',cvir(jj,:));
         
-        yy=feval(mramsey_fit_k{iaz,iel_0,jj},xx);
-        pfit=plot(xx,yy,'LineStyle',line_sty{jj},'Color',clvir(jj,:));
+        yy=feval(mramsey_fit_k{iazel(1),iazel(2),jj},tt_fit);
+        pfit=plot(tt_fit,yy,'LineStyle',line_sty{jj},'Color',clvir(jj,:));
         uistack(pfit,'bottom');
     end
-    titlestr=sprintf('%s %0.0f','$\theta=$',rad2deg(az(iaz)));
+    titlestr=sprintf('%s (%s)','$(\theta,\phi)=$',...
+        num2str(rad2deg(tazel)));
     title(titlestr);
     
     % annotate subplot
@@ -754,31 +783,31 @@ if do_save_figs
 end
 
 %% VIS: Mode-resolved Ramsey fringe: P
-% c_az=viridis(naz_disp);
-c_az=palette(naz_disp);
-cl_az=colshades(c_az);
+% c_loc=viridis(n_loc_disp);
+c_loc=palette(n_loc_disp);
+cl_loc=colshades(c_loc);
+
 
 figname='Pramsey_fringe_mode';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
 hold on;
 
-xx=1e6*linspace(min(tau),max(tau),1e3);     % x-axis range for fitted curve
-
 pleg=[];
-for ii=1:naz_disp
-    iaz=iaz_disp(ii);
-    tp=squeeze(P_k_avg(:,iaz,iel_0));
-    tperr=squeeze(P_k_se(:,iaz,iel_0));
+for ii=1:n_loc_disp
+    iazel=loc_disp(ii,:);
+    tazel=azel_disp(ii,:);
+    
+    tp=squeeze(P_k_avg(:,iazel(1),iazel(2)));
+    tperr=squeeze(P_k_se(:,iazel(1),iazel(2)));
     
     pexp=ploterr(1e6*tau,tp,[],tperr,mark_typ{ii},'hhxy',0);
-    set(pexp(1),'MarkerFaceColor',cl_az(ii,:),'MarkerEdgeColor',c_az(ii,:),...
-        'DisplayName',num2str(rad2deg(az(iaz))));
-%         'DisplayName',num2str(az(iaz)/pi));
-    set(pexp(2),'Color',c_az(ii,:));
+    set(pexp(1),'MarkerFaceColor',cl_loc(ii,:),'MarkerEdgeColor',c_loc(ii,:),...
+        'DisplayName',num2str(rad2deg(tazel)));
+    set(pexp(2),'Color',c_loc(ii,:));
     pleg(ii)=pexp(1);
     
-    yy=feval(Pramseyk_fit{iaz,iel_0},xx);
-    pfit=plot(xx,yy,'LineStyle',line_sty{ii},'Color',c_az(ii,:));
+    yy=feval(Pramseyk_fit{iazel(1),iazel(2)},tt_fit);
+    pfit=plot(tt_fit,yy,'LineStyle',line_sty{ii},'Color',c_loc(ii,:));
     uistack(pfit,'bottom');
     
     % annotate subplot
@@ -794,9 +823,8 @@ for ii=1:naz_disp
     ylabel('$P$');
 end
 
-lgd=legend(pleg);
-% title(lgd,'$\theta/\pi$');
-title(lgd,'$\theta$ (deg)');
+% lgd=legend(pleg);
+% title(lgd,'$(\theta,~\phi)$ (deg)');
 
 % save fig
 if do_save_figs
@@ -854,10 +882,16 @@ end
 figname='halo_magnetometry_P';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
 
-
 tp=plotFlatMapWrappedRad(gaz,gel,squeeze(Bk_Pramsey(:,:)),'rect','texturemap');
-% TODO
 % for rect projection, IMAGESC --> controllable x,y axis?
+
+% label ROI
+hold on;
+for ii=1:n_loc_disp
+    tazel=rad2deg(azel_disp(ii,:));
+    tp=plot(tazel(1),tazel(2),'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
+        'Marker',mark_typ{ii},'MarkerSize',10,'LineWidth',line_wid);
+end
 
 % annotation
 ax=gca;
@@ -867,7 +901,7 @@ grid on;
 ax.FontSize=fontsize;
 ax.LineWidth=ax_lwidth;
 
-axis tight;
+% axis tight;
 xlim([-180,180]);
 xticks(-180:90:180);
 yticks(-90:45:90);
