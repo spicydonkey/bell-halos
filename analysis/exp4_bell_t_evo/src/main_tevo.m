@@ -2,6 +2,8 @@
 % DKS
 % 2018-10-25
 
+tic
+
 %% CONFIGS
 % data file
 fdata='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\exp4_tevo\exp4_20181029.mat';
@@ -14,7 +16,7 @@ phi_max=pi/4;
 lim_el=[-phi_max,phi_max];
 n_el=15;
 
-az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
+az_disp=deg2rad([0,45,90,135]);     % azim sections (great circles) to display
 
 % g2
 n_dk=7;     %15
@@ -23,9 +25,8 @@ lim_dk=[-0.2,0.2];
 % lim_dk=[-0.1,0.1];
 
 % bootstrapping
-bs_frac=0.2;
-bs_nrep=20;
-% bs_nrep=1;
+bs_frac=1;
+bs_nrep=10;
 
 % He*
 C_gymag=2.8e6;     % gyromagnetic ratio (gamma) [Hz/G]
@@ -38,11 +39,11 @@ f_ren='painters';
 
 [c,cl,cd]=palette(3);
 % c_gray=0.6*ones(1,3);
-% line_sty={'-','--',':'};
-% mark_typ={'o','s','^'};
+line_sty={'-','--',':','-.'};
+mark_typ={'o','s','^','d'};
 % str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
 % str_ss={'$m_J = 1$','$m_J = 0$'};
-str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
+% str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
 mark_siz=7;
 line_wid=1.5;
 fontsize=12;
@@ -189,8 +190,10 @@ mdl_tevo.fopt=statset('TolFun',10^-10,'TolX',10^-10,'MaxIter',10^6,'UseParallel'
 par0=1;
 
 % preproc
-tau0=tau-tau(1);        % time evolution since T(PSI+)~0.8 [ms]
-tau0_fit=linspace(min(tau0),max(tau0),1e3);
+T_so=0.8;           % MODEL PARAM: asymmetry "switch-on" time = 0.8 ms
+tau0=tau-T_so;      % time evolution since switch-on
+% tau0_fit=linspace(min(tau0),max(tau0),1e3);     % tau vals to eval fit
+tau0_fit=linspace(0,2,1e3);     % tau vals to eval fit
 
 % fit
 mdl_tevo.fit=cell(n_az,n_el);
@@ -260,7 +263,7 @@ for ii=1:length(iaz_disp)
         pleg(jj)=tp(1);
         
         % fitted model
-        tpf=plot(tau0_fit+tau(1),B0_fit{iaz,jj},'-',...
+        tpf=plot(tau0_fit+T_so,B0_fit{iaz,jj},'-',...
             'LineWidth',line_wid,'Color',cc(jj,:));
         uistack(tpf,'bottom');
     end
@@ -283,7 +286,7 @@ end
 %% vis: Equatorial distribution
 figname='B0_tevo_eqt';
 figure('Name',figname,...
-    'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
+    'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
 hold on;
 
 disp_iaz=iaz_disp;
@@ -295,32 +298,38 @@ for ii=1:numel(disp_iaz)
     tiaz=disp_iaz(ii);
     tp=ploterr(tau,squeeze(B0(:,tiaz,iel_0)),[],squeeze(B0_bs_se(:,tiaz,iel_0)),'o','hhxy',0);
 %     tp=ploterr(tau,squeeze(B0(:,ii,iel_0)),[],squeeze(B0_bs_se(:,ii,iel_0)),'o','hhxy',0);
-    set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
+    set(tp(1),'Marker',mark_typ{ii},'MarkerSize',mark_siz,'LineWidth',line_wid,...
         'MarkerFaceColor',ccl(ii,:),'Color',cc(ii,:),'DisplayName',num2str(rad2deg(Vaz(tiaz)),2));
     set(tp(2),'LineWidth',line_wid,'Color',cc(ii,:));
     pleg(ii)=tp(1);
     
-    % fitted model
-    tpf=plot(tau0_fit+tau(1),B0_fit{tiaz,iel_0},'-',...
-        'LineWidth',line_wid,'Color',cc(ii,:));
+    %%% fitted model
+    % stationary before tau0 (Psi+ stationary --> parity=1)
+    tpf=plot([0,T_so],[1,1],...
+        line_sty{ii},'LineWidth',line_wid,'Color',cc(ii,:));
+    uistack(tpf,'bottom');
+    
+    % dynamics after turn-on
+    tpf=plot(tau0_fit+T_so,B0_fit{tiaz,iel_0},...
+        line_sty{ii},'LineWidth',line_wid,'Color',cc(ii,:));
     uistack(tpf,'bottom');
 end
-
-title('Equatorial');
 
 % annotation
 box on;
 ax=gca;
 set(ax,'Layer','Top');
-xlabel('$\tau~[\textrm{ms}]$');
-ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
+xlabel('$\tau~(\textrm{ms})$');
+% ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
+ylabel('parity');
 ax.FontSize=fontsize;
 ax.LineWidth=1.2;
+xlim([0.7,1.8]);
 ylim([-1.2,1.2]);
-titlestr=sprintf('Equator (%s %0.2g)','$\phi=$',Vel(iel_0));
-title(titlestr);
-lgd=legend(pleg,'Location','EastOutside');
-title(lgd,'Azimuth $\theta$ (deg)');
+
+% lgd=legend(pleg,'Location','SouthWest');
+% title(lgd,'Azimuth $\theta$ (deg)');
+
 
 %% vis: B0 distribution (3D)
 H=[];
@@ -431,3 +440,103 @@ cbar.TickLabelInterpreter='latex';
 cbar.Label.Interpreter='latex';
 cbar.Label.String='$\Delta \mathrm{B}$ [mG]';
 cbar.Label.FontSize=fontsize;
+
+%% vis: deltaB (rect)
+h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+
+[vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB);
+tp=plotFlatMapWrappedRad(vazf,velf,1e3*deltaBf,'rect','texturemap');
+
+% label ROI
+hold on;
+for ii=1:numel(disp_iaz)
+    tiaz=disp_iaz(ii);
+    tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',mark_typ{ii},...
+        'MarkerEdgeColor',cc(ii,:),'MarkerFaceColor',ccl(ii,:),...
+        'MarkerSize',10,'LineWidth',line_wid);
+end
+
+% annotation
+ax=gca;
+set(ax,'Layer','Top');
+box on;
+grid on;
+ax.FontSize=fontsize;
+ax.LineWidth=ax_lwidth;
+
+axis tight;
+% xlim([-180,180]);
+xticks(-180:90:180);
+yticks(-90:45:90);
+
+xlabel('$\theta$ (deg)');
+ylabel('$\phi$ (deg)');
+
+cbar=colorbar('eastoutside');
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
+cbar.Label.String='$\Delta \mathrm{B}$ (mG)';
+cbar.Label.FontSize=fontsize;
+cbar.FontSize=fontsize;
+
+
+%% VIS: Equatorial tomography
+%%% configs
+p_xlim=[0,180];     % periodic BC
+
+ctheme=magma(5);
+ctheme=ctheme(1:end-1,:);
+cltheme=colshades(ctheme);
+
+idx_col=4;      
+
+%%% DATA
+dB_eq=deltaB(:,iel_0);      % delta magnetic field around equator
+dBerr_eq=deltaB_se(:,iel_0);      
+
+% fit
+sine_mdl='y~c+amp*cos(2*x+phi)';      % periodic boundary condition fixes OMEGA
+sine_cname={'amp','phi','c'};
+sine_par0=[0.05,0,0.1];
+
+fit_dB_eq=fitnlm(Vaz,1e3*dB_eq,sine_mdl,sine_par0,'CoefficientNames',sine_cname);
+xx=linspace(0,pi,1e3);
+yy=feval(fit_dB_eq,xx);
+
+%%% PLOT
+figname='dB_equatorial_tomography';
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+
+hold on;
+
+% data
+tp=ploterr(rad2deg(Vaz),1e3*dB_eq,[],1e3*dBerr_eq,'o','hhxy',0);
+set(tp(1),'Marker','o','LineWidth',line_wid,...
+    'MarkerFaceColor',cltheme(idx_col,:),'MarkerEdgeColor',ctheme(idx_col,:),...
+    'DisplayName','');
+set(tp(2),'Color',ctheme(idx_col,:),'LineWidth',line_wid);
+pleg=tp(1);
+
+% fit
+pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',ctheme(idx_col,:),'LineWidth',line_wid);
+uistack(pfit,'bottom');
+
+% annotation
+box on;
+ax=gca;
+set(ax,'Layer','Top');
+ax.FontSize=fontsize;
+ax.LineWidth=ax_lwidth;
+
+xlabel('Azimuthal angle $\theta$ (deg)');
+ylabel('$\Delta \mathrm{B}$ (mG)');
+
+ylim_0=ax.YLim;
+ylim([0,ylim_0(2)]);
+xlim(p_xlim);
+ax.XTick=0:45:180;
+
+% lgd=legend(pleg);
+
+%% End of script
+toc
