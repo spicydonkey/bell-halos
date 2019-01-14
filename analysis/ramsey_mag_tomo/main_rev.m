@@ -19,7 +19,9 @@ do_save_figs=false;
 dir_save='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\ramsey\prelim_20181128';
 
 % He*
-C_gymag=2.8e6;     % gyromagnetic ratio (gamma) [Hz/G]
+mu_B=1.3996e6;      % bohr magneton [Hz/G]
+g_He=2;             % Lande g-factor He*
+C_gymag=g_He*mu_B;     % He* gyromagnetic ratio (gamma) [Hz/G]
 
 % vis
 f_units='normalized';

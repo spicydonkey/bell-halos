@@ -9,12 +9,13 @@ tic
 fdata='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\exp4_tevo\exp4_20181029.mat';
 
 % capture region - "central symmetry"!
-alpha=pi/10; % pi/8;        % cone half-angle
+alpha=pi/8;        % cone half-angle
 lim_az=[0,pi];              % limit of azim angle (exc +pi)
-n_az=24;                	% equispaced bins
 phi_max=pi/4;
 lim_el=[-phi_max,phi_max];
-n_el=15;
+
+n_az=10;                	% equispaced bins
+n_el=5;
 
 az_disp=deg2rad([0,45,90,135]);     % azim sections (great circles) to display
 
@@ -26,10 +27,12 @@ lim_dk=[-0.2,0.2];
 
 % bootstrapping
 bs_frac=1;
-bs_nrep=10;
+bs_nrep=50;
 
 % He*
-C_gymag=2.8e6;     % gyromagnetic ratio (gamma) [Hz/G]
+mu_B=1.3996e6;      % bohr magneton [Hz/G]
+g_He=2;             % Lande g-factor He*
+C_gymag=g_He*mu_B;     % He* gyromagnetic ratio (gamma) [Hz/G]
 
 % vis
 f_units='normalized';
