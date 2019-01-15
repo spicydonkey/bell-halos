@@ -330,6 +330,8 @@ clear txy zxy zxy0 zxy0_filt tzxy tzxy_mf tp_bec tp_bec0 tp_halo tr_bec0 tr_lim;
 clear h_zxy*;       % clear figs
 
 %% ANALYSIS
+tic
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 tau=par_comp{3};              % T_delay between two pulses [s]
 phi=par_comp{2};            % phase delay of 2nd pi/2 pulse (rad)
@@ -1081,3 +1083,81 @@ if do_save_figs
     saveas(h,strcat(fpath,'.fig'),'fig');
     print(h,strcat(fpath,'.svg'),'-dsvg');
 end
+
+
+%% BB B-difference around equator
+dth=mean(diff(az));     % incremental diff angle scanned around equator (rad)
+dI_pi=round(pi/dth);    % # increments to shift for azimuthal BB
+
+az_bb=circshift(az,dI_pi);      % azim-vectors pi-shifted
+
+% check BB
+dbb_max=max(abs(abs(az_bb-az)-pi));     % max deviation from BB (rad)
+if dbb_max>1e-2
+    warning('Some regions are not back-to-back!');
+end
+
+% get B-params at opposite regions
+Bk_eq_bb=circshift(Bk_eq,dI_pi);
+Bkerr_eq_bb=circshift(Bkerr_eq,dI_pi);
+
+% BB-difference
+dB_eq_bb=abs(Bk_eq_bb - Bk_eq);
+dBerr_eq_bb=sqrt(Bkerr_eq_bb.^2 + Bkerr_eq.^2);     % uncorrelated noise
+
+%%% vis
+figname='dBbb_ramsey';
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,6],'Renderer',f_ren);
+
+% B-field around equator @ theta and theta+pi
+subplot(2,1,1);
+hold on;
+% plot(rad2deg(az),Bk_eq);            % B-field (G)
+% plot(rad2deg(az),Bk_eq_bb);         % B-field at BB region (G)
+tp(1)=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r',1);        % B-field (G)
+tp(2)=shadedErrorBar(rad2deg(az),Bk_eq_bb,Bkerr_eq_bb,'b',1);  % B-field at BB region (G)
+
+ax=gca;
+set(ax,'Layer','Top');
+xlim([0,180]);      % periodic
+% ylim_0=ax.YLim;
+% ylim([0,ylim_0(2)]);
+ylim([0.52,0.545]);
+xticks(0:45:180);
+xlabel('$\theta$ (deg)');
+ylabel('$B$ (G)');
+
+ax.FontSize=9;
+% ax.LineWidth=1;
+
+% lgd=legend([tp(1).mainLine,tp(2).mainLine],{'$\theta$','$\theta+\pi$'});
+
+% B-field difference @ BB regions around equator
+subplot(2,1,2);
+hold on;
+% plot(rad2deg(az),1e3*dB_eq_bb);         % BB B-field difference (G)
+% plot(rad2deg(az),1e3*dBerr_eq_bb);      % uncertainty (G)
+
+tp=shadedErrorBar(rad2deg(az),1e3*dB_eq_bb,1e3*dBerr_eq_bb,'k');
+% tp.mainLine.Color=cvir(2,:);
+% tp.mainLine.LineWidth=1;
+% tp.patch.FaceColor=clvir(2,:);
+% tp.patch.FaceAlpha=0.33;
+% tp.edge(1).Visible='off';
+% tp.edge(2).Visible='off';
+
+ax=gca;
+set(ax,'Layer','Top');
+xlim([0,180]);      % periodic
+% ylim_0=ax.YLim;
+% ylim([0,ylim_0(2)]);
+ylim([0,10]);
+xticks(0:45:180);
+xlabel('$\theta$ (deg)');
+ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
+
+ax.FontSize=9;
+% ax.LineWidth=1;
+
+%% end of script
+toc
