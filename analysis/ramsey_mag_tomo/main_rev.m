@@ -795,7 +795,7 @@ if do_save_figs
     print(h,strcat(fpath,'.svg'),'-dsvg');
 end
 
-%% VIS: Mode-resolved Ramsey fringe: P
+%% VIS (publication): Mode-resolved Ramsey fringe: P
 % c_loc=viridis(n_loc_disp);
 % c_loc=palette(n_loc_disp);
 % cl_loc=colshades(c_loc);
@@ -903,7 +903,7 @@ end
 % end
 
 
-%% VIS: Magnetometry: P
+%% VIS (publication): Magnetometry: P
 figname='halo_magnetometry_P';
 % h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
@@ -1019,7 +1019,7 @@ end
 % end
 
 
-%% VIS: Magnetic tomography: equatorial: P
+%% VIS (publication): Magnetic tomography: equatorial: P 
 figname='B_equatorial_tomography_P';
 % h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 % h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);

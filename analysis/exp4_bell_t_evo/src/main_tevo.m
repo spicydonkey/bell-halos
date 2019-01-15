@@ -286,10 +286,15 @@ for ii=1:length(iaz_disp)
     title(lgd,'Latitude $\phi$ (deg)');
 end
 
-%% vis: Equatorial distribution
+%% vis: Equatorial distribution (publication)
+c_disp=viridis(length(az_disp)+1);
+c_disp=c_disp(1:end-1,:);         % max is too light
+cl_disp=colshades(c_disp);
+
+
 figname='B0_tevo_eqt';
-figure('Name',figname,...
-    'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+% figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
 hold on;
 
 disp_iaz=iaz_disp;
@@ -301,20 +306,20 @@ for ii=1:numel(disp_iaz)
     tiaz=disp_iaz(ii);
     tp=ploterr(tau,squeeze(B0(:,tiaz,iel_0)),[],squeeze(B0_bs_se(:,tiaz,iel_0)),'o','hhxy',0);
 %     tp=ploterr(tau,squeeze(B0(:,ii,iel_0)),[],squeeze(B0_bs_se(:,ii,iel_0)),'o','hhxy',0);
-    set(tp(1),'Marker',mark_typ{ii},'MarkerSize',mark_siz,'LineWidth',line_wid,...
-        'MarkerFaceColor',ccl(ii,:),'Color',cc(ii,:),'DisplayName',num2str(rad2deg(Vaz(tiaz)),2));
-    set(tp(2),'LineWidth',line_wid,'Color',cc(ii,:));
+    set(tp(1),'Marker',mark_typ{ii},'MarkerSize',4.5,...
+        'MarkerFaceColor',cl_disp(ii,:),'Color',c_disp(ii,:),'DisplayName',num2str(rad2deg(Vaz(tiaz)),2));
+    set(tp(2),'Color',c_disp(ii,:));
     pleg(ii)=tp(1);
     
     %%% fitted model
     % stationary before tau0 (Psi+ stationary --> parity=1)
     tpf=plot([0,T_so],[1,1],...
-        line_sty{ii},'LineWidth',line_wid,'Color',cc(ii,:));
+        line_sty{ii},'LineWidth',1.5,'Color',c_disp(ii,:));
     uistack(tpf,'bottom');
     
     % dynamics after turn-on
     tpf=plot(tau0_fit+T_so,B0_fit{tiaz,iel_0},...
-        line_sty{ii},'LineWidth',line_wid,'Color',cc(ii,:));
+        line_sty{ii},'LineWidth',1.5,'Color',c_disp(ii,:));
     uistack(tpf,'bottom');
 end
 
@@ -325,8 +330,10 @@ set(ax,'Layer','Top');
 xlabel('$\tau~(\textrm{ms})$');
 % ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
 ylabel('parity');
-ax.FontSize=fontsize;
-ax.LineWidth=1.2;
+% ax.FontSize=fontsize;
+% ax.LineWidth=1.2;
+ax.FontSize=9;
+ax.LineWidth=1;
 xlim([0.7,1.8]);
 ylim([-1.2,1.2]);
 
@@ -444,8 +451,9 @@ cbar.Label.Interpreter='latex';
 cbar.Label.String='$\Delta \mathrm{B}$ [mG]';
 cbar.Label.FontSize=fontsize;
 
-%% vis: deltaB (rect)
-h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+%% vis: deltaB - rectangular (publication)
+% h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
 
 [vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB);
 tp=plotFlatMapWrappedRad(vazf,velf,1e3*deltaBf,'rect','texturemap');
@@ -455,8 +463,8 @@ hold on;
 for ii=1:numel(disp_iaz)
     tiaz=disp_iaz(ii);
     tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',mark_typ{ii},...
-        'MarkerEdgeColor',cc(ii,:),'MarkerFaceColor',ccl(ii,:),...
-        'MarkerSize',10,'LineWidth',line_wid);
+        'MarkerEdgeColor',c_disp(ii,:),'MarkerFaceColor',cl_disp(ii,:),...
+        'MarkerSize',4.5);
 end
 
 % annotation
@@ -464,8 +472,10 @@ ax=gca;
 set(ax,'Layer','Top');
 box on;
 grid on;
-ax.FontSize=fontsize;
-ax.LineWidth=ax_lwidth;
+% ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+ax.FontSize=9;
+ax.LineWidth=1;
 
 axis tight;
 % xlim([-180,180]);
@@ -475,15 +485,33 @@ yticks(-90:45:90);
 xlabel('$\theta$ (deg)');
 ylabel('$\phi$ (deg)');
 
+ax.DataAspectRatio=[1 0.5 1];       % adjust aspect ratio
+
 cbar=colorbar('eastoutside');
 cbar.TickLabelInterpreter='latex';
 cbar.Label.Interpreter='latex';
 cbar.Label.String='$\Delta \mathrm{B}$ (mG)';
-cbar.Label.FontSize=fontsize;
-cbar.FontSize=fontsize;
+% cbar.Label.FontSize=fontsize;
+% cbar.FontSize=fontsize;
+cbar.Label.FontSize=9;
+cbar.FontSize=9;
+
+% change colorbar width
+pos_ax=get(gca,'Position');
+pos_cbar=get(cbar,'Position');
+pos_cbar(3)=0.03;
+set(cbar,'Position',pos_cbar);
+set(gca,'Position',pos_ax);
+
+%---------------------------------------------
+% NOTE: saved with vecrast
+% e.g.
+% vecrast(h,'filename',600,'bottom','pdf')
+%---------------------------------------------
 
 
-%% VIS: Equatorial tomography
+
+%% VIS: Equatorial tomography (publication)
 %%% configs
 p_xlim=[0,180];     % periodic BC
 
@@ -491,7 +519,7 @@ ctheme=magma(5);
 ctheme=ctheme(1:end-1,:);
 cltheme=colshades(ctheme);
 
-idx_col=4;      
+idx_col=3;     % mid-color 
 
 %%% DATA
 dB_eq=deltaB(:,iel_0);      % delta magnetic field around equator
@@ -508,30 +536,32 @@ yy=feval(fit_dB_eq,xx);
 
 %%% PLOT
 figname='dB_equatorial_tomography';
-h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+% h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
 
 hold on;
 
 % data
 tp=ploterr(rad2deg(Vaz),1e3*dB_eq,[],1e3*dBerr_eq,'o','hhxy',0);
-set(tp(1),'Marker','o','LineWidth',line_wid,...
-    'MarkerFaceColor',cltheme(idx_col,:),'MarkerEdgeColor',ctheme(idx_col,:),...
-    'DisplayName','');
-set(tp(2),'Color',ctheme(idx_col,:),'LineWidth',line_wid);
+set(tp(1),'Marker','o','MarkerSize',4.5,...
+    'MarkerFaceColor',[1,1,1],'MarkerEdgeColor',ctheme(idx_col,:));
+set(tp(2),'Color',ctheme(idx_col,:));
 pleg=tp(1);
 
 % fit
-pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',ctheme(idx_col,:),'LineWidth',line_wid);
+pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',ctheme(idx_col,:),'LineWidth',1);
 uistack(pfit,'bottom');
 
 % annotation
 box on;
 ax=gca;
 set(ax,'Layer','Top');
-ax.FontSize=fontsize;
-ax.LineWidth=ax_lwidth;
+% ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+ax.FontSize=9;
+ax.LineWidth=1;
 
-xlabel('Azimuthal angle $\theta$ (deg)');
+xlabel('$\theta$ (deg)');
 ylabel('$\Delta \mathrm{B}$ (mG)');
 
 ylim_0=ax.YLim;
