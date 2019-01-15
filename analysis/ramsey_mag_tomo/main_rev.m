@@ -31,7 +31,7 @@ f_ren='painters';
 
 cvir=viridis(3);
 clvir=colshades(cvir);
-cvir2=viridis(4);
+cvir2=viridis(5);
 clvir2=colshades(cvir2);
 [col,coll,cold]=palette(3);
 c_gray=0.8*ones(1,3);
@@ -501,8 +501,8 @@ lim_az=[-pi,pi];    % no inversion symmetry
 phi_max=pi/4;       
 lim_el=[-phi_max,phi_max];
 
-n_az=20;                	% equispaced bins
-n_el=5;
+n_az=200;                	% equispaced bins
+n_el=50;
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
 % el_disp=deg2rad(-30:30:30);    % elev/lat zones to display
@@ -674,6 +674,10 @@ omerrk_Pramsey=Pramseyk_fparerr(:,:,idx_om_Pramsey);
 Bk_Pramsey=1e6*omk_Pramsey/(2*pi*C_gymag);
 Berrk_Pramsey=1e6*omerrk_Pramsey/(2*pi*C_gymag);
 
+% equatorial slice
+Bk_eq=Bk_Pramsey(:,iel_0);
+Bkerr_eq=Berrk_Pramsey(:,iel_0);      
+
 
 %% Ramsey analysis: EQUATOR: P
 % collate data to fit
@@ -707,6 +711,7 @@ Berr_Pramsey_eq=1e6*omerr_Pramsey_eq/(2*pi*C_gymag);
 
 
 %% regions to display Ramsey signal
+% max, min and theta=0 around equator
 loc_disp=[];    % row-array of (Iaz,Iel)-location to display
 azel_disp=[];   % (az,el)
 
@@ -715,18 +720,24 @@ loc_disp=cat(1,loc_disp,[iaz_0,iel_0]);
 azel_disp=cat(1,azel_disp,[az(iaz_0),el(iel_0)]);
 
 %%% max
-Bk_max=max(Bk_Pramsey(:));
-[iaz_Bmax,iel_Bmax]=find(Bk_Pramsey==Bk_max);
+[Bk_eq_max,iaz_Bmax]=max(Bk_eq);
+loc_disp=cat(1,loc_disp,[iaz_Bmax,iel_0]);
+azel_disp=cat(1,azel_disp,[az(iaz_Bmax),el(iel_0)]);
 
-loc_disp=cat(1,loc_disp,[iaz_Bmax,iel_Bmax]);
-azel_disp=cat(1,azel_disp,[az(iaz_Bmax),el(iel_Bmax)]);
+% Bk_max=max(Bk_Pramsey(:));
+% [iaz_Bmax,iel_Bmax]=find(Bk_Pramsey==Bk_max);
+% loc_disp=cat(1,loc_disp,[iaz_Bmax,iel_Bmax]);
+% azel_disp=cat(1,azel_disp,[az(iaz_Bmax),el(iel_Bmax)]);
 
 %%% min
-Bk_min=min(Bk_Pramsey(:));
-[iaz_Bmin,iel_Bmin]=find(Bk_Pramsey==Bk_min);
+[Bk_eq_min,iaz_Bmin]=min(Bk_eq);
+loc_disp=cat(1,loc_disp,[iaz_Bmin,iel_0]);
+azel_disp=cat(1,azel_disp,[az(iaz_Bmin),el(iel_0)]);
 
-loc_disp=cat(1,loc_disp,[iaz_Bmin,iel_Bmin]);
-azel_disp=cat(1,azel_disp,[az(iaz_Bmin),el(iel_Bmin)]);
+% Bk_min=min(Bk_Pramsey(:));
+% [iaz_Bmin,iel_Bmin]=find(Bk_Pramsey==Bk_min);
+% loc_disp=cat(1,loc_disp,[iaz_Bmin,iel_Bmin]);
+% azel_disp=cat(1,azel_disp,[az(iaz_Bmin),el(iel_Bmin)]);
 
 % summary
 n_loc_disp=size(loc_disp,1);        % num of locations to display
@@ -786,12 +797,16 @@ end
 
 %% VIS: Mode-resolved Ramsey fringe: P
 % c_loc=viridis(n_loc_disp);
-c_loc=palette(n_loc_disp);
+% c_loc=palette(n_loc_disp);
+% cl_loc=colshades(c_loc);
+
+c_loc=magma(n_loc_disp+1);
+c_loc=c_loc(1:end-1,:);         % max is too light
 cl_loc=colshades(c_loc);
 
-
 figname='Pramsey_fringe_mode';
-h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+% h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
 hold on;
 
 pleg=[];
@@ -803,13 +818,16 @@ for ii=1:n_loc_disp
     tperr=squeeze(P_k_se(:,iazel(1),iazel(2)));
     
     pexp=ploterr(1e6*tau,tp,[],tperr,mark_typ{ii},'hhxy',0);
-    set(pexp(1),'MarkerFaceColor',cl_loc(ii,:),'MarkerEdgeColor',c_loc(ii,:),...
+    set(pexp(1),'MarkerEdgeColor',c_loc(ii,:),...
+        'MarkerFaceColor',cl_loc(ii,:),...
+        'MarkerSize',4.5,...
         'DisplayName',num2str(rad2deg(tazel)));
     set(pexp(2),'Color',c_loc(ii,:));
     pleg(ii)=pexp(1);
     
     yy=feval(Pramseyk_fit{iazel(1),iazel(2)},tt_fit);
-    pfit=plot(tt_fit,yy,'LineStyle',line_sty{ii},'Color',c_loc(ii,:));
+    pfit=plot(tt_fit,yy,...
+        'LineWidth',1,'LineStyle',line_sty{ii},'Color',c_loc(ii,:));
     uistack(pfit,'bottom');
     
     % annotate subplot
@@ -818,9 +836,14 @@ for ii=1:n_loc_disp
     ax_ylim=ax.YLim;
     ax_xlim=ax.XLim;
     
+    ax.XLim=[ax_xlim(1),3.6];
+    
     set(ax,'Layer','Top');
-    ax.FontSize=fontsize;
-    ax.LineWidth=ax_lwidth;
+%     ax.FontSize=fontsize;
+%     ax.LineWidth=ax_lwidth;
+    ax.FontSize=9;
+    ax.LineWidth=1;
+
     xlabel('pulse delay $\tau~(\mu s)$');
     ylabel('$P$');
 end
@@ -882,7 +905,8 @@ end
 
 %% VIS: Magnetometry: P
 figname='halo_magnetometry_P';
-h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+% h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
 
 tp=plotFlatMapWrappedRad(gaz,gel,squeeze(Bk_Pramsey(:,:)),'rect','texturemap');
 % for rect projection, IMAGESC --> controllable x,y axis?
@@ -891,8 +915,9 @@ tp=plotFlatMapWrappedRad(gaz,gel,squeeze(Bk_Pramsey(:,:)),'rect','texturemap');
 hold on;
 for ii=1:n_loc_disp
     tazel=rad2deg(azel_disp(ii,:));
-    tp=plot(tazel(1),tazel(2),'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
-        'Marker',mark_typ{ii},'MarkerSize',10,'LineWidth',line_wid);
+    tp=plot(tazel(1),tazel(2),...
+        'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
+        'Marker',mark_typ{ii},'MarkerSize',4.5);
 end
 
 % annotation
@@ -900,10 +925,12 @@ ax=gca;
 set(ax,'Layer','Top');
 box on;
 grid on;
-ax.FontSize=fontsize;
-ax.LineWidth=ax_lwidth;
+% ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+ax.FontSize=9;
+ax.LineWidth=1;
 
-% axis tight;
+axis tight;
 xlim([-180,180]);
 xticks(-180:90:180);
 yticks(-90:45:90);
@@ -911,13 +938,31 @@ yticks(-90:45:90);
 xlabel('$\theta$ (deg)');
 ylabel('$\phi$ (deg)');
 
+ax.DataAspectRatio=[1 0.5 1];       % adjust aspect ratio
+
+% cbar=colorbar('west');
 cbar=colorbar('eastoutside');
 cbar.TickLabelInterpreter='latex';
 cbar.Label.Interpreter='latex';
-cbar.Label.String='Magnetic field $\mathrm{B}$ (G)';
-cbar.Label.FontSize=fontsize;
-cbar.FontSize=fontsize;
+cbar.Label.String='$\mathrm{B}$ (G)';
+% cbar.Label.FontSize=fontsize;
+% cbar.FontSize=fontsize;
+cbar.Label.FontSize=9;
+cbar.FontSize=9;
+% change colorbar width
+pos_ax=get(gca,'Position');
+pos_cbar=get(cbar,'Position');
+pos_cbar(3)=0.03;
+set(cbar,'Position',pos_cbar);
+set(gca,'Position',pos_ax);
+
 colormap('viridis');
+
+%---------------------------------------------
+% NOTE: saved with vecrast
+% e.g.
+% vecrast(h,'filename',600,'bottom','pdf')
+%---------------------------------------------
 
 % save fig
 if do_save_figs
@@ -977,37 +1022,56 @@ end
 %% VIS: Magnetic tomography: equatorial: P
 figname='B_equatorial_tomography_P';
 % h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
-h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+% h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
 hold on;
 
 %%% EQ-integrated 
-H=shadedErrorBar([-180,180],B_Pramsey_eq*[1,1],Berr_Pramsey_eq*[1,1]);
+H=shadedErrorBar([-180,180],B_Pramsey_eq*[1,1],Berr_Pramsey_eq*[1,1],'k');
+H.mainLine.LineWidth=1;
+H.edge(1).Visible='off';
+H.edge(2).Visible='off';
+
+%%% ROI
+for ii=1:n_loc_disp
+    taz_disp=azel_disp(ii,1);
+    tp=line(rad2deg(taz_disp)*[1,1],[0,1],'Color',c_loc(ii,:),...
+        'LineStyle','--');
+end
 
 %%% k-resolved
-Bk_eq=Bk_Pramsey(:,iel_0);      % magnetic field around equator
-Bkerr_eq=Berrk_Pramsey(:,iel_0);      
+%PLOTERR
+% tp=ploterr(rad2deg(az),Bk_eq,[],Bkerr_eq,'o','hhxy',0);
+% set(tp(1),'Marker','.','MarkerSize',4.5,...
+%     'MarkerFaceColor',clvir(2,:),'MarkerEdgeColor',cvir(2,:),...
+%     'DisplayName','');
+% set(tp(2),'Color',cvir(2,:));
 
-tp=ploterr(rad2deg(az),Bk_eq,[],Bkerr_eq,'o','hhxy',0);
-set(tp(1),'Marker',mark_typ{1},...
-    'MarkerFaceColor',clvir2(1,:),'MarkerEdgeColor',cvir2(1,:),...
-    'DisplayName','');
-set(tp(2),'Color',cvir2(1,:));
+%SHADED ERR BAR
+tp=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
+tp.mainLine.Color=cvir(2,:);
+tp.mainLine.LineWidth=1;
+tp.patch.FaceColor=clvir(2,:);
+tp.patch.FaceAlpha=0.33;
+tp.edge(1).Visible='off';
+tp.edge(2).Visible='off';
 
-% annotation
+%%% annotation
 box on;
 ax=gca;
 set(ax,'Layer','Top');
-ax.FontSize=fontsize;
-ax.LineWidth=ax_lwidth;
+% ax.FontSize=fontsize;
+% ax.LineWidth=ax_lwidth;
+ax.FontSize=9;
+ax.LineWidth=1;
 
 xlabel('$\theta$ (deg)');
-ylabel('Magnetic field $\mathrm{B}$ (G)');
+ylabel('$\mathrm{B}$ (G)');
 
 xlim([-180,180]);
 ax.XTick=-180:90:180;
+ylim([0.52,0.54]);
 
-% lgd=legend(pleg);
-% legend(H.mainLine,'equator integrated');
 
 % save fig
 if do_save_figs
