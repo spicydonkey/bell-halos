@@ -314,12 +314,12 @@ for ii=1:numel(disp_iaz)
     %%% fitted model
     % stationary before tau0 (Psi+ stationary --> parity=1)
     tpf=plot([0,T_so],[1,1],...
-        line_sty{ii},'LineWidth',1.5,'Color',c_disp(ii,:));
+        line_sty{ii},'LineWidth',1,'Color',c_disp(ii,:));
     uistack(tpf,'bottom');
     
     % dynamics after turn-on
     tpf=plot(tau0_fit+T_so,B0_fit{tiaz,iel_0},...
-        line_sty{ii},'LineWidth',1.5,'Color',c_disp(ii,:));
+        line_sty{ii},'LineWidth',1,'Color',c_disp(ii,:));
     uistack(tpf,'bottom');
 end
 
@@ -506,12 +506,20 @@ set(gca,'Position',pos_ax);
 %---------------------------------------------
 % NOTE: saved with vecrast
 % e.g.
-% vecrast(h,'filename',600,'bottom','pdf')
+% vecrast(h,strcat('dB_dist_',getdatetimestr),600,'bottom','pdf')
 %---------------------------------------------
 
 
 
 %% VIS: Equatorial tomography (publication)
+%%% calibration
+% nuller characterisation at ±y measurement
+dBdy=0.4;           % mG/mm
+dBdy_ferr=0.6;      % fractional error
+th_exp=pi/2;     % deltaY - measurement direction
+% th_err_exp    % TODO: uncertainty of orientation
+
+
 %%% configs
 p_xlim=[0,180];     % periodic BC
 
@@ -552,7 +560,17 @@ pleg=tp(1);
 pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',ctheme(idx_col,:),'LineWidth',1);
 uistack(pfit,'bottom');
 
-% annotation
+% independent measurement (calibration)
+d_sep=0.15;             % halo effective Dia. (separation) for diff B (mm)
+dB_exp=d_sep*dBdy;      % diff B (mG)
+
+tp_exp=ploterr(rad2deg(th_exp),dB_exp,[],dB_exp*dBdy_ferr,'.','hhxy',1);
+set(tp_exp(1),'Marker','none');
+set(tp_exp(2),'Color','k','LineWidth',1);
+arrayfun(@(p) uistack(p,'bottom'),tp_exp);
+
+
+%%% annotation
 box on;
 ax=gca;
 set(ax,'Layer','Top');
