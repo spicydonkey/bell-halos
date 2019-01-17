@@ -14,9 +14,12 @@ P_anti = 1-P_corr;
 
 E = P_corr - P_anti;        % measured correlation coefficient
 
-g2=g2_corr+g2_anti-1;           % effective two-particle corr amplitude
+% g2=g2_corr+g2_anti-1;           % effective two-particle corr amplitude
+% E_ideal_src=(g2-1)./(g2+1);      % ideal source 2-particle correlation
 
-E_ideal_src=(g2-1)./(g2+1);      % ideal source 2-particle correlation
+g2=0.5*(g2_corr+g2_anti);       % spin-integrated two-particle corr amp
+E_ideal_src=1-1/g2;             % correlator amplitude for pair source
+
 E0=E./E_ideal_src;               % mode occupancy corrected correlation
 
 end
