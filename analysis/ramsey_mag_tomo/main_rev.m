@@ -429,7 +429,8 @@ P_bec_se=P_bec_std./sqrt(n_shot);
 
 %% VIS
 % configs
-i_bec=1;
+i_bec=1:2;
+mrk_bec={'v','^'};      % marker types for BEC: triangle DOWN/UP
 col_spin={'b','r'};     % mJ = 1, 0
 
 %%% detected atom number
@@ -444,9 +445,11 @@ for ii=1:2
     set(tp_halo(2),'Color',col_spin{ii});
     
     % bec
-    tp_bec=ploterr(1e6*tau,Nm_bec_avg(:,ii,i_bec),[],Nm_bec_se(:,ii,i_bec),'^--');
-    set(tp_bec(1),'Color',col_spin{ii},'MarkerFaceColor','w');
-    set(tp_bec(2),'Color',col_spin{ii});
+    for jj=i_bec
+        tp_bec=ploterr(1e6*tau,Nm_bec_avg(:,ii,jj),[],Nm_bec_se(:,ii,jj),'--');
+        set(tp_bec(1),'Color',col_spin{ii},'MarkerFaceColor','w','Marker',mrk_bec{jj});
+        set(tp_bec(2),'Color',col_spin{ii});
+    end
 end
 
 ax=gca;
@@ -459,7 +462,7 @@ xlim(1e6*[min(tau),max(tau)]+[-0.1,0.1]);
 
 
 %%% Polarisation
-figname='bec_halo_num';
+figname='bec_halo_pol';
 h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
 hold on;
 
@@ -469,9 +472,11 @@ set(tp_halo(1),'Color','k','MarkerFaceColor','k');
 set(tp_halo(2),'Color','k');
 
 % bec
-tp_bec=ploterr(1e6*tau,P_bec_avg(:,i_bec),[],P_bec_se(:,i_bec),'^--');
-set(tp_bec(1),'Color','k','MarkerFaceColor','w');
-set(tp_bec(2),'Color','k');
+for jj=i_bec
+    tp_bec=ploterr(1e6*tau,P_bec_avg(:,jj),[],P_bec_se(:,jj),'--');
+    set(tp_bec(1),'Color','k','MarkerFaceColor','w','Marker',mrk_bec{jj});
+    set(tp_bec(2),'Color','k');
+end
 
 ax=gca;
 box on;
