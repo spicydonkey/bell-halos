@@ -47,6 +47,17 @@ fontsize=12;
 ax_lwidth=1.2;
 
 
+%%% vis: publication
+config_fig.units='centimeters';
+config_fig.pos_2col=[0,0,17.2,6];      % 2-column
+% config_fig.pos_2col=[0,0,8.6,3.2];      % 2-column
+config_fig.rend='painters';
+config_fig.ax_fontsize=9;
+config_fig.ax_lwid=0.5;
+config_fig.mark_siz=4;
+config_fig.line_wid=0.5;
+
+
 %% load raw data
 run('config_v1');
 
@@ -435,52 +446,68 @@ col_spin={'b','r'};     % mJ = 1, 0
 
 %%% detected atom number
 figname='bec_halo_num';
-h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',config_fig.pos_2col,...
+    'Renderer',config_fig.rend);
 hold on;
 
 for ii=1:2
     % halo
     tp_halo=ploterr(1e6*tau,Nm_halo_avg(:,ii),[],Nm_halo_se(:,ii),'o-');
-    set(tp_halo(1),'Color',col_spin{ii},'MarkerFaceColor',col_spin{ii});
-    set(tp_halo(2),'Color',col_spin{ii});
+    set(tp_halo(1),'Color',col_spin{ii},'MarkerFaceColor',col_spin{ii},...
+        'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
+    set(tp_halo(2),'Color',col_spin{ii},'LineWidth',config_fig.line_wid);
     
     % bec
     for jj=i_bec
         tp_bec=ploterr(1e6*tau,Nm_bec_avg(:,ii,jj),[],Nm_bec_se(:,ii,jj),'--');
-        set(tp_bec(1),'Color',col_spin{ii},'MarkerFaceColor','w','Marker',mrk_bec{jj});
-        set(tp_bec(2),'Color',col_spin{ii});
+        set(tp_bec(1),'Color',col_spin{ii},'MarkerFaceColor','w','Marker',mrk_bec{jj},...
+            'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
+        set(tp_bec(2),'Color',col_spin{ii},'LineWidth',config_fig.line_wid);
     end
 end
 
 ax=gca;
 box on;
 set(ax,'Layer','Top');
+set(ax,'FontSize',config_fig.ax_fontsize);
+set(ax,'LineWidth',config_fig.ax_lwid);
+
+xlim(1e6*[min(tau),max(tau)]+[-0.1,0.1]);
+ylim([0,800]);
+ax.YTick=0:250:1000;
 
 xlabel('pulse delay $\tau~(\mu s)$');
-ylabel('\# atoms detected');
-xlim(1e6*[min(tau),max(tau)]+[-0.1,0.1]);
+ylabel('\# detected $N_i$');
+
 
 
 %%% Polarisation
 figname='bec_halo_pol';
-h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',config_fig.pos_2col,...
+    'Renderer',config_fig.rend);
 hold on;
 
 % halo
 tp_halo=ploterr(1e6*tau,P_halo_avg,[],P_halo_se,'o-');
-set(tp_halo(1),'Color','k','MarkerFaceColor','k');
-set(tp_halo(2),'Color','k');
+set(tp_halo(1),'Color','k','MarkerFaceColor','k',...
+    'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
+set(tp_halo(2),'Color','k',...
+    'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
 
 % bec
 for jj=i_bec
     tp_bec=ploterr(1e6*tau,P_bec_avg(:,jj),[],P_bec_se(:,jj),'--');
-    set(tp_bec(1),'Color','k','MarkerFaceColor','w','Marker',mrk_bec{jj});
-    set(tp_bec(2),'Color','k');
+    set(tp_bec(1),'Color','k','MarkerFaceColor','w','Marker',mrk_bec{jj},...
+        'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
+    set(tp_bec(2),'Color','k',...
+        'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
 end
 
 ax=gca;
 box on;
 set(ax,'Layer','Top');
+set(ax,'FontSize',config_fig.ax_fontsize);
+set(ax,'LineWidth',config_fig.ax_lwid);
 
 xlabel('pulse delay $\tau~(\mu s)$');
 ylabel('polarisation');
