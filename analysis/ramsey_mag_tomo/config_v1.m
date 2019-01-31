@@ -43,13 +43,11 @@ configs.mf(2).p_bec0=[1.638,  -0.3e-3,    2.9e-3;
                     1.69,  -0.3e-3,    2.9e-3];
 configs.mf(2).r_bec0=13e-3;
 
-
 % configs.mf(3).mf=-1;
 % configs.mf(3).window={vz*[0.416,0.4349],35e-3*[-1,1],35e-3*[-1,1]};
 % configs.mf(3).p_bec0=[1.71,  -0.3e-3,    7.5e-3;
 %                     1.763,  0.4e-3,    7.5e-3];
 % configs.mf(3).r_bec0=10e-3;
-
 
 %%% filter
 % 1st stage
@@ -60,3 +58,7 @@ configs.filt.z_cap=0.8;
 % post-distortion
 configs.filt2.r_crop=[0.9,1.1];
 configs.filt2.z_cap=0.8;
+
+%%% capture (BEC as interest rather than to filter)
+configs.crop.bec=5e-3;
+

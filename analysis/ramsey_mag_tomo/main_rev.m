@@ -143,6 +143,7 @@ for ii=1:n_shot
 end
 
 % DEBUG
+% TODO - pretty this figure for publication
 figure(h_zxy_raw);
 hold on;
 plot_zxy(p_halo,[],50,'mkg');
@@ -165,6 +166,11 @@ view([0,0]);
 %% filter data
 zxy0_filt=zxy0;     % initialise filtered data
 
+% non-halo stuff
+r_bec_capt=configs.crop.bec;
+zxy0_bec=cell(n_shot,n_mf,2);
+
+
 %%% BEC + thermal
 r_thermal=configs.filt.r_ball;
 for ii=1:n_shot
@@ -173,6 +179,9 @@ for ii=1:n_shot
             tp_bec0=p_bec0{jj}(ii,:,kk);
             % get atoms outside ball centered at BEC
             zxy0_filt{ii,jj}=cropBall(zxy0_filt{ii,jj},r_thermal,tp_bec0,false);
+            
+            % get BEC (relatively tight)
+            zxy0_bec{ii,jj,kk}=cropBall(zxy0{ii,jj},r_bec_capt,tp_bec0,true);     % BEC
         end
     end
 end
@@ -266,8 +275,9 @@ for ii=1:n_mf
 end
 
 %%% ellipsoid fit to sphere
+v_ellip3=cell(n_mf,1);
 for ii=1:n_mf
-    k_halo(:,ii)=map2usph(k_halo(:,ii));
+    [k_halo(:,ii),v_ellip3{ii}]=map2usph(k_halo(:,ii));
 end
     
 % DEBUG
@@ -300,10 +310,14 @@ scatter_halo(k_halo_filt);
 %% categorise data by exp-params
 % k_par=cell(1,nparam);
 k_par=cell(ncomp);
+x_bec_par=cell(ncomp);      % BEC counts. spatial coord [m]
+
 for ii=1:nparam
 %     k_par{ii}=k_halo_filt(b_paramset(:,ii),:);      % get all halo data
     k_par{ii}=k_halo_filt(b_paramset{ii},:);      % get all halo data
     %from this param-set and store
+    
+    x_bec_par{ii}=zxy0_bec(b_paramset{ii},:,:);
 end
 
 
@@ -343,6 +357,8 @@ idx_phi0=find(phi==0);      % two-pi/2-pulse (Ramsey) dataset with zero phase de
 k_ramsey_phi0=squeeze(k_par(idx_ramsey_exp,idx_phi0,:));     % Ramsey sub-dataset (phi=0)
 n_shot=cellfun(@(x) size(x,1),k_ramsey_phi0);       % number of shots per tau
 
+x_ramsey_phi0=squeeze(x_bec_par(idx_ramsey_exp,idx_phi0,:));    % BEC sub-dataset
+
 
 %% atom number and population
 % raw #spins: #atom in mJ halos
@@ -355,7 +371,7 @@ Nm_halo_std=cellfun(@(n) std(n,0,1),Nm_halo,'UniformOutput',false);     % std
 Nm_halo_std=vertcat(Nm_halo_std{:});
 Nm_halo_se=Nm_halo_std./sqrt(n_shot);       % std-err
 
-Ninv_halo=cellfun(@(x) x(:,1)-x(:,2),Nm_halo,'UniformOutput',false);    % "collective spin"/inversion
+Ninv_halo=cellfun(@(x) -diff(x,1,2),Nm_halo,'UniformOutput',false);    % "collective spin"/inversion
 
 % tot #atom in halo per tau
 N_halo=cellfun(@(n) sum(n,2),Nm_halo,'UniformOutput',false);    % total num det in halo
@@ -384,6 +400,86 @@ P_halo=cellfun(@(n,N) n./N,Ninv_halo,N_halo,'UniformOutput',false);
 P_halo_avg=cellfun(@(x) mean(x),P_halo);
 P_halo_std=cellfun(@(x) std(x),P_halo);
 P_halo_se=P_halo_std./sqrt(n_shot);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% BEC
+Nm_bec=cellfun(@(x) shotSize(x),x_ramsey_phi0,'UniformOutput',false);
+
+Nm_bec_avg=cellfun(@(n) mean(n,1),Nm_bec,'UniformOutput',false);
+Nm_bec_avg=vertcat(Nm_bec_avg{:});
+Nm_bec_std=cellfun(@(n) std(n,0,1),Nm_bec,'UniformOutput',false);     % std 
+Nm_bec_std=vertcat(Nm_bec_std{:});
+Nm_bec_se=Nm_bec_std./sqrt(n_shot);       % std-err
+Ninv_bec=cellfun(@(x) -squeeze(diff(x,1,2)),Nm_bec,'UniformOutput',false);    % "collective spin"/inversion
+
+N_bec=cellfun(@(n) squeeze(sum(n,2)),Nm_bec,'UniformOutput',false);
+N_bec_avg=cellfun(@(x) mean(x,1),N_bec,'UniformOutput',false);    % avg total atom num det'd (T avg'd)
+N_bec_avg=vertcat(N_bec_avg{:});
+N_bec_std=cellfun(@(x) std(x,0,1),N_bec,'UniformOutput',false);
+N_bec_std=vertcat(N_bec_std{:});
+N_bec_se=N_bec_std./sqrt(n_shot);
+
+P_bec=cellfun(@(n,N) n./N,Ninv_bec,N_bec,'UniformOutput',false);   
+P_bec_avg=cellfun(@(x) mean(x),P_bec,'UniformOutput',false);
+P_bec_avg=vertcat(P_bec_avg{:});
+P_bec_std=cellfun(@(x) std(x),P_bec,'UniformOutput',false);
+P_bec_std=vertcat(P_bec_std{:});
+P_bec_se=P_bec_std./sqrt(n_shot);
+
+
+%% VIS
+% configs
+i_bec=1;
+col_spin={'b','r'};     % mJ = 1, 0
+
+%%% detected atom number
+figname='bec_halo_num';
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+hold on;
+
+for ii=1:2
+    % halo
+    tp_halo=ploterr(1e6*tau,Nm_halo_avg(:,ii),[],Nm_halo_se(:,ii),'o-');
+    set(tp_halo(1),'Color',col_spin{ii},'MarkerFaceColor',col_spin{ii});
+    set(tp_halo(2),'Color',col_spin{ii});
+    
+    % bec
+    tp_bec=ploterr(1e6*tau,Nm_bec_avg(:,ii,i_bec),[],Nm_bec_se(:,ii,i_bec),'^--');
+    set(tp_bec(1),'Color',col_spin{ii},'MarkerFaceColor','w');
+    set(tp_bec(2),'Color',col_spin{ii});
+end
+
+ax=gca;
+box on;
+set(ax,'Layer','Top');
+
+xlabel('pulse delay $\tau~(\mu s)$');
+ylabel('\# atoms detected');
+xlim(1e6*[min(tau),max(tau)]+[-0.1,0.1]);
+
+
+%%% Polarisation
+figname='bec_halo_num';
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+hold on;
+
+% halo
+tp_halo=ploterr(1e6*tau,P_halo_avg,[],P_halo_se,'o-');
+set(tp_halo(1),'Color','k','MarkerFaceColor','k');
+set(tp_halo(2),'Color','k');
+
+% bec
+tp_bec=ploterr(1e6*tau,P_bec_avg(:,i_bec),[],P_bec_se(:,i_bec),'^--');
+set(tp_bec(1),'Color','k','MarkerFaceColor','w');
+set(tp_bec(2),'Color','k');
+
+ax=gca;
+box on;
+set(ax,'Layer','Top');
+
+xlabel('pulse delay $\tau~(\mu s)$');
+ylabel('polarisation');
+xlim(1e6*[min(tau),max(tau)]+[-0.1,0.1]);
 
 
 %% Ramsey model
@@ -961,9 +1057,9 @@ set(gca,'Position',pos_ax);
 colormap('viridis');
 
 %---------------------------------------------
-% NOTE: saved with vecrast
+% NOTE: save with vecrast
 % e.g.
-% vecrast(h,'filename',600,'bottom','pdf')
+% vecrast(h,strcat('B_dist_',getdatetimestr),600,'bottom','pdf')
 %---------------------------------------------
 
 % save fig
