@@ -204,7 +204,7 @@ efit_flag='';
 
 %%% 3.2. Unit sphere mapping 
 %%%% Tranform to unit sphere (k-space)
-halo_k=cellfun(@(v_zxy) ellip2usph(v_zxy,ecent,erad,evec,verbose-1),...
+halo_k=cellfun(@(v_zxy) ellip2usph(v_zxy,ecent,erad,evec),...
     halo_zxy0,'UniformOutput',false);
 
 %%% Summary
