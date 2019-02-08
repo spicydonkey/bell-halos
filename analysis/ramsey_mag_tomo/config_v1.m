@@ -62,3 +62,6 @@ configs.filt2.z_cap=0.8;
 %%% capture (BEC as interest rather than to filter)
 configs.crop.bec=5e-3;
 
+
+% analysis
+configs.roi = 'all';       % 'halo', 'all'

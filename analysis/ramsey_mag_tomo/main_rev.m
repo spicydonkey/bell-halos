@@ -36,7 +36,8 @@ clvir2=colshades(cvir2);
 [col,coll,cold]=palette(3);
 c_gray=0.8*ones(1,3);
 line_sty={'-','--',':','-.'};
-mark_typ={'o','s','^','d'};
+% mark_typ={'o','s','^','d'};
+mark_typ={'+','o','^','d'};
 % str_mm={'$x$','$y$','$z$'};
 str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
 % str_ss={'$m_J = 1$','$m_J = 0$'};
@@ -46,17 +47,7 @@ line_wid=1.5;
 fontsize=12;
 ax_lwidth=1.2;
 
-
-%%% vis: publication
-config_fig.units='centimeters';
-config_fig.pos_2col=[0,0,17.2,6];      % 2-column
-% config_fig.pos_2col=[0,0,8.6,3.2];      % 2-column
-config_fig.rend='painters';
-config_fig.ax_fontsize=9;
-config_fig.ax_lwid=0.5;
-config_fig.mark_siz=4;
-config_fig.line_wid=0.5;
-
+config_fig = loadFigureConfig;
 
 %% load raw data
 run('config_v1');
@@ -315,6 +306,38 @@ end
 % DEBUG
 scatter_halo(k_halo_filt);
 
+
+%% transform raw spatial clouds
+k_all=cell(size(zxy0));
+for ii = 1:n_mf
+    tV = v_ellip(ii);       
+    k_all(:,ii) = cellfun(@(x) ellip2usph(x,tV.cent,tV.rad,tV.vaxis),zxy0(:,ii),...
+        'UniformOutput',false);
+end
+
+% VIS
+scatter_halo(k_all);
+
+%%% filter radially
+k_all_filt = cfilter_norm(k_all,configs.filt2.r_crop(1),configs.filt2.r_crop(2));
+
+% VIS
+scatter_halo(k_all_filt);
+
+
+%% select data to analyse
+if ~isfield(configs,'roi')
+    warning('Region to analyse has not been specified. Default: scattering halo "k_halo_filt".');
+    k_roi=k_halo_filt;
+elseif strcmp(configs.roi,'halo')
+    k_roi=k_halo_filt;
+elseif strcmp(configs.roi,'all')
+    k_roi=k_all_filt;
+else
+    error('Unrecognised region of interest to analyse.');
+end
+
+
 %% categorise data by exp-params
 % k_par=cell(1,nparam);
 k_par=cell(ncomp);
@@ -322,7 +345,7 @@ x_bec_par=cell(ncomp);      % BEC counts. spatial coord [m]
 
 for ii=1:nparam
 %     k_par{ii}=k_halo_filt(b_paramset(:,ii),:);      % get all halo data
-    k_par{ii}=k_halo_filt(b_paramset{ii},:);      % get all halo data
+    k_par{ii}=k_roi(b_paramset{ii},:);      % get all halo data
     %from this param-set and store
     
     x_bec_par{ii}=zxy0_bec(b_paramset{ii},:,:);
@@ -625,11 +648,17 @@ end
 % construct spatial zones at latlon grid + solid angle
 alpha=pi/10;         % half-cone angle
 lim_az=[-pi,pi];    % no inversion symmetry
-phi_max=pi/4;       
+% phi_max=pi/4;       
+phi_max=pi/2;       
 lim_el=[-phi_max,phi_max];
 
 n_az=200;                	% equispaced bins
 n_el=50;
+
+% QUICK DEBUG
+% n_az=30;
+% n_el=15;
+
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
 % el_disp=deg2rad(-30:30:30);    % elev/lat zones to display
@@ -894,8 +923,8 @@ for ii=1:n_loc_disp
         pfit=plot(tt_fit,yy,'LineStyle',line_sty{jj},'Color',clvir(jj,:));
         uistack(pfit,'bottom');
     end
-    titlestr=sprintf('%s (%s)','$(\theta,\phi)=$',...
-        num2str(rad2deg(tazel)));
+    titlestr=sprintf('%s (%0.3g, %0.3g)','$(\theta,\phi)=$',...
+        rad2deg(tazel));
     title(titlestr);
     
     % annotate subplot
@@ -927,13 +956,19 @@ end
 % c_loc=palette(n_loc_disp);
 % cl_loc=colshades(c_loc);
 
-c_loc=magma(n_loc_disp+1);
-c_loc=c_loc(1:end-1,:);         % max is too light
-cl_loc=colshades(c_loc);
+% c_loc=magma(n_loc_disp+1);
+% c_loc=c_loc(1:end-1,:);         % max is too light
+% cl_loc=colshades(c_loc);
+
+% *BLACK* markers (simple)
+c_loc=zeros(n_loc_disp,3);
+cl_loc=[0,1,0]'*[1,1,1];
+
+
 
 figname='Pramsey_fringe_mode';
 % h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4],'Renderer',f_ren);
 hold on;
 
 pleg=[];
@@ -944,36 +979,39 @@ for ii=1:n_loc_disp
     tp=squeeze(P_k_avg(:,iazel(1),iazel(2)));
     tperr=squeeze(P_k_se(:,iazel(1),iazel(2)));
     
-    pexp=ploterr(1e6*tau,tp,[],tperr,mark_typ{ii},'hhxy',0);
+    dY_data=(ii-2)*0.5;
+    
+    pexp=ploterr(1e6*tau,dY_data + tp,[],tperr,mark_typ{ii},'hhxy',0);
     set(pexp(1),'MarkerEdgeColor',c_loc(ii,:),...
         'MarkerFaceColor',cl_loc(ii,:),...
-        'MarkerSize',4.5,...
+        'MarkerSize',config_fig.mark_siz,...
         'DisplayName',num2str(rad2deg(tazel)));
     set(pexp(2),'Color',c_loc(ii,:));
     pleg(ii)=pexp(1);
     
     yy=feval(Pramseyk_fit{iazel(1),iazel(2)},tt_fit);
-    pfit=plot(tt_fit,yy,...
-        'LineWidth',1,'LineStyle',line_sty{ii},'Color',c_loc(ii,:));
+    pfit=plot(tt_fit,dY_data + yy,...
+        'LineWidth',config_fig.line_wid,'LineStyle',line_sty{ii},'Color',c_loc(ii,:));
     uistack(pfit,'bottom');
-    
-    % annotate subplot
-    ax=gca;
-    box on;
-    ax_ylim=ax.YLim;
-    ax_xlim=ax.XLim;
-    
-    ax.XLim=[ax_xlim(1),3.6];
-    
-    set(ax,'Layer','Top');
-%     ax.FontSize=fontsize;
-%     ax.LineWidth=ax_lwidth;
-    ax.FontSize=9;
-    ax.LineWidth=1;
-
-    xlabel('pulse delay $\tau~(\mu s)$');
-    ylabel('$P$');
 end
+ax=gca;
+box on;
+
+axis tight;
+ax_xlim=ax.XLim;
+ax_ylim=ax.YLim;
+
+% ax.XLim=[1.9,3.6];
+% ax.YLim=1.1*[-1,1];
+xlim(ax_xlim+0.05*diff(ax_xlim)*[-1,1]);
+ylim(ax_ylim+0.05*diff(ax_ylim)*[-1,1]);
+
+set(ax,'Layer','Top');
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+xlabel('pulse delay $\tau~(\mu s)$');
+ylabel('polarisation');
 
 % lgd=legend(pleg);
 % title(lgd,'$(\theta,~\phi)$ (deg)');
@@ -1036,6 +1074,7 @@ figname='halo_magnetometry_P';
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
 
 tp=plotFlatMapWrappedRad(gaz,gel,squeeze(Bk_Pramsey(:,:)),'rect','texturemap');
+% tp=plotFlatMapWrappedRad(gaz,gel,squeeze(Bk_Pramsey(:,:)),'eckert4','texturemap');
 % for rect projection, IMAGESC --> controllable x,y axis?
 
 % label ROI
@@ -1044,18 +1083,16 @@ for ii=1:n_loc_disp
     tazel=rad2deg(azel_disp(ii,:));
     tp=plot(tazel(1),tazel(2),...
         'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
-        'Marker',mark_typ{ii},'MarkerSize',4.5);
+        'Marker',mark_typ{ii},'MarkerSize',config_fig.mark_siz);
 end
 
 % annotation
 ax=gca;
 set(ax,'Layer','Top');
 box on;
-grid on;
-% ax.FontSize=fontsize;
-% ax.LineWidth=ax_lwidth;
-ax.FontSize=9;
-ax.LineWidth=1;
+% grid on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
 
 axis tight;
 xlim([-180,180]);
@@ -1065,17 +1102,18 @@ yticks(-90:45:90);
 xlabel('$\theta$ (deg)');
 ylabel('$\phi$ (deg)');
 
-ax.DataAspectRatio=[1 0.5 1];       % adjust aspect ratio
+% ax.DataAspectRatio=[1 0.5 1];       % adjust aspect ratio
 
+colormap('viridis');
+
+%%% colorbar
 % cbar=colorbar('west');
 cbar=colorbar('eastoutside');
 cbar.TickLabelInterpreter='latex';
 cbar.Label.Interpreter='latex';
 cbar.Label.String='$\mathrm{B}$ (G)';
-% cbar.Label.FontSize=fontsize;
-% cbar.FontSize=fontsize;
-cbar.Label.FontSize=9;
-cbar.FontSize=9;
+cbar.Label.FontSize=config_fig.ax_fontsize;
+cbar.FontSize=config_fig.ax_fontsize;
 % change colorbar width
 pos_ax=get(gca,'Position');
 pos_cbar=get(cbar,'Position');
@@ -1083,7 +1121,7 @@ pos_cbar(3)=0.03;
 set(cbar,'Position',pos_cbar);
 set(gca,'Position',pos_ax);
 
-colormap('viridis');
+
 
 %---------------------------------------------
 % NOTE: save with vecrast
@@ -1150,7 +1188,7 @@ end
 figname='B_equatorial_tomography_P';
 % h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
 % h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4],'Renderer',f_ren);
 hold on;
 
 %%% EQ-integrated 
@@ -1159,22 +1197,8 @@ H.mainLine.LineWidth=1;
 H.edge(1).Visible='off';
 H.edge(2).Visible='off';
 
-%%% ROI
-for ii=1:n_loc_disp
-    taz_disp=azel_disp(ii,1);
-    tp=line(rad2deg(taz_disp)*[1,1],[0,1],'Color',c_loc(ii,:),...
-        'LineStyle','--');
-end
 
-%%% k-resolved
-%PLOTERR
-% tp=ploterr(rad2deg(az),Bk_eq,[],Bkerr_eq,'o','hhxy',0);
-% set(tp(1),'Marker','.','MarkerSize',4.5,...
-%     'MarkerFaceColor',clvir(2,:),'MarkerEdgeColor',cvir(2,:),...
-%     'DisplayName','');
-% set(tp(2),'Color',cvir(2,:));
-
-%SHADED ERR BAR
+%%% SHADED ERR BAR
 tp=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
 tp.mainLine.Color=cvir(2,:);
 tp.mainLine.LineWidth=1;
@@ -1183,21 +1207,56 @@ tp.patch.FaceAlpha=0.33;
 tp.edge(1).Visible='off';
 tp.edge(2).Visible='off';
 
+%%% ROI
+
+for ii=1:n_loc_disp
+    clearvars tp;
+    
+    iazel=loc_disp(ii,:);
+    taz_disp=azel_disp(ii,1);
+    tp=ploterr(rad2deg(taz_disp),Bk_eq(iazel(1)),[],Bkerr_eq(iazel(1)),...
+        mark_typ{ii},'hhxy',1);
+    
+    set(tp(1),'MarkerEdgeColor',c_loc(ii,:),...
+        'MarkerFaceColor',cl_loc(ii,:),...
+        'MarkerSize',config_fig.mark_siz,...
+        'DisplayName',num2str(rad2deg(tazel)));
+    set(tp(2),'Color',c_loc(ii,:));
+    
+end
+
+% VERTICAL LINES
+% for ii=1:n_loc_disp
+%     taz_disp=azel_disp(ii,1);
+%     tp=line(rad2deg(taz_disp)*[1,1],[0,1],'Color',c_loc(ii,:),...
+%         'LineStyle','--');
+% end
+
+%%% k-resolved
+% %PLOTERR
+% tp=ploterr(rad2deg(az),Bk_eq,[],Bkerr_eq,'o','hhxy',0);
+% set(tp(1),'Marker','.','MarkerSize',4.5,...
+%     'MarkerFaceColor',clvir(2,:),'MarkerEdgeColor',cvir(2,:),...
+%     'DisplayName','');
+% set(tp(2),'Color',cvir(2,:));
+
+
 %%% annotation
 box on;
 ax=gca;
 set(ax,'Layer','Top');
-% ax.FontSize=fontsize;
-% ax.LineWidth=ax_lwidth;
-ax.FontSize=9;
-ax.LineWidth=1;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
 
 xlabel('$\theta$ (deg)');
 ylabel('$\mathrm{B}$ (G)');
 
+axis tight;
 xlim([-180,180]);
 ax.XTick=-180:90:180;
-ylim([0.52,0.54]);
+% ylim([0.52,0.54]);
+ylim0=ax.YLim;
+ylim(ylim0 + 0.1*diff(ylim0)*[-1,1]);
 
 
 % save fig
@@ -1239,6 +1298,7 @@ subplot(2,1,1);
 hold on;
 % plot(rad2deg(az),Bk_eq);            % B-field (G)
 % plot(rad2deg(az),Bk_eq_bb);         % B-field at BB region (G)
+clearvars tp;
 tp(1)=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r',1);        % B-field (G)
 tp(2)=shadedErrorBar(rad2deg(az),Bk_eq_bb,Bkerr_eq_bb,'b',1);  % B-field at BB region (G)
 
