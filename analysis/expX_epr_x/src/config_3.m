@@ -1,19 +1,17 @@
 % EPR experiment (1/2) <JyJy> measurement
 %
-%
-% 2018.05.19: Bragg pulse scan in trap
-%
-% DKS
-% 
+% DKS 
 
 exp_param=expparams();
 
 %% CONFIGS
-configs.path.base='C:\Users\HE BEC\bell\2018april\expX_epr_x';
-
+% configs.path.base='C:\Users\HE BEC\bell\2018april\expX_epr_x';
 % configs.path.data=fullfile(configs.path.base,'data');
-exp_num=3;
-configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
+% exp_num=3;
+% configs.path.data=fullfile(configs.path.base,'data',num2str(exp_num));
+
+configs.path.base='C:\Users\HE BEC\bell_data\expX_epr_x\1';
+configs.path.data=configs.path.base;
 
 configs.path.out=fullfile(configs.path.base,'out');
 configs.path.src=fullfile(configs.path.base,'src');
@@ -21,11 +19,11 @@ configs.path.src=fullfile(configs.path.base,'src');
 configs.load.path=fullfile(configs.path.data,'d');
 
 configs.flag.param_scan=0;      % 0 for no scan; 1 for param scan
-configs.misc.param_const=5e-6;      % constant param (no scan)
+configs.misc.param=5e-6;        % T_mix (pi/2) for this experiment (see wfmgen)
+% configs.misc.param_const=5e-6;      % constant param (no scan)
 configs.path.paramlog=fullfile(configs.path.data,'LOG_parameters.txt');
 
-
-configs.load.id=1:1550;
+configs.load.id=[];
 configs.load.mincount=0;
 configs.load.maxcount=Inf;
 

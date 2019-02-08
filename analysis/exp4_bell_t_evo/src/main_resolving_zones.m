@@ -5,7 +5,7 @@
 %% configs
 % FILES
 path_dir='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\';
-fname_data='out_20181031.mat';
+fname_data='out_20181031_2.mat';
 
 %%% analysis
 % to be loaded from data --> identical to k-resolved analysis

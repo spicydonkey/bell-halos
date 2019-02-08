@@ -23,8 +23,8 @@
 
 %%% EXPX: X-rotation <JyJy>
 % config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_x1.m';
-% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_x2.m';
-config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_x3.m';
+config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_x2.m';
+% config_name='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_x3.m';
 
 
 % config_name='C:\Users\David\Documents\MATLAB\bell-halos\analysis\exp5_bell_yrot\src\config_2.m';
@@ -221,21 +221,21 @@ ylabel('y');
 zlabel('z');
 view([0,0]);
 
+
 %% k-space and distortion cancellation
-%%% unit spherise
 k_halo=zxy0_filt;       % initialise atoms in k-space (i.e. atoms lie on unit-sphere)
+v_ellip=cell(n_mf,1);
 
+% ellipsoid fit to sphere
 for ii=1:n_mf
-    k_halo(:,ii)=cellfun(@(x) x/r_halo_avg(ii),k_halo(:,ii),'UniformOutput',false);
+    [k_halo(:,ii),v_ellip{ii}]=map2usph(k_halo(:,ii));
 end
-
-%%% ellipsoid fit to sphere
-for ii=1:n_mf
-    k_halo(:,ii)=map2usph(k_halo(:,ii));
-end
+v_ellip=[v_ellip{:}];   % form as struct array
     
-% DEBUG
+
+% VIS
 scatter_halo(k_halo);
+
 
 %% filter post-processed data
 %%% radial

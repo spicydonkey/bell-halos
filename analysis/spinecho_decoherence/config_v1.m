@@ -9,8 +9,9 @@ vz=exp_param.vz;
 
 
 %% CONFIGS
-configs.path.base='C:\Users\HE BEC\bell_data\spin_echo_v1';
+% configs.path.base='C:\Users\HE BEC\bell_data\spin_echo_v1';
 % configs.path.base='C:\Users\David\Documents\bell\20180329_easter\spin_echo_v1';
+configs.path.base='\\AMPLPC29\He BEC Archive\EXPERIMENT-DATA\BELL_MF\20180122_bell-mf-global\bell_global\20180329_easter\spin_echo_v1';
 configs.path.paramlog=fullfile(configs.path.base,'LOG_parameters.txt');
 
 configs.load.path=fullfile(configs.path.base,'d');

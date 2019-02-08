@@ -30,7 +30,6 @@ c_gray=0.6*ones(1,3);
 c(3,:)=[0,0,0]; 
 cl(3,:)=c_gray;
 
-
 % line_sty={'-','--',':'};
 mark_typ={'o','s','^','d'};
 % str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
@@ -239,23 +238,37 @@ zlabel('z');
 view([0,0]);
 
 
-
 %% k-space and distortion cancellation
-%%% unit spherise
 k_halo=zxy0_filt;       % initialise atoms in k-space (i.e. atoms lie on unit-sphere)
+v_ellip=cell(n_mf,1);
 
+% ellipsoid fit to sphere
 for ii=1:n_mf
-    k_halo(:,ii)=cellfun(@(x) x/r_halo_avg(ii),k_halo(:,ii),'UniformOutput',false);
+    [k_halo(:,ii),v_ellip{ii}]=map2usph(k_halo(:,ii));
 end
-
-%%% ellipsoid fit to sphere
-for ii=1:n_mf
-    k_halo(:,ii)=map2usph(k_halo(:,ii));
-end
+v_ellip=[v_ellip{:}];   % form as struct array
     
-% DEBUG
+
+% VIS
 scatter_halo(k_halo);
 
+
+%% transform raw spatial clouds
+k_all=cell(size(zxy0));
+for ii = 1:n_mf
+    tV = v_ellip(ii);       
+    k_all(:,ii) = cellfun(@(x) ellip2usph(x,tV.cent,tV.rad,tV.vaxis),zxy0(:,ii),...
+        'UniformOutput',false);
+end
+
+% VIS
+scatter_halo(k_all);
+
+%%% filter radially
+k_all_filt = cfilter_norm(k_all,configs.filt2.r_crop(1),configs.filt2.r_crop(2));
+
+% VIS
+scatter_halo(k_all_filt);
 
 
 %% filter post-processed data
@@ -812,3 +825,35 @@ end
 view(3);
 axis equal;
 axis off;
+
+
+%% g2
+t_start=tic;
+
+% g2 rel-vec bins
+n_bins=15;      % original: 29
+dk_ed_vec=linspace(-0.2,0.2,n_bins+1);      % original: [-0.2,0.2]
+dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
+[~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
+dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
+dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
+
+g2=cell(nparam,1);
+dk=cell(nparam,1);
+g2mdl=cell(nparam,1);
+
+ % ii=10;       % DEBUG
+for ii=1:nparam
+    % run full g2
+    [tg2,tdk,tg2mdl]=summary_disthalo_g2(k_par{ii}(:,[1,2]),dk_ed,0,1,1,0);
+    %     [tg2,tdk,tg2mdl]=summary_disthalo_g2(k_par{ii},dk_ed,1,1,1,0);    % fast test
+    
+    % store
+    g2{ii}=tg2;
+    dk{ii}=tdk;
+    g2mdl{ii}=tg2mdl;
+end
+
+% % centerise correlation function
+% tfit_param=cellfun(@(f) f.Coefficients.Estimate,tg2mdl,'UniformOutput',false);
+t_end=toc(t_start);

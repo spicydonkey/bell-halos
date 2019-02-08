@@ -9,8 +9,8 @@ vz=exp_param.vz;
 
 
 %% CONFIGS
-% configs.path.base='C:\Users\HE BEC\bell\global_rotation\20180329_easter\ramsey_v1';
-configs.path.base='C:\Users\David\Documents\bell\20180329_easter\ramsey_v1';
+configs.path.base='C:\Users\HE BEC\bell_data\ramsey_v1';
+% configs.path.base='C:\Users\David\Documents\bell\20180329_easter\ramsey_v1';
 configs.path.paramlog=fullfile(configs.path.base,'LOG_parameters.txt');
 
 configs.load.path=fullfile(configs.path.base,'d');

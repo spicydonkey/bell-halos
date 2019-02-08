@@ -67,3 +67,8 @@ configs.filt2.z_cap=0.75;
 %%% halo centering
 configs.post.Dk{1}=[0,-0.02,-0.01];
 configs.post.Dk{2}=[0,0,0];
+
+
+%% param selector
+% select a single parameter from a scan
+configs.param_select=1;     % 1: this is for theta=pi/4

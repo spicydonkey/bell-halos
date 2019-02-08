@@ -504,7 +504,7 @@ set(cbar,'Position',pos_cbar);
 set(gca,'Position',pos_ax);
 
 %---------------------------------------------
-% NOTE: saved with vecrast
+% NOTE: save with vecrast
 % e.g.
 % vecrast(h,strcat('dB_dist_',getdatetimestr),600,'bottom','pdf')
 %---------------------------------------------
