@@ -374,6 +374,17 @@ end
 clear txy zxy zxy0 zxy0_filt tzxy tzxy_mf tp_bec tp_bec0 tp_halo tr_bec0 tr_lim;
 clear h_zxy*;       % clear figs
 
+
+%% transform to RH coords
+% SAVE ORIGINAL 
+if ~exist('k_par_orig','var')
+    k_par_orig=k_par;
+end
+
+k_par=cellfun(@(C) cellfun(@(x) tzxy2RHtzxy2(x),C,'UniformOutput',false),...
+    k_par_orig,'UniformOutput',false);      % EXP-coord sys (z against g)
+
+
 %% ANALYSIS
 tic
 
