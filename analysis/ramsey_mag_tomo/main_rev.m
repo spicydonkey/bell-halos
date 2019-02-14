@@ -18,10 +18,11 @@
 do_save_figs=false;
 dir_save='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\ramsey\prelim_20181128';
 
-% He*
-mu_B=1.3996e6;      % bohr magneton [Hz/G]
-g_He=2;             % Lande g-factor He*
-C_gymag=g_He*mu_B;     % He* gyromagnetic ratio (gamma) [Hz/G]
+
+% Phys-constants
+Cphys=physConsts;
+C_gymag=Cphys.He_gymag;         % He* gyromagnetic ratio (gamma) [Hz/G]
+
 
 % vis
 f_units='normalized';
@@ -663,12 +664,12 @@ lim_az=[-pi,pi];    % no inversion symmetry
 phi_max=pi/2;       
 lim_el=[-phi_max,phi_max];
 
-n_az=200;                	% equispaced bins
-n_el=50;
+% n_az=200;                	% equispaced bins
+% n_el=50;
 
 % QUICK DEBUG
-% n_az=30;
-% n_el=15;
+n_az=40;
+n_el=20;
 
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
@@ -1354,6 +1355,29 @@ ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
 
 ax.FontSize=9;
 % ax.LineWidth=1;
+
+%% dBdx (equator)
+d_sep = 3e-3 * 120e-3;     % 3ms expansion at 120 mm/s
+
+dBdx_eq=dB_eq_bb/d_sep;     % in G/m
+dBdx_eq_se=dBerr_eq_bb/d_sep;     
+
+figure;
+tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdx_eq_se,'k');
+
+ax=gca;
+set(ax,'Layer','Top');
+
+xlim([0,180]);      % periodic
+ylim_Original=ax.YLim;
+ylim([0,ylim_Original(2)]);
+
+xticks(0:45:180);
+
+xlabel('$\theta$ (deg)');
+ylabel('$d\mathrm{B}/dx$ (G/m)');
+
+
 
 %% end of script
 toc
