@@ -1210,6 +1210,15 @@ H.edge(1).Visible='off';
 H.edge(2).Visible='off';
 
 
+%%% entire halo integrated
+% TODO - maybe elminate BECs (saturation) but this could be a point of
+% interesting discussion
+H=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'b');
+H.mainLine.LineWidth=1;
+H.edge(1).Visible='off';
+H.edge(2).Visible='off';
+
+
 %%% SHADED ERR BAR
 tp=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
 tp.mainLine.Color=cvir(2,:);
