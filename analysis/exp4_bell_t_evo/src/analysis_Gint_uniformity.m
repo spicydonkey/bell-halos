@@ -38,9 +38,9 @@ bs_nrep=10;
 do_fit=true;
 
 % He*
-mu_B=1.3996e6;      % bohr magneton [Hz/G]
-g_He=2;             % Lande g-factor He*
-C_gymag=g_He*mu_B;     % He* gyromagnetic ratio (gamma) [Hz/G]
+Cphys=physConsts;
+C_gymag=Cphys.He_gymag;         % He* gyromagnetic ratio (gamma) [Hz/G]
+
 
 % vis
 f_units='normalized';
