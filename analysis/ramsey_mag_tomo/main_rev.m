@@ -515,9 +515,7 @@ set(ax,'Layer','Top');
 set(ax,'FontSize',config_fig.ax_fontsize);
 set(ax,'LineWidth',config_fig.ax_lwid);
 
-xlim(1e6*[min(tau),max(tau)]+[-0.1,0.1]);
-ylim([0,800]);
-ax.YTick=0:250:1000;
+axis_snug(ax,[0.05,0.1]);
 
 xlabel('pulse delay $\tau~(\mu s)$');
 ylabel('\# detected $N_i$');
@@ -554,7 +552,7 @@ set(ax,'LineWidth',config_fig.ax_lwid);
 
 xlabel('pulse delay $\tau~(\mu s)$');
 ylabel('polarisation');
-xlim(1e6*[min(tau),max(tau)]+[-0.1,0.1]);
+axis_snug(ax,[0.05,0.1]);
 
 
 %% Ramsey model
@@ -983,6 +981,7 @@ if do_save_figs
     print(h,strcat(fpath,'.svg'),'-dsvg');
 end
 
+
 %% VIS (publication): Mode-resolved Ramsey fringe: P
 % c_loc=viridis(n_loc_disp);
 % c_loc=palette(n_loc_disp);
@@ -1057,47 +1056,33 @@ if do_save_figs
     print(h,strcat(fpath,'.svg'),'-dsvg');
 end
 
-% %% VIS: Magnetometry: Pm
-% idx_mJ=1;       % just use fit param from mJ=1
-% 
-% figname='halo_magnetometry_Pm';
-% h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
-% 
-% tp=plotFlatMapWrappedRad(gaz,gel,squeeze(B_mramsey_k(:,:,idx_mJ)),'rect','texturemap');
-% 
-% % annotation
-% ax=gca;
-% set(ax,'Layer','Top');
-% box on;
-% grid on;
-% ax.FontSize=fontsize;
-% ax.LineWidth=ax_lwidth;
-% 
-% axis tight;
-% xlim([-180,180]);
-% xticks(-180:90:180);
-% yticks(-90:45:90);
-% 
-% xlabel('$\theta$ (deg)');
-% ylabel('$\phi$ (deg)');
-% 
-% cbar=colorbar('eastoutside');
-% cbar.TickLabelInterpreter='latex';
-% cbar.Label.Interpreter='latex';
-% cbar.Label.String='Magnetic field $\mathrm{B}$ (G)';
-% cbar.Label.FontSize=fontsize;
-% cbar.FontSize=fontsize;
-% colormap('viridis');
-% 
-% 
-% % save fig
-% if do_save_figs
-%     savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
-%     fpath=fullfile(dir_save,savefigname);
-%     
-%     saveas(h,strcat(fpath,'.fig'),'fig');
-%     print(h,strcat(fpath,'.png'),'-dpng','-r300');
-% end
+
+%% Processing for VIS: truncate sph-dist to within sensible elev-limits
+% config
+el_trunc=deg2rad(60);           % elevation angle threshold to truncate (rad)
+% el_trunc=deg2rad(90);        
+b_trunc=(abs(gel)>el_trunc);    % boolean indicator to truncate
+
+% get/store original
+if ~exist('Bk_Pramsey_original','var')
+    % store
+    Bk_Pramsey_original=Bk_Pramsey;
+    Berrk_Pramsey_original=Berrk_Pramsey;
+    Br_original=Br;
+    Brerr_original=Brerr;
+else
+    % get
+    Bk_Pramsey=Bk_Pramsey_original;
+    Berrk_Pramsey=Berrk_Pramsey_original;
+    Br=Br_original;
+    Brerr=Brerr_original;
+end
+
+% truncate
+Bk_Pramsey(b_trunc)=NaN;
+Berrk_Pramsey(b_trunc)=NaN;
+Br(b_trunc)=NaN;
+Brerr(b_trunc)=NaN;
 
 
 %% VIS (publication): Magnetometry @ far-field (detected)
@@ -1151,6 +1136,14 @@ set(cbar,'Position',pos_cbar);
 set(gca,'Position',pos_ax);
 
 
+%%% hatch-out truncated region
+hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+    'FaceColor','none','EdgeColor','none');
+uistack(hpatch_trunc,'bottom');
+H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
+    'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+
 
 %---------------------------------------------
 % NOTE: save with vecrast
@@ -1166,51 +1159,6 @@ if do_save_figs
     saveas(h,strcat(fpath,'.fig'),'fig');
     print(h,strcat(fpath,'.png'),'-dpng','-r300');
 end
-
-
-% %% VIS: Magnetic tomography: Pm: equatorial
-% figname='B_equatorial_tomography';
-% h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
-% 
-% Bk_eq=B_mramsey_k(:,:,iel_0,idx_mJ);      % magnetic field around equator
-% Bkerr_eq=Berr_mramsey_k(:,:,iel_0,idx_mJ);      
-% 
-% hold on;
-% pleg=NaN(npar_phidelay,1);
-% for ii=1:npar_phidelay
-%     tp=ploterr(rad2deg(az),Bk_eq(ii,:),[],Bkerr_eq(ii,:),'o','hhxy',0);
-%     set(tp(1),'Marker',mark_typ{ii},...
-%         'MarkerFaceColor',clvir2(ii,:),'MarkerEdgeColor',cvir2(ii,:),...
-%         'DisplayName',num2str(rad2deg(par_comp{2}(ii)),3));
-%     set(tp(2),'Color',cvir2(ii,:));
-%     pleg(ii)=tp(1);
-% end
-% 
-% % annotation
-% box on;
-% ax=gca;
-% set(ax,'Layer','Top');
-% ax.FontSize=fontsize;
-% ax.LineWidth=ax_lwidth;
-% 
-% title('Equatorial tomography $\phi=0$');
-% 
-% xlabel('Azimuthal angle $\theta$ [$^\circ$]');
-% ylabel('Magnetic field $\mathrm{B}$ [G]');
-% 
-% xlim([-180,180]);
-% ax.XTick=-180:90:180;
-% 
-% % lgd=legend(pleg);
-% 
-% % save fig
-% if do_save_figs
-%     savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
-%     fpath=fullfile(dir_save,savefigname);
-%     
-%     saveas(h,strcat(fpath,'.fig'),'fig');
-%     print(h,strcat(fpath,'.svg'),'-dsvg');
-% end
 
 
 %% VIS (publication): Magnetometry predicted at interrogation
@@ -1261,6 +1209,83 @@ pos_cbar(3)=0.03;
 set(cbar,'Position',pos_cbar);
 set(gca,'Position',pos_ax);
 
+%%% hatch-out truncated region
+hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+    'FaceColor','none','EdgeColor','none');
+uistack(hpatch_trunc,'bottom');
+H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
+    'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+
+
+%% VIS (publication): horizontally-split comparison
+% DATA
+B_ff_r_split=Bk_Pramsey;
+B_ff_r_split(iaz_0:end,:)=Br(iaz_0:end,:);
+
+% PLOT
+figname='halo_magnetometry_split';
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
+
+tp=plotFlatMapWrappedRad(gaz,gel,B_ff_r_split,'rect','texturemap');
+
+% label ROI
+hold on;
+for ii=1:n_loc_disp
+    tazel=rad2deg(azel_disp(ii,:));
+    tp=plot(tazel(1),tazel(2),...
+        'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
+        'Marker',mark_typ{ii},'MarkerSize',config_fig.mark_siz);
+end
+
+% annotation
+ax=gca;
+set(ax,'Layer','Top');
+box on;
+% grid on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+axis tight;
+xlim([-180,180]);
+xticks(-180:90:180);
+yticks(-90:45:90);
+
+xlabel('$\theta$ (deg)');
+ylabel('$\phi$ (deg)');
+
+colormap('viridis');
+
+%%% colorbar
+% cbar=colorbar('west');
+cbar=colorbar('eastoutside');
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
+cbar.Label.String='$\mathrm{B}$ (G)';
+cbar.Label.FontSize=config_fig.ax_fontsize;
+cbar.FontSize=config_fig.ax_fontsize;
+% change colorbar width
+pos_ax=get(gca,'Position');
+pos_cbar=get(cbar,'Position');
+pos_cbar(3)=0.03;
+set(cbar,'Position',pos_cbar);
+set(gca,'Position',pos_ax);
+
+%%% hatch-out truncated region
+% need to divide into two-regions (top,bottom) because of vecrast...
+hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+    'FaceColor','none','EdgeColor','none');
+uistack(hpatch_trunc,'bottom');
+H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
+    'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+
+%%% indicate split
+hpatch_star=patch('XData',[az(iaz_0),ax.XLim(2),ax.XLim(2),az(iaz_0)],...
+    'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+    'FaceColor',clvir(1,:),'FaceAlpha',pf_alpha,'EdgeColor','none');
+uistack(hpatch_star,'bottom');
+
 
 %% VIS (publication): Magnetic tomography: equatorial: P 
 figname='B_equatorial_tomography_P';
@@ -1281,16 +1306,17 @@ hold on;
 %%% entire halo integrated
 % TODO - maybe elminate BECs (saturation) but this could be a point of
 % interesting discussion
-H_r_int=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'b');
+H_r_int=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'k');
 H_r_int.mainLine.LineWidth=1;
+H_r_int.mainLine.LineStyle='-';
 H_r_int.mainLine.DisplayName='$\mathbf{r}$ int';
-H_r_int.patch.FaceAlpha=pf_alpha;
+H_r_int.patch.FaceAlpha=1;
 H_r_int.edge(1).Visible='off';
 H_r_int.edge(2).Visible='off';
 
 
 %%% spatial resolved predictions
-% Far-Field
+%%%%% Far-Field
 % %PLOTERR
 % tp=ploterr(rad2deg(az),Bk_eq,[],Bkerr_eq,'o','hhxy',0);
 % set(tp(1),'Marker','.','MarkerSize',4.5,...
@@ -1301,6 +1327,7 @@ H_r_int.edge(2).Visible='off';
 % SHADED ERR BAR
 H_res_ff=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
 H_res_ff.mainLine.Color=cvir(2,:);
+H_res_ff.mainLine.LineStyle='--';
 H_res_ff.mainLine.LineWidth=1;
 H_res_ff.mainLine.DisplayName='$\mathbf{r}$ resolved $\infty$';
 H_res_ff.patch.FaceColor=clvir(2,:);  
@@ -1308,10 +1335,11 @@ H_res_ff.patch.FaceAlpha=pf_alpha;
 H_res_ff.edge(1).Visible='off';
 H_res_ff.edge(2).Visible='off';
 
-% interrogation time
+%%%%% interrogation time
 % SHADED ERR BAR
 H_res_r=shadedErrorBar(rad2deg(az),Br(:,iel_0),Brerr(:,iel_0),'r');
 H_res_r.mainLine.Color=cvir(1,:);
+H_res_r.mainLine.LineStyle='-';
 H_res_r.mainLine.LineWidth=2;
 H_res_r.mainLine.DisplayName='$\mathbf{r}$ resolved $t^*$';
 H_res_r.patch.FaceColor=clvir(1,:);  
@@ -1320,9 +1348,7 @@ H_res_r.edge(1).Visible='off';
 H_res_r.edge(2).Visible='off';
 
 
-
 %%% ROI
-
 for ii=1:n_loc_disp
     clearvars tp;
     
@@ -1354,9 +1380,9 @@ ax.XTick=-180:90:180;
 axis_snug(ax,[0,0.1]);
 
 
-% legend
-lgd=legend([H_res_r.mainLine,H_res_ff.mainLine,H_r_int.mainLine]);
-lgd.Location='eastoutside';
+% % legend
+% lgd=legend([H_res_r.mainLine,H_res_ff.mainLine,H_r_int.mainLine]);
+% lgd.Location='eastoutside';
 
 % save fig
 if do_save_figs
