@@ -329,27 +329,26 @@ scatter_halo(k_all_filt);
 
 
 %% select data to analyse
-if ~isfield(configs,'roi')
-    warning('Region to analyse has not been specified. Default: scattering halo "k_halo_filt".');
-    k_roi=k_halo_filt;
-elseif strcmp(configs.roi,'halo')
-    k_roi=k_halo_filt;
-elseif strcmp(configs.roi,'all')
-    k_roi=k_all_filt;
-else
-    error('Unrecognised region of interest to analyse.');
-end
+% if ~isfield(configs,'roi')
+%     warning('Region to analyse has not been specified. Default: scattering halo "k_halo_filt".');
+%     k_roi=k_halo_filt;
+% elseif strcmp(configs.roi,'halo')
+%     k_roi=k_halo_filt;
+% elseif strcmp(configs.roi,'all')
+%     k_roi=k_all_filt;
+% else
+%     error('Unrecognised region of interest to analyse.');
+% end
 
 
 %% categorise data by exp-params
-% k_par=cell(1,nparam);
-k_par=cell(ncomp);
+k_halo_par=cell(ncomp);     % halo only
+k_all_par=cell(ncomp);      % spherical shell (w/ BEC)
 x_bec_par=cell(ncomp);      % BEC counts. spatial coord [m]
 
 for ii=1:nparam
-%     k_par{ii}=k_halo_filt(b_paramset(:,ii),:);      % get all halo data
-    k_par{ii}=k_roi(b_paramset{ii},:);      % get all halo data
-    %from this param-set and store
+    k_all_par{ii}=k_all_filt(b_paramset{ii},:);   
+    k_halo_par{ii}=k_halo_filt(b_paramset{ii},:); 
     
     x_bec_par{ii}=zxy0_bec(b_paramset{ii},:,:);
 end
@@ -380,16 +379,20 @@ clear h_zxy*;       % clear figs
 
 %% transform to RH coords
 % SAVE ORIGINAL 
-if ~exist('k_par_orig','var')
-    k_par_orig=k_par;
+if ~exist('k_all_orig','var')
+    k_all_orig=k_all_par;
+    k_halo_orig=k_halo_par;
 end
 
-k_par=cellfun(@(C) cellfun(@(x) tzxy2RHtzxy2(x),C,'UniformOutput',false),...
-    k_par_orig,'UniformOutput',false);      % EXP-coord sys (z against g)
+% EXP-coord sys (z against g)
+k_all_par=cellfun(@(C) cellfun(@(x) tzxy2RHtzxy2(x),C,'UniformOutput',false),...
+    k_all_orig,'UniformOutput',false);      
+k_halo_par=cellfun(@(C) cellfun(@(x) tzxy2RHtzxy2(x),C,'UniformOutput',false),...
+    k_halo_orig,'UniformOutput',false);      
 
 
 %% ANALYSIS
-tic
+tic;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% PRE-ANALYSIS: select subset of DATA relevant
@@ -401,10 +404,13 @@ phi=par_comp{2};            % phase delay of 2nd pi/2 pulse (rad)
 idx_ramsey_exp=1;           % 1: Ramsey (pi/2), 2: pi-pulses
 idx_phi0=find(phi==0);      % two-pi/2-pulse (Ramsey) dataset with zero phase delay phi=0
 
-k_ramsey_phi0=squeeze(k_par(idx_ramsey_exp,idx_phi0,:));     % Ramsey sub-dataset (phi=0)
-n_shot=cellfun(@(x) size(x,1),k_ramsey_phi0);       % number of shots per tau
+% Ramsey sub-dataset (phi=0)
+k_all_ramsey_phi0=squeeze(k_all_par(idx_ramsey_exp,idx_phi0,:));     
+k_halo_ramsey_phi0=squeeze(k_halo_par(idx_ramsey_exp,idx_phi0,:));
 
 x_ramsey_phi0=squeeze(x_bec_par(idx_ramsey_exp,idx_phi0,:));    % BEC sub-dataset
+
+n_shot=cellfun(@(x) size(x,1),k_all_ramsey_phi0);       % number of shots per tau
 
 
 %% General halo/collision stuff
@@ -416,7 +422,8 @@ sig_psf_beta=sig_psf_r/(d_sep/2);   % PSF rms width in angle (rad)
 
 %% atom number and population
 % raw #spins: #atom in mJ halos
-Nm_halo=cellfun(@(x) shotSize(x),k_ramsey_phi0,'UniformOutput',false);      
+Nm_all=cellfun(@(x) shotSize(x),k_all_ramsey_phi0,'UniformOutput',false);      
+Nm_halo=cellfun(@(x) shotSize(x),k_halo_ramsey_phi0,'UniformOutput',false);      
 
 % #spin in halo
 Nm_halo_avg=cellfun(@(n) mean(n,1),Nm_halo,'UniformOutput',false);      % avg num in mJ halo
@@ -667,18 +674,18 @@ end
 %% atom number distribution: nk_m
 %%% Spatial zones
 % construct spatial zones at latlon grid + solid angle
-alpha=pi/10;         % half-cone angle
+alpha=pi/20;         % half-cone angle (rad)
 lim_az=[-pi,pi];    % no inversion symmetry
 % phi_max=pi/4;       
 phi_max=pi/2;       
 lim_el=[-phi_max,phi_max];
 
-% n_az=200;                	% equispaced bins
-% n_el=50;
+n_az=200;                	% equispaced bins
+n_el=100;
 
-% QUICK DEBUG
-n_az=40;
-n_el=20;
+% % QUICK DEBUG
+% n_az=20;
+% n_el=10;
 
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
@@ -704,8 +711,8 @@ n_zone=numel(gaz);
 Nm_k=cell(numel(tau),1);     % #atoms in k,mj-zone categorise by exp param
 
 % evaluate
-for ii=1:numel(k_ramsey_phi0)
-    tk=k_ramsey_phi0{ii};        % exp data for this param
+for ii=1:numel(k_all_ramsey_phi0)
+    tk=k_all_ramsey_phi0{ii};        % exp data for this param
     
     % get num in zone/shot
     tN=arrayfun(@(th,ph) cellfun(@(x) size(inCone(x,th,ph,alpha),1),tk),...
@@ -769,6 +776,10 @@ for ii=1:n_zone
         % collate data to fit
         yy=cellfun(@(x) squeeze(x(iaz,iel,:,jj)),pm_k,'UniformOutput',false);
         yy=vertcat(yy{:});       
+        
+%         if all(isnan(yy))
+%             continue;
+%         end
         
         % fit
         mramsey_fit_k{iaz,iel,jj}=fitnlm(1e6*tt,yy,mramsey_mdl,...
@@ -1110,8 +1121,9 @@ box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
 
-axis tight;
+% axis tight;
 xlim([-180,180]);
+ylim([-90,90]);
 xticks(-180:90:180);
 yticks(-90:45:90);
 
@@ -1184,8 +1196,9 @@ box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
 
-axis tight;
+% axis tight;
 xlim([-180,180]);
+ylim([-90,90]);
 xticks(-180:90:180);
 yticks(-90:45:90);
 
@@ -1246,8 +1259,9 @@ box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
 
-axis tight;
+% axis tight;
 xlim([-180,180]);
+ylim([-90,90]);
 xticks(-180:90:180);
 yticks(-90:45:90);
 
@@ -1303,7 +1317,7 @@ hold on;
 % H_eq_int.edge(2).Visible='off';
 
 
-%%% entire halo integrated
+%%% entire halo integrated (with BEC)
 % TODO - maybe elminate BECs (saturation) but this could be a point of
 % interesting discussion
 H_r_int=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'k');
@@ -1313,6 +1327,16 @@ H_r_int.mainLine.DisplayName='$\mathbf{r}$ int';
 H_r_int.patch.FaceAlpha=1;
 H_r_int.edge(1).Visible='off';
 H_r_int.edge(2).Visible='off';
+
+
+%%% halo integrated (no BEC) 
+H_halo_int=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'k');
+H_halo_int.mainLine.LineWidth=1;
+H_halo_int.mainLine.LineStyle='-';
+H_halo_int.mainLine.DisplayName='$\mathbf{r}$ int';
+H_halo_int.patch.FaceAlpha=1;
+H_halo_int.edge(1).Visible='off';
+H_halo_int.edge(2).Visible='off';
 
 
 %%% spatial resolved predictions
@@ -1340,7 +1364,7 @@ H_res_ff.edge(2).Visible='off';
 H_res_r=shadedErrorBar(rad2deg(az),Br(:,iel_0),Brerr(:,iel_0),'r');
 H_res_r.mainLine.Color=cvir(1,:);
 H_res_r.mainLine.LineStyle='-';
-H_res_r.mainLine.LineWidth=2;
+H_res_r.mainLine.LineWidth=1;
 H_res_r.mainLine.DisplayName='$\mathbf{r}$ resolved $t^*$';
 H_res_r.patch.FaceColor=clvir(1,:);  
 H_res_r.patch.FaceAlpha=pf_alpha;
@@ -1360,7 +1384,7 @@ for ii=1:n_loc_disp
     set(tp(1),'MarkerEdgeColor',c_loc(ii,:),...
         'MarkerFaceColor',cl_loc(ii,:),...
         'MarkerSize',config_fig.mark_siz,...
-        'DisplayName',num2str(rad2deg(tazel)));
+        'DisplayName',num2str(rad2deg(taz_disp)));
     set(tp(2),'Color',c_loc(ii,:));
     
 end
@@ -1414,8 +1438,9 @@ Bkerr_eq_bb=circshift(Bkerr_eq,dI_pi);
 dB_eq_bb=abs(Bk_eq_bb - Bk_eq);
 dBerr_eq_bb=sqrt(Bkerr_eq_bb.^2 + Bkerr_eq.^2);     % uncorrelated noise
 
+
 %%% vis
-figname='dBbb_ramsey';
+figname='dBbb_ramsey_ff';
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,6],'Renderer',f_ren);
 
 % B-field around equator @ theta and theta+pi
@@ -1469,12 +1494,75 @@ ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
 ax.FontSize=9;
 % ax.LineWidth=1;
 
-%% dBdx (equator)
-dBdx_eq=dB_eq_bb/d_sep;     % in G/m
-dBdx_eq_se=dBerr_eq_bb/d_sep;     
+%% BB B-difference around equator (@ t star)
+% PSF filtered
+Br_eq_bb=circshift(Br(:,iel_0),dI_pi);
+Brerr_eq_bb=circshift(Brerr(:,iel_0),dI_pi);
+dBr_eq=abs(Br(:,iel_0)-Br_eq_bb);
+dBrerr_eq=sqrt(Brerr(:,iel_0).^2 + Brerr_eq_bb.^2);
 
-figure;
-tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdx_eq_se,'k');
+%%% vis
+figname='dBbb_ramsey_int';
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,6],'Renderer',f_ren);
+
+% B-field around equator @ theta and theta+pi
+subplot(2,1,1);
+hold on;
+% plot(rad2deg(az),Bk_eq);            % B-field (G)
+% plot(rad2deg(az),Bk_eq_bb);         % B-field at BB region (G)
+clearvars tp;
+tp(1)=shadedErrorBar(rad2deg(az),Br(:,iel_0),Brerr(:,iel_0),'r',1);        % B-field (G)
+tp(2)=shadedErrorBar(rad2deg(az),Br_eq_bb,Brerr_eq_bb,'b',1);  % B-field at BB region (G)
+
+ax=gca;
+set(ax,'Layer','Top');
+xlim([0,180]);      % periodic
+% ylim_0=ax.YLim;
+% ylim([0,ylim_0(2)]);
+ylim([0.52,0.545]);
+xticks(0:45:180);
+xlabel('$\theta$ (deg)');
+ylabel('$B$ (G)');
+
+ax.FontSize=9;
+% ax.LineWidth=1;
+
+% lgd=legend([tp(1).mainLine,tp(2).mainLine],{'$\theta$','$\theta+\pi$'});
+
+% B-field difference @ BB regions around equator
+subplot(2,1,2);
+hold on;
+% plot(rad2deg(az),1e3*dB_eq_bb);         % BB B-field difference (G)
+% plot(rad2deg(az),1e3*dBerr_eq_bb);      % uncertainty (G)
+
+tp=shadedErrorBar(rad2deg(az),1e3*dBr_eq,1e3*dBrerr_eq,'k');
+% tp.mainLine.Color=cvir(2,:);
+% tp.mainLine.LineWidth=1;
+% tp.patch.FaceColor=clvir(2,:);
+% tp.patch.FaceAlpha=pf_alpha;
+% tp.edge(1).Visible='off';
+% tp.edge(2).Visible='off';
+
+ax=gca;
+set(ax,'Layer','Top');
+xlim([0,180]);      % periodic
+% ylim_0=ax.YLim;
+% ylim([0,ylim_0(2)]);
+ylim([0,10]);
+xticks(0:45:180);
+xlabel('$\theta$ (deg)');
+ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
+
+ax.FontSize=9;
+% ax.LineWidth=1;
+
+%% dBdx (equator) (ff)
+dBdx_eq_ff=dB_eq_bb/d_sep;     % in G/m
+dBdx_eq_se_ff=dBerr_eq_bb/d_sep;     
+
+figname='dBdx_ramsey_ff';
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,6],'Renderer',f_ren);
+tp=shadedErrorBar(rad2deg(az),dBdx_eq_ff,dBdx_eq_se_ff,'k');
 
 ax=gca;
 set(ax,'Layer','Top');
@@ -1489,6 +1577,37 @@ xlabel('$\theta$ (deg)');
 ylabel('$d\mathrm{B}/dx$ (G/m)');
 
 
+%% dBdx (equator) (t star)
+dBdx_eq_int=dBr_eq/d_sep;     % in G/m
+dBdx_eq_se_int=dBrerr_eq/d_sep;     
+
+figname='dBdx_ramsey_ff';
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,6],'Renderer',f_ren);
+tp=shadedErrorBar(rad2deg(az),dBdx_eq_int,dBdx_eq_se_int,'k');
+
+ax=gca;
+set(ax,'Layer','Top');
+
+xlim([0,180]);      % periodic
+ylim_Original=ax.YLim;
+ylim([0,ylim_Original(2)]);
+
+xticks(0:45:180);
+
+xlabel('$\theta$ (deg)');
+ylabel('$d\mathrm{B}/dx$ (G/m)');
+
+
+%% save outputs
+vars_to_save={'az','el','iel_0','gaz','gel',...
+    'tau','P_k_avg','P_k_se',...
+    'dBdx_eq_int','dBdx_eq_se_int',...
+    'B_Pramsey_halo','Berr_Pramsey_halo',...
+    'Bk_Pramsey','Berrk_Pramsey',...
+    'Bk_eq','Bkerr_eq',...
+    'Br','Brerr'};  
+
+save(['out_',getdatetimestr,'.mat'],vars_to_save{:});
 
 %% end of script
 toc
