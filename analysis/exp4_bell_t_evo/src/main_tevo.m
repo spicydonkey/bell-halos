@@ -195,6 +195,13 @@ for ii=1:n_tau
     end
 end
 
+%% General halo/collision stuff
+d_sep = 1e-3*max(tau) * 120e-3;      % 1.7ms expansion at 120 mm/s
+sig_psf_r = 35e-6;      % rms width of point-spread function ~ 35um (BEC) (see supplementary in paper)
+
+sig_psf_beta=sig_psf_r/(d_sep/2);   % PSF rms width in angle (rad)
+
+
 %% Fit time-evolution model
 % simplest model: time-independent asymmetry of Bell triplet
 % B_pi/2 = cos(hbar*gamma* deltaB * t)
@@ -271,13 +278,37 @@ mdl_tevo2.fit_par=arrayfun(@(I) cellfun(@(m) m.Coefficients.Estimate(I),mdl_tevo
 mdl_tevo2.fit_par_se=arrayfun(@(I) cellfun(@(m) m.Coefficients.SE(I),mdl_tevo2.fit),1:numel(mdl_tevo2.cname),'UniformOutput',false);
 B0_fit2=cellfun(@(f) feval(f,t_fit),mdl_tevo2.fit,'UniformOutput',false);
 
-% Magnetic field gradient: dBdx
+
+%%% Magnetic field gradient: dBdx -----------------------------------------
 v_sep=120e-3;                               % pair separation velocity [m/s]
 beta=abs(mdl_tevo2.fit_par{1});             % get fit params and ensure sign is positive
 beta_se=abs(mdl_tevo2.fit_par_se{1});
 
-dBdx=1e6*beta/(v_sep*C_gymag/2);            % [G/m] (factor to convert time-scaling ms^-2 --> s^-2)
-dBdx_se=1e6*beta_se/(v_sep*C_gymag/2);      
+% far-field
+dBdx_ff=1e6*beta/(v_sep*C_gymag/2);            % [G/m] (factor to convert time-scaling ms^-2 --> s^-2)
+dBdx_se_ff=1e6*beta_se/(v_sep*C_gymag/2);      
+
+% fill by inversion symmetry
+[gaz,gel,dBdx_ff]=autofill_cent_symm(vaz,vel,dBdx_ff);
+[~,~,dBdx_se_ff]=autofill_cent_symm(vaz,vel,dBdx_se_ff);
+
+% outlier to NaN (ones that have 1e4 mean errors)
+b_outlier=isoutlier(dBdx_se_ff);
+dBdx_ff(b_outlier)=NaN;
+dBdx_se_ff(b_outlier)=NaN;
+
+% interrogation time
+% METHOD: estimated at interrogation time
+%   Gaussian convolution: see SMs for determination of length scale
+%       ERROR by conv of variance
+dBdx_r=gaussfilt_sph(dBdx_ff,gaz,gel,gaz,gel,sig_psf_beta);      
+dBdxerr_r=sqrt(gaussfilt_sph(dBdx_se_ff.^2,gaz,gel,gaz,gel,sig_psf_beta));
+
+
+%% misc
+az=gaz(:,1)';
+iaz_0=find(az==0);
+el=gel(1,:);
 
 
 %% vis: corrected parity - ALL
@@ -514,8 +545,10 @@ cbar.Label.FontSize=fontsize;
 %% vis: dBdx around halo: Model2 (3D SPH)
 h=figure('Name','dBdx_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
 
-[vazf,velf,dBdxf]=autofill_cent_symm(vaz,vel,dBdx);
-tp=plot_sph_surf(vazf,velf,dBdxf);
+% [vazf,velf,dBdxf]=autofill_cent_symm(vaz,vel,dBdx_ff);
+% tp=plot_sph_surf(vazf,velf,dBdxf);
+tp=plot_sph_surf(gaz,gel,dBdx_ff);
+
 
 % annotation
 ax=gca;
@@ -542,6 +575,9 @@ h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',f_pos,'Renderer',
 % tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),1e3*deltaB,'rect','texturemap');
 tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaBf,'eckert4','texturemap');
 
+% all around the halo (redundant since inversion symmetry)
+% tp=plotFlatMapWrappedRad(vazf,velf,1e3*deltaBf,'rect','texturemap');
+
 % annotation
 ax=gca;
 ax.FontSize=fontsize;
@@ -552,21 +588,22 @@ cbar.Label.Interpreter='latex';
 cbar.Label.String='$\Delta \mathrm{B}$ (mG)';
 cbar.Label.FontSize=fontsize;
 
-%% vis: dBdx - rectangular (publication)
-figname='dBdx_rectmap';
+%% vis: dBdx - rectangular (publication) (@ff)
+figname='dBdx_rectmap_ff';
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
 
-% all around the halo (redundant since inversion symmetry)
-% tp=plotFlatMapWrappedRad(vazf,velf,1e3*deltaBf,'rect','texturemap');
+tp=plotFlatMapWrappedRad(gaz,gel,dBdx_ff,'rect','texturemap');
+% tp=plotFlatMapWrappedRad(gaz,gel,dBdx_se_ff,'rect','texturemap');
 
-% AZIM in [0,pi]
-vaz_pi=vaz;
-vaz_pi(end+1,:)=vaz_pi(1,:)+pi;
-vel_pi=vel;
-vel_pi(end+1,:)=vel_pi(1,:);
-dBdx_pi=dBdx;
-dBdx_pi(end+1,:)=fliplr(dBdx_pi(1,:));
-tp=plotFlatMap(rad2deg(vel_pi),rad2deg(vaz_pi),dBdx_pi,'rect','texturemap');
+% % AZIM in [0,pi]
+% vaz_pi=vaz;
+% vaz_pi(end+1,:)=vaz_pi(1,:)+pi;
+% vel_pi=vel;
+% vel_pi(end+1,:)=vel_pi(1,:);
+% dBdx_pi=dBdx;
+% dBdx_pi(end+1,:)=fliplr(dBdx_pi(1,:));
+% tp=plotFlatMap(rad2deg(vel_pi),rad2deg(vaz_pi),dBdx_pi,'rect','texturemap');
+% tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),dBdx_r,'rect','texturemap');
 
 % label ROI
 hold on;
@@ -585,15 +622,14 @@ box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
 
-axis tight;
-% xlim([-180,180]);
+% axis tight;
+xlim([-180,180]);
+ylim([-90,90]);
 xticks(-180:90:180);
 yticks(-90:45:90);
 
 xlabel('$\theta$ (deg)');
 ylabel('$\phi$ (deg)');
-
-% ax.DataAspectRatio=[1 0.5 1];       % adjust aspect ratio
 
 cbar=colorbar('eastoutside');
 clim_original=cbar.Limits;
@@ -617,14 +653,115 @@ set(gca,'Position',pos_ax);
 % vecrast(h,strcat('dB_dist_',getdatetimestr),600,'bottom','pdf')
 %---------------------------------------------
 
+%% vis: dBdx - rectangular (publication) (@int)
+figname='dBdx_rectmap_int';
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
+
+tp=plotFlatMapWrappedRad(gaz,gel,dBdx_r,'rect','texturemap');
+% tp=plotFlatMapWrappedRad(gaz,gel,dBdxerr_r,'rect','texturemap');
+
+
+% label ROI
+hold on;
+for ii=1:numel(disp_iaz)
+    tiaz=disp_iaz(ii);
+    tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',mark_typ{ii},...
+        'MarkerEdgeColor',c_disp(ii,:),'MarkerFaceColor',cl_disp(ii,:),...
+        'MarkerSize',config_fig.mark_siz);
+end
+
+% annotation
+ax=gca;
+set(ax,'Layer','Top');
+box on;
+% grid on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+% axis tight;
+xlim([-180,180]);
+ylim([-90,90]);
+xticks(-180:90:180);
+yticks(-90:45:90);
+
+xlabel('$\theta$ (deg)');
+ylabel('$\phi$ (deg)');
+
+cbar=colorbar('eastoutside');
+clim_original=cbar.Limits;
+cbar.Limits=[0,clim_original(2)];
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
+cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
+cbar.Label.FontSize=config_fig.ax_fontsize;
+cbar.FontSize=config_fig.ax_fontsize;
+
+% change colorbar width
+pos_ax=get(gca,'Position');
+pos_cbar=get(cbar,'Position');
+pos_cbar(3)=0.03;
+set(cbar,'Position',pos_cbar);
+set(gca,'Position',pos_ax);
+
+
+%% vis (publication): dBdx horz-split comparison
+% DATA ----------------------------------------------
+dBdx_split=dBdx_ff;
+dBdx_split(iaz_0:end,:)=dBdx_r(iaz_0:end,:);
+
+
+% PLOT ----------------------------------------------
+figname='dBdx_split';
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
+
+tp=plotFlatMapWrappedRad(gaz,gel,dBdx_split,'rect','texturemap');
+
+% label ROI
+hold on;
+for ii=1:numel(disp_iaz)
+    tiaz=disp_iaz(ii);
+    tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',mark_typ{ii},...
+        'MarkerEdgeColor',c_disp(ii,:),'MarkerFaceColor',cl_disp(ii,:),...
+        'MarkerSize',config_fig.mark_siz);
+end
+
+% annotation
+ax=gca;
+set(ax,'Layer','Top');
+box on;
+% grid on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+% axis tight;
+xlim([-180,180]);
+ylim([-90,90]);
+xticks(-180:90:180);
+yticks(-90:45:90);
+
+xlabel('$\theta$ (deg)');
+ylabel('$\phi$ (deg)');
+
+cbar=colorbar('eastoutside');
+clim_original=cbar.Limits;
+cbar.Limits=[0,clim_original(2)];
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
+cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
+cbar.Label.FontSize=config_fig.ax_fontsize;
+cbar.FontSize=config_fig.ax_fontsize;
+
+% change colorbar width
+pos_ax=get(gca,'Position');
+pos_cbar=get(cbar,'Position');
+pos_cbar(3)=0.03;
+set(cbar,'Position',pos_cbar);
+set(gca,'Position',pos_ax);
 
 
 %% vis: deltaB - rectangular (publication)
 figname='deltaB_rectmap';
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
-
-% all around the halo (redundant since inversion symmetry)
-% tp=plotFlatMapWrappedRad(vazf,velf,1e3*deltaBf,'rect','texturemap');
 
 % AZIM in [0,pi]
 vaz_pi=vaz;
@@ -684,23 +821,24 @@ set(gca,'Position',pos_ax);
 %---------------------------------------------
 
 
-%% VIS: Equatorial tomography (publication)
+%% VIS: Diff B: Equatorial tomography (publication)
 %%% calibration
 % nuller characterisation at ±y measurement
 dBdy=0.4;           % mG/mm
 dBdy_ferr=0.6;      % fractional error
-th_exp=pi/2;     % deltaY - measurement direction
-% th_err_exp    % TODO: uncertainty of orientation
+th_exp=pi/2;        % deltaY - measurement direction
+% th_err_exp        % TODO: uncertainty of orientation
 
 
 %%% configs
 p_xlim=[0,180];     % periodic BC
 
-ctheme=magma(5);
+% ctheme=magma(5);
+ctheme=parula(5);
 ctheme=ctheme(1:end-1,:);
 cltheme=colshades(ctheme);
 
-idx_col=3;     % mid-color 
+idx_col=2;     % mid-color 
 
 %%% DATA
 dB_eq=deltaB(:,iel_0);      % delta magnetic field around equator
@@ -804,15 +942,11 @@ ax.XTick=0:45:180;
 %%% configs
 p_xlim=[0,180];     % periodic BC
 
-ctheme=magma(5);
-ctheme=ctheme(1:end-1,:);
-cltheme=colshades(ctheme);
-
-idx_col=3;     % mid-color 
+idx_col=2;     % mid-color 
 
 %%% DATA
-dBdx_eq=dBdx(:,iel_0);      % delta magnetic field around equator
-dBdxerr_eq=dBdx_se(:,iel_0);      
+dBdx_eq=dBdx_ff(:,iel_0);      % delta magnetic field around equator
+dBdxerr_eq=dBdx_se_ff(:,iel_0);      
 
 % % fit
 % sine_mdl='y~c+amp*cos(2*x+phi)';      % periodic boundary condition fixes OMEGA
@@ -828,26 +962,61 @@ figname='dBdx_equatorial_tomography';
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
 hold on;
 
-% data
-%%% scatter with errbars
+% data-------------------------------------------------------------------
+% Ramsey estimate
+S_ramsey=load('C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\ramsey\out\out_20190218_105132.mat');
+
+% SHADED ERR BAR
+tp=shadedErrorBar(rad2deg(S_ramsey.az),S_ramsey.dBdx_eq_int,S_ramsey.dBdx_eq_se_int,'k');
+tp.mainLine.Color='k';    % 'none';
+tp.mainLine.LineWidth=0.5;
+tp.mainLine.LineStyle='--';
+% tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
+% tp.patch.FaceAlpha=0.33;
+tp.edge(1).Visible='off';
+tp.edge(2).Visible='off';
+
+
+
+% Ent-based Gradiometry
 % skip ROI data
-not_roi = true(size(Vaz));
-not_roi(iaz_disp)=false;
+not_roi = true(size(az));
+not_roi(iaz_0+iaz_disp-1)=false;
 
-tp=ploterr(rad2deg(Vaz(not_roi)),dBdx_eq(not_roi),[],dBdxerr_eq(not_roi),'.','hhxy',0);
-set(tp(1),'Marker','*','MarkerSize',config_fig.mark_siz,...
-    'MarkerFaceColor',[1,1,1],'MarkerEdgeColor',ctheme(idx_col,:));
-set(tp(2),'Color',ctheme(idx_col,:));
-pleg=tp(1);
+%%% ff
+% ERRBAR
+% tp=ploterr(rad2deg(az(not_roi)),dBdx_eq(not_roi),[],dBdxerr_eq(not_roi),'.','hhxy',0);
+% set(tp(1),'Marker','*','MarkerSize',config_fig.mark_siz,...
+%     'MarkerFaceColor',[1,1,1],'MarkerEdgeColor',ctheme(idx_col,:));
+% set(tp(2),'Color',ctheme(idx_col,:));
+% pleg=tp(1);
 
-% %%% SHADED ERR BAR
-% tp=shadedErrorBar(rad2deg(Vaz),dBdx_eq,dBdxerr_eq,'r');
+% % SHADED ERR BAR
+% tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdxerr_eq,'r');
 % tp.mainLine.Color=ctheme(idx_col,:);    % 'none';
 % tp.mainLine.LineWidth=config_fig.ax_lwid;
 % tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
 % tp.patch.FaceAlpha=0.33;
 % tp.edge(1).Visible='off';
 % tp.edge(2).Visible='off';
+
+%%% interrogation time
+% % ERRBAR
+% tp=ploterr(rad2deg(az),dBdx_r(:,iel_0),[],dBdxerr_r(:,iel_0),'.','hhxy',0);
+% set(tp(1),'Marker','*','MarkerSize',config_fig.mark_siz,...
+%     'MarkerFaceColor',[1,1,1],'MarkerEdgeColor',ctheme(idx_col,:));
+% set(tp(2),'Color',ctheme(idx_col,:));
+% pleg=tp(1);
+
+% SHADED ERR BAR
+tp=shadedErrorBar(rad2deg(az),dBdx_r(:,iel_0),dBdxerr_r(:,iel_0),'r');
+tp.mainLine.Color=ctheme(idx_col,:);    % 'none';
+tp.mainLine.LineWidth=1.5;
+tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
+tp.patch.FaceAlpha=0.33;
+tp.edge(1).Visible='off';
+tp.edge(2).Visible='off';
+
 
 % % fit
 % pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',ctheme(idx_col,:),...
@@ -879,7 +1048,6 @@ for ii=1:numel(disp_iaz)
     set(tp(2),'Color',c_disp(ii,:));
 end
 
-
 %%% annotation
 box on;
 ax=gca;
@@ -896,6 +1064,22 @@ xlim(p_xlim);
 ax.XTick=0:45:180;
 
 % lgd=legend(pleg);
+
+
+
+%% save output
+%TODO
+% vars_to_save={'az','el','iel_0','gaz','gel',...
+%     'tau','P_k_avg','P_k_se',...
+%     'dBdx_eq_int','dBdx_eq_se_int',...
+%     'B_Pramsey_halo','Berr_Pramsey_halo',...
+%     'Bk_Pramsey','Berrk_Pramsey',...
+%     'Bk_eq','Bkerr_eq',...
+%     'Br','Brerr'};  
+% 
+% save(['out_',getdatetimestr,'.mat'],vars_to_save{:});
+
+
 
 %% End of script
 toc
