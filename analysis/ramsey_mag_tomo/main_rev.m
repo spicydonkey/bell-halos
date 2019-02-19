@@ -684,8 +684,8 @@ lim_el=[-phi_max,phi_max];
 % n_el=100;
 
 % QUICK DEBUG
-n_az=50;
-n_el=25;
+n_az=80;
+n_el=40;
 
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
@@ -777,10 +777,6 @@ for ii=1:n_zone
         yy=cellfun(@(x) squeeze(x(iaz,iel,:,jj)),pm_k,'UniformOutput',false);
         yy=vertcat(yy{:});       
         
-%         if all(isnan(yy))
-%             continue;
-%         end
-        
         % fit
         mramsey_fit_k{iaz,iel,jj}=fitnlm(1e6*tt,yy,mramsey_mdl,...
             mramsey_par0,'CoefficientNames',mramsey_cname);
@@ -847,12 +843,12 @@ omk_Pramsey=Pramseyk_fpar(:,:,idx_om_Pramsey);
 omerrk_Pramsey=Pramseyk_fparerr(:,:,idx_om_Pramsey);
 % dim: AZ X EL
 
-% outlier to NaN
-b_outlier=isoutlier(omk_Pramsey);    % find outlier by Med Abs Dev
-omk_Pramsey_raw=omk_Pramsey;      % store original raw data set
-omerrk_Pramsey_raw=omerrk_Pramsey;
-omk_Pramsey(b_outlier)=NaN;          % outlier --> NaN
-omerrk_Pramsey(b_outlier)=NaN;
+% % outlier to NaN
+% b_outlier=isoutlier(omk_Pramsey);    % find outlier by Med Abs Dev
+% omk_Pramsey_raw=omk_Pramsey;      % store original raw data set
+% omerrk_Pramsey_raw=omerrk_Pramsey;
+% omk_Pramsey(b_outlier)=NaN;          % outlier --> NaN
+% omerrk_Pramsey(b_outlier)=NaN;
 
 % omk_Pramsey_0=squeeze(mean(omk_Pramsey,1,'omitnan'));   % mode-resolved L-freq avgd thru PHI_DELAY
 % n_samp=squeeze(sum(~b_outlier,1));       % num exp samples to average over
@@ -877,6 +873,36 @@ Bkerr_eq=Berrk_Pramsey(:,iel_0);
 % % 
 % Br=gaussfilt_sph(Bk_Pramsey,gaz,gel,gaz,gel,sig_filt_beta);      
 % Brerr=sqrt(gaussfilt_sph(Berrk_Pramsey.^2,gaz,gel,gaz,gel,sig_filt_beta));
+
+
+%% truncate sph-dist to within sensible elev-limits
+% config
+el_trunc=deg2rad(60);           % elevation angle threshold to truncate (rad)
+% el_trunc=deg2rad(90);        
+b_trunc=(abs(gel)>el_trunc);    % boolean indicator to truncate
+
+% % get/store original
+% % TODO - this needs work
+% if ~exist('Bk_Pramsey_original','var')
+%     % store
+%     Bk_Pramsey_original=Bk_Pramsey;
+%     Berrk_Pramsey_original=Berrk_Pramsey;
+%     Br_original=Br;
+%     Brerr_original=Brerr;
+% else
+%     % get
+%     Bk_Pramsey=Bk_Pramsey_original;
+%     Berrk_Pramsey=Berrk_Pramsey_original;
+%     Br=Br_original;
+%     Brerr=Brerr_original;
+% end
+
+% truncate
+Bk_Pramsey(b_trunc)=NaN;
+Berrk_Pramsey(b_trunc)=NaN;
+% Br(b_trunc)=NaN;
+% Brerr(b_trunc)=NaN;
+
 
 
 %% Ramsey analysis: EQUATOR: P
@@ -1057,35 +1083,6 @@ if do_save_figs
     saveas(h,strcat(fpath,'.fig'),'fig');
     print(h,strcat(fpath,'.svg'),'-dsvg');
 end
-
-
-%% Processing for VIS: truncate sph-dist to within sensible elev-limits
-% config
-el_trunc=deg2rad(60);           % elevation angle threshold to truncate (rad)
-% el_trunc=deg2rad(90);        
-b_trunc=(abs(gel)>el_trunc);    % boolean indicator to truncate
-
-% % get/store original
-% % TODO - this needs work
-% if ~exist('Bk_Pramsey_original','var')
-%     % store
-%     Bk_Pramsey_original=Bk_Pramsey;
-%     Berrk_Pramsey_original=Berrk_Pramsey;
-%     Br_original=Br;
-%     Brerr_original=Brerr;
-% else
-%     % get
-%     Bk_Pramsey=Bk_Pramsey_original;
-%     Berrk_Pramsey=Berrk_Pramsey_original;
-%     Br=Br_original;
-%     Brerr=Brerr_original;
-% end
-
-% truncate
-Bk_Pramsey(b_trunc)=NaN;
-Berrk_Pramsey(b_trunc)=NaN;
-Br(b_trunc)=NaN;
-Brerr(b_trunc)=NaN;
 
 
 %% VIS (publication): Magnetometry @ far-field (detected)
@@ -1588,11 +1585,9 @@ ylabel('$d\mathrm{B}/dx$ (G/m)');
 %% save outputs
 vars_to_save={'az','el','iel_0','gaz','gel',...
     'tau','P_k_avg','P_k_se',...
-    'dBdx_eq_int','dBdx_eq_se_int',...
     'B_Pramsey_halo','Berr_Pramsey_halo',...
     'Bk_Pramsey','Berrk_Pramsey',...
-    'Bk_eq','Bkerr_eq',...
-    'Br','Brerr'};  
+    'Bk_eq','Bkerr_eq'};  
 
 save(['out_',getdatetimestr,'.mat'],vars_to_save{:});
 
