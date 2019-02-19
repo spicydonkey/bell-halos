@@ -256,8 +256,8 @@ deltaB_se=om_se_fit/(2*pi*C_gymag);   % standard error (fit)
 %
 % CHECK ABOVE
 
-
-mdl_tevo2.mdl='y~cos(2*beta*(x-0.5*sin(phi)^2)^2)';       % constrain t0 in [0,0.5]
+% mdl_tevo2.mdl='y~cos(2*beta*(x-0.5*sin(phi)^2)^2)';       % constrain t0 in [0,0.5]
+mdl_tevo2.mdl='y~cos(2*beta*(x-0.8*(tanh(phi)+1)/2)^2)';       % constrain t0 to [0,0.8]
 mdl_tevo2.cname={'beta','phi'};     
 mdl_tevo2.fopt=statset('TolFun',10^-10,'TolX',10^-10,'MaxIter',10^6,'UseParallel',0);
 mdl_tevo2.par0=[0.15,0];
@@ -292,17 +292,17 @@ dBdx_se_ff=1e6*beta_se/(v_sep*C_gymag/2);
 [gaz,gel,dBdx_ff]=autofill_cent_symm(vaz,vel,dBdx_ff);
 [~,~,dBdx_se_ff]=autofill_cent_symm(vaz,vel,dBdx_se_ff);
 
-% outlier to NaN (ones that have 1e4 mean errors)
-b_outlier=isoutlier(dBdx_se_ff);
-dBdx_ff(b_outlier)=NaN;
-dBdx_se_ff(b_outlier)=NaN;
+% % outlier to NaN (ones that have 1e4 mean errors)
+% b_outlier=isoutlier(dBdx_se_ff);
+% dBdx_ff(b_outlier)=NaN;
+% dBdx_se_ff(b_outlier)=NaN;
 
-% interrogation time
-% METHOD: estimated at interrogation time
-%   Gaussian convolution: see SMs for determination of length scale
-%       ERROR by conv of variance
-dBdx_r=gaussfilt_sph(dBdx_ff,gaz,gel,gaz,gel,sig_psf_beta);      
-dBdxerr_r=sqrt(gaussfilt_sph(dBdx_se_ff.^2,gaz,gel,gaz,gel,sig_psf_beta));
+% % interrogation time
+% % METHOD: estimated at interrogation time
+% %   Gaussian convolution: see SMs for determination of length scale
+% %       ERROR by conv of variance
+% dBdx_r=gaussfilt_sph(dBdx_ff,gaz,gel,gaz,gel,sig_psf_beta);      
+% dBdxerr_r=sqrt(gaussfilt_sph(dBdx_se_ff.^2,gaz,gel,gaz,gel,sig_psf_beta));
 
 
 %% misc
@@ -631,6 +631,7 @@ yticks(-90:45:90);
 xlabel('$\theta$ (deg)');
 ylabel('$\phi$ (deg)');
 
+colormap('parula');
 cbar=colorbar('eastoutside');
 clim_original=cbar.Limits;
 cbar.Limits=[0,clim_original(2)];
@@ -654,109 +655,109 @@ set(gca,'Position',pos_ax);
 %---------------------------------------------
 
 %% vis: dBdx - rectangular (publication) (@int)
-figname='dBdx_rectmap_int';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
-
-tp=plotFlatMapWrappedRad(gaz,gel,dBdx_r,'rect','texturemap');
-% tp=plotFlatMapWrappedRad(gaz,gel,dBdxerr_r,'rect','texturemap');
-
-
-% label ROI
-hold on;
-for ii=1:numel(disp_iaz)
-    tiaz=disp_iaz(ii);
-    tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',mark_typ{ii},...
-        'MarkerEdgeColor',c_disp(ii,:),'MarkerFaceColor',cl_disp(ii,:),...
-        'MarkerSize',config_fig.mark_siz);
-end
-
-% annotation
-ax=gca;
-set(ax,'Layer','Top');
-box on;
-% grid on;
-ax.FontSize=config_fig.ax_fontsize;
-ax.LineWidth=config_fig.ax_lwid;
-
-% axis tight;
-xlim([-180,180]);
-ylim([-90,90]);
-xticks(-180:90:180);
-yticks(-90:45:90);
-
-xlabel('$\theta$ (deg)');
-ylabel('$\phi$ (deg)');
-
-cbar=colorbar('eastoutside');
-clim_original=cbar.Limits;
-cbar.Limits=[0,clim_original(2)];
-cbar.TickLabelInterpreter='latex';
-cbar.Label.Interpreter='latex';
-cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
-cbar.Label.FontSize=config_fig.ax_fontsize;
-cbar.FontSize=config_fig.ax_fontsize;
-
-% change colorbar width
-pos_ax=get(gca,'Position');
-pos_cbar=get(cbar,'Position');
-pos_cbar(3)=0.03;
-set(cbar,'Position',pos_cbar);
-set(gca,'Position',pos_ax);
+% figname='dBdx_rectmap_int';
+% h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
+% 
+% tp=plotFlatMapWrappedRad(gaz,gel,dBdx_r,'rect','texturemap');
+% % tp=plotFlatMapWrappedRad(gaz,gel,dBdxerr_r,'rect','texturemap');
+% 
+% 
+% % label ROI
+% hold on;
+% for ii=1:numel(disp_iaz)
+%     tiaz=disp_iaz(ii);
+%     tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',mark_typ{ii},...
+%         'MarkerEdgeColor',c_disp(ii,:),'MarkerFaceColor',cl_disp(ii,:),...
+%         'MarkerSize',config_fig.mark_siz);
+% end
+% 
+% % annotation
+% ax=gca;
+% set(ax,'Layer','Top');
+% box on;
+% % grid on;
+% ax.FontSize=config_fig.ax_fontsize;
+% ax.LineWidth=config_fig.ax_lwid;
+% 
+% % axis tight;
+% xlim([-180,180]);
+% ylim([-90,90]);
+% xticks(-180:90:180);
+% yticks(-90:45:90);
+% 
+% xlabel('$\theta$ (deg)');
+% ylabel('$\phi$ (deg)');
+% 
+% cbar=colorbar('eastoutside');
+% clim_original=cbar.Limits;
+% cbar.Limits=[0,clim_original(2)];
+% cbar.TickLabelInterpreter='latex';
+% cbar.Label.Interpreter='latex';
+% cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
+% cbar.Label.FontSize=config_fig.ax_fontsize;
+% cbar.FontSize=config_fig.ax_fontsize;
+% 
+% % change colorbar width
+% pos_ax=get(gca,'Position');
+% pos_cbar=get(cbar,'Position');
+% pos_cbar(3)=0.03;
+% set(cbar,'Position',pos_cbar);
+% set(gca,'Position',pos_ax);
 
 
 %% vis (publication): dBdx horz-split comparison
-% DATA ----------------------------------------------
-dBdx_split=dBdx_ff;
-dBdx_split(iaz_0:end,:)=dBdx_r(iaz_0:end,:);
-
-
-% PLOT ----------------------------------------------
-figname='dBdx_split';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
-
-tp=plotFlatMapWrappedRad(gaz,gel,dBdx_split,'rect','texturemap');
-
-% label ROI
-hold on;
-for ii=1:numel(disp_iaz)
-    tiaz=disp_iaz(ii);
-    tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',mark_typ{ii},...
-        'MarkerEdgeColor',c_disp(ii,:),'MarkerFaceColor',cl_disp(ii,:),...
-        'MarkerSize',config_fig.mark_siz);
-end
-
-% annotation
-ax=gca;
-set(ax,'Layer','Top');
-box on;
-% grid on;
-ax.FontSize=config_fig.ax_fontsize;
-ax.LineWidth=config_fig.ax_lwid;
-
-% axis tight;
-xlim([-180,180]);
-ylim([-90,90]);
-xticks(-180:90:180);
-yticks(-90:45:90);
-
-xlabel('$\theta$ (deg)');
-ylabel('$\phi$ (deg)');
-
-cbar=colorbar('eastoutside');
-clim_original=cbar.Limits;
-cbar.Limits=[0,clim_original(2)];
-cbar.TickLabelInterpreter='latex';
-cbar.Label.Interpreter='latex';
-cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
-cbar.Label.FontSize=config_fig.ax_fontsize;
-cbar.FontSize=config_fig.ax_fontsize;
-
-% change colorbar width
-pos_ax=get(gca,'Position');
-pos_cbar=get(cbar,'Position');
-pos_cbar(3)=0.03;
-set(cbar,'Position',pos_cbar);
-set(gca,'Position',pos_ax);
+% % DATA ----------------------------------------------
+% dBdx_split=dBdx_ff;
+% dBdx_split(iaz_0:end,:)=dBdx_r(iaz_0:end,:);
+% 
+% 
+% % PLOT ----------------------------------------------
+% figname='dBdx_split';
+% h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
+% 
+% tp=plotFlatMapWrappedRad(gaz,gel,dBdx_split,'rect','texturemap');
+% 
+% % label ROI
+% hold on;
+% for ii=1:numel(disp_iaz)
+%     tiaz=disp_iaz(ii);
+%     tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',mark_typ{ii},...
+%         'MarkerEdgeColor',c_disp(ii,:),'MarkerFaceColor',cl_disp(ii,:),...
+%         'MarkerSize',config_fig.mark_siz);
+% end
+% 
+% % annotation
+% ax=gca;
+% set(ax,'Layer','Top');
+% box on;
+% % grid on;
+% ax.FontSize=config_fig.ax_fontsize;
+% ax.LineWidth=config_fig.ax_lwid;
+% 
+% % axis tight;
+% xlim([-180,180]);
+% ylim([-90,90]);
+% xticks(-180:90:180);
+% yticks(-90:45:90);
+% 
+% xlabel('$\theta$ (deg)');
+% ylabel('$\phi$ (deg)');
+% 
+% cbar=colorbar('eastoutside');
+% clim_original=cbar.Limits;
+% cbar.Limits=[0,clim_original(2)];
+% cbar.TickLabelInterpreter='latex';
+% cbar.Label.Interpreter='latex';
+% cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
+% cbar.Label.FontSize=config_fig.ax_fontsize;
+% cbar.FontSize=config_fig.ax_fontsize;
+% 
+% % change colorbar width
+% pos_ax=get(gca,'Position');
+% pos_cbar=get(cbar,'Position');
+% pos_cbar(3)=0.03;
+% set(cbar,'Position',pos_cbar);
+% set(gca,'Position',pos_ax);
 
 
 %% vis: deltaB - rectangular (publication)
@@ -964,18 +965,18 @@ hold on;
 
 % data-------------------------------------------------------------------
 % Ramsey estimate
-S_ramsey=load('C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\ramsey\out\out_20190218_105132.mat');
+% S_ramsey=load('C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\ramsey\out\out_20190218_105132.mat');
+S_ramsey=load('C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ramsey_mag_tomo\out\out_20190219_171911');
 
 % SHADED ERR BAR
-tp=shadedErrorBar(rad2deg(S_ramsey.az),S_ramsey.dBdx_eq_int,S_ramsey.dBdx_eq_se_int,'k');
+tp=shadedErrorBar(rad2deg(S_ramsey.az),S_ramsey.dBdx_eq_ff,S_ramsey.dBdx_eq_se_ff,'k');
 tp.mainLine.Color='k';    % 'none';
-tp.mainLine.LineWidth=0.5;
+tp.mainLine.LineWidth=1;
 tp.mainLine.LineStyle='--';
 % tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
 % tp.patch.FaceAlpha=0.33;
 tp.edge(1).Visible='off';
 tp.edge(2).Visible='off';
-
 
 
 % Ent-based Gradiometry
@@ -991,14 +992,14 @@ not_roi(iaz_0+iaz_disp-1)=false;
 % set(tp(2),'Color',ctheme(idx_col,:));
 % pleg=tp(1);
 
-% % SHADED ERR BAR
-% tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdxerr_eq,'r');
-% tp.mainLine.Color=ctheme(idx_col,:);    % 'none';
-% tp.mainLine.LineWidth=config_fig.ax_lwid;
-% tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
-% tp.patch.FaceAlpha=0.33;
-% tp.edge(1).Visible='off';
-% tp.edge(2).Visible='off';
+% SHADED ERR BAR
+tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdxerr_eq,'r');
+tp.mainLine.Color=ctheme(idx_col,:);    % 'none';
+tp.mainLine.LineWidth=1;
+tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
+tp.patch.FaceAlpha=0.33;
+tp.edge(1).Visible='off';
+tp.edge(2).Visible='off';
 
 %%% interrogation time
 % % ERRBAR
@@ -1008,14 +1009,14 @@ not_roi(iaz_0+iaz_disp-1)=false;
 % set(tp(2),'Color',ctheme(idx_col,:));
 % pleg=tp(1);
 
-% SHADED ERR BAR
-tp=shadedErrorBar(rad2deg(az),dBdx_r(:,iel_0),dBdxerr_r(:,iel_0),'r');
-tp.mainLine.Color=ctheme(idx_col,:);    % 'none';
-tp.mainLine.LineWidth=1.5;
-tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
-tp.patch.FaceAlpha=0.33;
-tp.edge(1).Visible='off';
-tp.edge(2).Visible='off';
+% % SHADED ERR BAR
+% tp=shadedErrorBar(rad2deg(az),dBdx_r(:,iel_0),dBdxerr_r(:,iel_0),'r');
+% tp.mainLine.Color=ctheme(idx_col,:);    % 'none';
+% tp.mainLine.LineWidth=1.5;
+% tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
+% tp.patch.FaceAlpha=0.33;
+% tp.edge(1).Visible='off';
+% tp.edge(2).Visible='off';
 
 
 % % fit
@@ -1032,21 +1033,21 @@ tp.edge(2).Visible='off';
 % set(tp_exp(2),'Color',0.8*ones(1,3),'LineWidth',5);
 % arrayfun(@(p) uistack(p,'bottom'),tp_exp);
 
-%%% ROI
-for ii=1:numel(disp_iaz)
-    clearvars tp;
-    
-    iazel=[disp_iaz(ii),iel_0];
-    taz_disp=Vaz(iazel(1));    
-    tp=ploterr(rad2deg(taz_disp),dBdx_eq(iazel(1)),[],dBdxerr_eq(iazel(1)),...
-        mark_typ{ii},'hhxy',1);
-    
-    set(tp(1),'MarkerEdgeColor',c_disp(ii,:),...
-        'MarkerFaceColor',cl_disp(ii,:),...
-        'MarkerSize',config_fig.mark_siz,...
-        'DisplayName',num2str(rad2deg([taz_disp,Vel(iel_0)])));
-    set(tp(2),'Color',c_disp(ii,:));
-end
+% %%% ROI
+% for ii=1:numel(disp_iaz)
+%     clearvars tp;
+%     
+%     iazel=[disp_iaz(ii),iel_0];
+%     taz_disp=Vaz(iazel(1));    
+%     tp=ploterr(rad2deg(taz_disp),dBdx_eq(iazel(1)),[],dBdxerr_eq(iazel(1)),...
+%         mark_typ{ii},'hhxy',1);
+%     
+%     set(tp(1),'MarkerEdgeColor',c_disp(ii,:),...
+%         'MarkerFaceColor',cl_disp(ii,:),...
+%         'MarkerSize',config_fig.mark_siz,...
+%         'DisplayName',num2str(rad2deg([taz_disp,Vel(iel_0)])));
+%     set(tp(2),'Color',c_disp(ii,:));
+% end
 
 %%% annotation
 box on;
@@ -1058,6 +1059,7 @@ ax.LineWidth=config_fig.ax_lwid;
 xlabel('$\theta$ (deg)');
 ylabel('$d\mathrm{B}/dx$ (G/m)');
 
+axis tight;
 ylim_0=ax.YLim;
 ylim([0,ylim_0(2)]);
 xlim(p_xlim);
