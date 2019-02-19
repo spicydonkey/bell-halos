@@ -38,7 +38,7 @@ clvir2=colshades(cvir2);
 c_gray=0.8*ones(1,3);
 line_sty={'-','--',':','-.'};
 % mark_typ={'o','s','^','d'};
-mark_typ={'+','o','^','d'};
+mark_typ={'^','+','o','d'};
 % str_mm={'$x$','$y$','$z$'};
 str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
 % str_ss={'$m_J = 1$','$m_J = 0$'};
@@ -418,6 +418,7 @@ d_sep = 3e-3 * 120e-3;      % 3ms expansion at 120 mm/s
 sig_psf_r = 35e-6;      % rms width of point-spread function ~ 35um (BEC) (see supplementary in paper)
 
 sig_psf_beta=sig_psf_r/(d_sep/2);   % PSF rms width in angle (rad)
+% sig_filt_beta=sig_psf_beta/2;       % filter rms width (rad)
 
 
 %% atom number and population
@@ -569,14 +570,14 @@ mramsey_mdl='y~c+amp*cos(om*x+phi)';
 mramsey_cname={'amp','om','phi','c'};
 mramsey_par0=[0.5,2*pi*1.5,0,0.5];
 
-idx_om_mramsey=find(cellfun(@(s) strcmp(s,'om'),mramsey_cname)==1);     % param-vec idx to 'om'
+idx_om_mramsey=2;     %find(cellfun(@(s) strcmp(s,'om'),mramsey_cname)==1);     % param-vec idx to 'om'
 
 % pop-inversion
 Pramsey_mdl='y~amp*cos(om*x+phi)';
 Pramsey_cname={'amp','om','phi'};
 Pramsey_par0=[0.5,2*pi*1.5,0];
 
-idx_om_Pramsey=find(cellfun(@(s) strcmp(s,'om'),Pramsey_cname)==1);
+idx_om_Pramsey=2;     %find(cellfun(@(s) strcmp(s,'om'),Pramsey_cname)==1);
 
 
 %% fit to halo-avgd data
@@ -674,18 +675,17 @@ end
 %% atom number distribution: nk_m
 %%% Spatial zones
 % construct spatial zones at latlon grid + solid angle
-alpha=pi/20;         % half-cone angle (rad)
-lim_az=[-pi,pi];    % no inversion symmetry
-% phi_max=pi/4;       
-phi_max=pi/2;       
+alpha=sig_psf_beta;     % half-cone angle of integration bin (rad)
+lim_az=[-pi,pi];        % no inversion symmetry
+phi_max=pi/2;           
 lim_el=[-phi_max,phi_max];
 
-n_az=200;                	% equispaced bins
-n_el=100;
+% n_az=200;                	% equispaced bins
+% n_el=100;
 
-% % QUICK DEBUG
-% n_az=20;
-% n_el=10;
+% QUICK DEBUG
+n_az=50;
+n_el=25;
 
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
@@ -847,12 +847,12 @@ omk_Pramsey=Pramseyk_fpar(:,:,idx_om_Pramsey);
 omerrk_Pramsey=Pramseyk_fparerr(:,:,idx_om_Pramsey);
 % dim: AZ X EL
 
-% % outlier to NaN
-% b_outlier=isoutlier(omk_Pramsey);    % find outlier by Med Abs Dev
-% omk_Pramsey_raw=omk_Pramsey;      % store original raw data set
-% omerrk_Pramsey_raw=omerrk_Pramsey;
-% omk_Pramsey(b_outlier)=NaN;          % outlier --> NaN
-% omerrk_Pramsey(b_outlier)=NaN;
+% outlier to NaN
+b_outlier=isoutlier(omk_Pramsey);    % find outlier by Med Abs Dev
+omk_Pramsey_raw=omk_Pramsey;      % store original raw data set
+omerrk_Pramsey_raw=omerrk_Pramsey;
+omk_Pramsey(b_outlier)=NaN;          % outlier --> NaN
+omerrk_Pramsey(b_outlier)=NaN;
 
 % omk_Pramsey_0=squeeze(mean(omk_Pramsey,1,'omitnan'));   % mode-resolved L-freq avgd thru PHI_DELAY
 % n_samp=squeeze(sum(~b_outlier,1));       % num exp samples to average over
@@ -868,12 +868,15 @@ Bk_eq=Bk_Pramsey(:,iel_0);
 Bkerr_eq=Berrk_Pramsey(:,iel_0);      
 
 
-%%%% interrogation
-% METHOD: Evaluate magnetic field estimated at interrogation time
-%   Gaussian convolution: see SMs for determination of length scale
-%       ERROR by conv of variance
-Br=gaussfilt_sph(Bk_Pramsey,gaz,gel,gaz,gel,sig_psf_beta);      
-Brerr=sqrt(gaussfilt_sph(Berrk_Pramsey.^2,gaz,gel,gaz,gel,sig_psf_beta));
+% %%%% interrogation
+% % METHOD: Evaluate magnetic field estimated at interrogation time
+% %   Gaussian convolution: see SMs for determination of length scale
+% %       ERROR by conv of variance
+% % Br=gaussfilt_sph(Bk_Pramsey,gaz,gel,gaz,gel,sig_psf_beta);      
+% % Brerr=sqrt(gaussfilt_sph(Berrk_Pramsey.^2,gaz,gel,gaz,gel,sig_psf_beta));
+% % 
+% Br=gaussfilt_sph(Bk_Pramsey,gaz,gel,gaz,gel,sig_filt_beta);      
+% Brerr=sqrt(gaussfilt_sph(Berrk_Pramsey.^2,gaz,gel,gaz,gel,sig_filt_beta));
 
 
 %% Ramsey analysis: EQUATOR: P
@@ -891,17 +894,6 @@ Pramsey_fparerr_eq=Pramsey_fit_eq.Coefficients.SE;
 om_Pramsey_eq=Pramsey_fpar_eq(idx_om_Pramsey);
 omerr_Pramsey_eq=Pramsey_fparerr_eq(idx_om_Pramsey);
 
-% % outlier to NaN
-% b_outlier=isoutlier(om_eq_Pramsey);    % find outlier by Med Abs Dev
-% omk_Pramsey_raw=om_eq_Pramsey;      % store original raw data set
-% omerr_eq_Pramsey_raw=omerr_eq_Pramsey;
-% om_eq_Pramsey(b_outlier)=NaN;          % outlier --> NaN
-% omerr_eq_Pramsey(b_outlier)=NaN;
-
-% om_eq_Pramsey_0=squeeze(mean(om_eq_Pramsey,'omitnan'));   % mode-resolved L-freq avgd thru PHI_DELAY
-% n_samp=squeeze(sum(~b_outlier));       % num exp samples to average over
-% omerr_eq_Pramsey_0=sqrt(squeeze(sum(omerr_eq_Pramsey.^2,1,'omitnan')))./n_samp;
-
 % magnetic field
 B_Pramsey_eq=1e6*om_Pramsey_eq/(2*pi*C_gymag);
 Berr_Pramsey_eq=1e6*omerr_Pramsey_eq/(2*pi*C_gymag);
@@ -913,28 +905,37 @@ loc_disp=[];    % row-array of (Iaz,Iel)-location to display
 azel_disp=[];   % (az,el)
 
 %%% theta,phi=(0,0)
-loc_disp=cat(1,loc_disp,[iaz_0,iel_0]);
-azel_disp=cat(1,azel_disp,[az(iaz_0),el(iel_0)]);
+% loc_disp=cat(1,loc_disp,[iaz_0,iel_0]);
+% azel_disp=cat(1,azel_disp,[az(iaz_0),el(iel_0)]);
+loc_disp(end+1,:)=[iaz_0,iel_0];
+azel_disp(end+1,:)=[az(iaz_0),el(iel_0)];
 
-%%% max
-[Bk_eq_max,iaz_Bmax]=max(Bk_eq);
-loc_disp=cat(1,loc_disp,[iaz_Bmax,iel_0]);
-azel_disp=cat(1,azel_disp,[az(iaz_Bmax),el(iel_0)]);
 
-% Bk_max=max(Bk_Pramsey(:));
-% [iaz_Bmax,iel_Bmax]=find(Bk_Pramsey==Bk_max);
-% loc_disp=cat(1,loc_disp,[iaz_Bmax,iel_Bmax]);
-% azel_disp=cat(1,azel_disp,[az(iaz_Bmax),el(iel_Bmax)]);
+%%% max -----------------------------------------------------------
+% % equator
+% [Bk_eq_max,iaz_Bmax]=max(Bk_eq);
+% loc_disp=cat(1,loc_disp,[iaz_Bmax,iel_0]);
+% azel_disp=cat(1,azel_disp,[az(iaz_Bmax),el(iel_0)]);
 
-%%% min
-[Bk_eq_min,iaz_Bmin]=min(Bk_eq);
-loc_disp=cat(1,loc_disp,[iaz_Bmin,iel_0]);
-azel_disp=cat(1,azel_disp,[az(iaz_Bmin),el(iel_0)]);
+% anywhere
+Bk_max=max(Bk_Pramsey(:));
+[iaz_Bmax,iel_Bmax]=find(Bk_Pramsey==Bk_max);
+loc_disp(end+1,:)=[iaz_Bmax,iel_Bmax];
+azel_disp(end+1,:)=[az(iaz_Bmax),el(iel_Bmax)];
 
-% Bk_min=min(Bk_Pramsey(:));
-% [iaz_Bmin,iel_Bmin]=find(Bk_Pramsey==Bk_min);
+%%% min --------------------------------------------------------------
+% % equator
+% [Bk_eq_min,iaz_Bmin]=min(Bk_eq);
+% loc_disp=cat(1,loc_disp,[iaz_Bmin,iel_0]);
+% azel_disp=cat(1,azel_disp,[az(iaz_Bmin),el(iel_0)]);
+
+% anywhere
+Bk_min=min(Bk_Pramsey(:));
+[iaz_Bmin,iel_Bmin]=find(Bk_Pramsey==Bk_min);
 % loc_disp=cat(1,loc_disp,[iaz_Bmin,iel_Bmin]);
 % azel_disp=cat(1,azel_disp,[az(iaz_Bmin),el(iel_Bmin)]);
+loc_disp(end+1,:)=[iaz_Bmin,iel_Bmin];
+azel_disp(end+1,:)=[az(iaz_Bmin),el(iel_Bmin)];
 
 % summary
 n_loc_disp=size(loc_disp,1);        % num of locations to display
@@ -994,23 +995,13 @@ end
 
 
 %% VIS (publication): Mode-resolved Ramsey fringe: P
-% c_loc=viridis(n_loc_disp);
-% c_loc=palette(n_loc_disp);
-% cl_loc=colshades(c_loc);
-
-% c_loc=magma(n_loc_disp+1);
-% c_loc=c_loc(1:end-1,:);         % max is too light
-% cl_loc=colshades(c_loc);
-
-% *BLACK* markers (simple)
+% markers to distinguish region
 c_loc=zeros(n_loc_disp,3);
-cl_loc=[0,1,0]'*[1,1,1];
-
+cl_loc=[0,1,1]'*[1,1,1];
 
 
 figname='Pramsey_fringe_mode';
-% h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',f_ren);
 hold on;
 
 pleg=[];
@@ -1074,20 +1065,21 @@ el_trunc=deg2rad(60);           % elevation angle threshold to truncate (rad)
 % el_trunc=deg2rad(90);        
 b_trunc=(abs(gel)>el_trunc);    % boolean indicator to truncate
 
-% get/store original
-if ~exist('Bk_Pramsey_original','var')
-    % store
-    Bk_Pramsey_original=Bk_Pramsey;
-    Berrk_Pramsey_original=Berrk_Pramsey;
-    Br_original=Br;
-    Brerr_original=Brerr;
-else
-    % get
-    Bk_Pramsey=Bk_Pramsey_original;
-    Berrk_Pramsey=Berrk_Pramsey_original;
-    Br=Br_original;
-    Brerr=Brerr_original;
-end
+% % get/store original
+% % TODO - this needs work
+% if ~exist('Bk_Pramsey_original','var')
+%     % store
+%     Bk_Pramsey_original=Bk_Pramsey;
+%     Berrk_Pramsey_original=Berrk_Pramsey;
+%     Br_original=Br;
+%     Brerr_original=Brerr;
+% else
+%     % get
+%     Bk_Pramsey=Bk_Pramsey_original;
+%     Berrk_Pramsey=Berrk_Pramsey_original;
+%     Br=Br_original;
+%     Brerr=Brerr_original;
+% end
 
 % truncate
 Bk_Pramsey(b_trunc)=NaN;
@@ -1098,9 +1090,9 @@ Brerr(b_trunc)=NaN;
 
 %% VIS (publication): Magnetometry @ far-field (detected)
 figname='halo_magnetometry_ff';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',f_ren);
 
-tp=plotFlatMapWrappedRad(gaz,gel,squeeze(Bk_Pramsey(:,:)),'rect','texturemap');
+tp=plotFlatMapWrappedRad(gaz,gel,Bk_Pramsey,'rect','texturemap');
 
 % for rect projection, IMAGESC --> controllable x,y axis?
 
@@ -1174,138 +1166,136 @@ end
 
 
 %% VIS (publication): Magnetometry predicted at interrogation
-figname='halo_magnetometry_r';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
-
-tp=plotFlatMapWrappedRad(gaz,gel,Br,'rect','texturemap');
-
-% label ROI
-hold on;
-for ii=1:n_loc_disp
-    tazel=rad2deg(azel_disp(ii,:));
-    tp=plot(tazel(1),tazel(2),...
-        'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
-        'Marker',mark_typ{ii},'MarkerSize',config_fig.mark_siz);
-end
-
-% annotation
-ax=gca;
-set(ax,'Layer','Top');
-box on;
-% grid on;
-ax.FontSize=config_fig.ax_fontsize;
-ax.LineWidth=config_fig.ax_lwid;
-
-% axis tight;
-xlim([-180,180]);
-ylim([-90,90]);
-xticks(-180:90:180);
-yticks(-90:45:90);
-
-xlabel('$\theta$ (deg)');
-ylabel('$\phi$ (deg)');
-
-colormap('viridis');
-
-%%% colorbar
-% cbar=colorbar('west');
-cbar=colorbar('eastoutside');
-cbar.TickLabelInterpreter='latex';
-cbar.Label.Interpreter='latex';
-cbar.Label.String='$\mathrm{B}$ (G)';
-cbar.Label.FontSize=config_fig.ax_fontsize;
-cbar.FontSize=config_fig.ax_fontsize;
-% change colorbar width
-pos_ax=get(gca,'Position');
-pos_cbar=get(cbar,'Position');
-pos_cbar(3)=0.03;
-set(cbar,'Position',pos_cbar);
-set(gca,'Position',pos_ax);
-
-%%% hatch-out truncated region
-hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-    'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
-    'FaceColor','none','EdgeColor','none');
-uistack(hpatch_trunc,'bottom');
-H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
-    'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+% figname='halo_magnetometry_r';
+% h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',f_ren);
+% 
+% tp=plotFlatMapWrappedRad(gaz,gel,Br,'rect','texturemap');
+% 
+% % label ROI
+% hold on;
+% for ii=1:n_loc_disp
+%     tazel=rad2deg(azel_disp(ii,:));
+%     tp=plot(tazel(1),tazel(2),...
+%         'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
+%         'Marker',mark_typ{ii},'MarkerSize',config_fig.mark_siz);
+% end
+% 
+% % annotation
+% ax=gca;
+% set(ax,'Layer','Top');
+% box on;
+% % grid on;
+% ax.FontSize=config_fig.ax_fontsize;
+% ax.LineWidth=config_fig.ax_lwid;
+% 
+% % axis tight;
+% xlim([-180,180]);
+% ylim([-90,90]);
+% xticks(-180:90:180);
+% yticks(-90:45:90);
+% 
+% xlabel('$\theta$ (deg)');
+% ylabel('$\phi$ (deg)');
+% 
+% colormap('viridis');
+% 
+% %%% colorbar
+% % cbar=colorbar('west');
+% cbar=colorbar('eastoutside');
+% cbar.TickLabelInterpreter='latex';
+% cbar.Label.Interpreter='latex';
+% cbar.Label.String='$\mathrm{B}$ (G)';
+% cbar.Label.FontSize=config_fig.ax_fontsize;
+% cbar.FontSize=config_fig.ax_fontsize;
+% % change colorbar width
+% pos_ax=get(gca,'Position');
+% pos_cbar=get(cbar,'Position');
+% pos_cbar(3)=0.03;
+% set(cbar,'Position',pos_cbar);
+% set(gca,'Position',pos_ax);
+% 
+% %%% hatch-out truncated region
+% hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+%     'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+%     'FaceColor','none','EdgeColor','none');
+% uistack(hpatch_trunc,'bottom');
+% H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
+%     'HatchColor','k','HatchLineWidth',config_fig.line_wid);
 
 
 %% VIS (publication): horizontally-split comparison
-% DATA
-B_ff_r_split=Bk_Pramsey;
-B_ff_r_split(iaz_0:end,:)=Br(iaz_0:end,:);
-
-% PLOT
-figname='halo_magnetometry_split';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
-
-tp=plotFlatMapWrappedRad(gaz,gel,B_ff_r_split,'rect','texturemap');
-
-% label ROI
-hold on;
-for ii=1:n_loc_disp
-    tazel=rad2deg(azel_disp(ii,:));
-    tp=plot(tazel(1),tazel(2),...
-        'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
-        'Marker',mark_typ{ii},'MarkerSize',config_fig.mark_siz);
-end
-
-% annotation
-ax=gca;
-set(ax,'Layer','Top');
-box on;
-% grid on;
-ax.FontSize=config_fig.ax_fontsize;
-ax.LineWidth=config_fig.ax_lwid;
-
-% axis tight;
-xlim([-180,180]);
-ylim([-90,90]);
-xticks(-180:90:180);
-yticks(-90:45:90);
-
-xlabel('$\theta$ (deg)');
-ylabel('$\phi$ (deg)');
-
-colormap('viridis');
-
-%%% colorbar
-% cbar=colorbar('west');
-cbar=colorbar('eastoutside');
-cbar.TickLabelInterpreter='latex';
-cbar.Label.Interpreter='latex';
-cbar.Label.String='$\mathrm{B}$ (G)';
-cbar.Label.FontSize=config_fig.ax_fontsize;
-cbar.FontSize=config_fig.ax_fontsize;
-% change colorbar width
-pos_ax=get(gca,'Position');
-pos_cbar=get(cbar,'Position');
-pos_cbar(3)=0.03;
-set(cbar,'Position',pos_cbar);
-set(gca,'Position',pos_ax);
-
-%%% hatch-out truncated region
-% need to divide into two-regions (top,bottom) because of vecrast...
-hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-    'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
-    'FaceColor','none','EdgeColor','none');
-uistack(hpatch_trunc,'bottom');
-H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
-    'HatchColor','k','HatchLineWidth',config_fig.line_wid);
-
-%%% indicate split
-hpatch_star=patch('XData',[az(iaz_0),ax.XLim(2),ax.XLim(2),az(iaz_0)],...
-    'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
-    'FaceColor',clvir(1,:),'FaceAlpha',pf_alpha,'EdgeColor','none');
-uistack(hpatch_star,'bottom');
+% % DATA
+% B_ff_r_split=Bk_Pramsey;
+% B_ff_r_split(iaz_0:end,:)=Br(iaz_0:end,:);
+% 
+% % PLOT
+% figname='halo_magnetometry_split';
+% h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',f_ren);
+% 
+% tp=plotFlatMapWrappedRad(gaz,gel,B_ff_r_split,'rect','texturemap');
+% 
+% % label ROI
+% hold on;
+% for ii=1:n_loc_disp
+%     tazel=rad2deg(azel_disp(ii,:));
+%     tp=plot(tazel(1),tazel(2),...
+%         'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
+%         'Marker',mark_typ{ii},'MarkerSize',config_fig.mark_siz);
+% end
+% 
+% % annotation
+% ax=gca;
+% set(ax,'Layer','Top');
+% box on;
+% % grid on;
+% ax.FontSize=config_fig.ax_fontsize;
+% ax.LineWidth=config_fig.ax_lwid;
+% 
+% % axis tight;
+% xlim([-180,180]);
+% ylim([-90,90]);
+% xticks(-180:90:180);
+% yticks(-90:45:90);
+% 
+% xlabel('$\theta$ (deg)');
+% ylabel('$\phi$ (deg)');
+% 
+% colormap('viridis');
+% 
+% %%% colorbar
+% % cbar=colorbar('west');
+% cbar=colorbar('eastoutside');
+% cbar.TickLabelInterpreter='latex';
+% cbar.Label.Interpreter='latex';
+% cbar.Label.String='$\mathrm{B}$ (G)';
+% cbar.Label.FontSize=config_fig.ax_fontsize;
+% cbar.FontSize=config_fig.ax_fontsize;
+% % change colorbar width
+% pos_ax=get(gca,'Position');
+% pos_cbar=get(cbar,'Position');
+% pos_cbar(3)=0.03;
+% set(cbar,'Position',pos_cbar);
+% set(gca,'Position',pos_ax);
+% 
+% %%% hatch-out truncated region
+% % need to divide into two-regions (top,bottom) because of vecrast...
+% hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+%     'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+%     'FaceColor','none','EdgeColor','none');
+% uistack(hpatch_trunc,'bottom');
+% H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
+%     'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+% 
+% %%% indicate split
+% hpatch_star=patch('XData',[az(iaz_0),ax.XLim(2),ax.XLim(2),az(iaz_0)],...
+%     'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+%     'FaceColor',clvir(1,:),'FaceAlpha',pf_alpha,'EdgeColor','none');
+% uistack(hpatch_star,'bottom');
 
 
 %% VIS (publication): Magnetic tomography: equatorial: P 
 figname='B_equatorial_tomography_P';
-% h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
-% h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',f_ren);
 hold on;
 
 % %%% EQ-integrated 
@@ -1317,23 +1307,25 @@ hold on;
 % H_eq_int.edge(2).Visible='off';
 
 
-%%% entire halo integrated (with BEC)
-% TODO - maybe elminate BECs (saturation) but this could be a point of
-% interesting discussion
-H_r_int=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'k');
-H_r_int.mainLine.LineWidth=1;
-H_r_int.mainLine.LineStyle='-';
-H_r_int.mainLine.DisplayName='$\mathbf{r}$ int';
-H_r_int.patch.FaceAlpha=1;
-H_r_int.edge(1).Visible='off';
-H_r_int.edge(2).Visible='off';
+% %%% entire halo integrated (with BEC)
+% % TODO - maybe elminate BECs (saturation) but this could be a point of
+% % interesting discussion
+% H_r_int=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'k');
+% H_r_int.mainLine.LineWidth=1;
+% H_r_int.mainLine.LineStyle='--';
+% H_r_int.mainLine.DisplayName='$\mathbf{r}$ int';
+% H_r_int.patch.FaceAlpha=1;
+% H_r_int.edge(1).Visible='off';
+% H_r_int.edge(2).Visible='off';
 
 
 %%% halo integrated (no BEC) 
 H_halo_int=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'k');
 H_halo_int.mainLine.LineWidth=1;
-H_halo_int.mainLine.LineStyle='-';
+H_halo_int.mainLine.LineStyle='--';
 H_halo_int.mainLine.DisplayName='$\mathbf{r}$ int';
+H_halo_int.mainLine.Visible='off';
+H_halo_int.patch.FaceColor=0.8*ones(1,3);
 H_halo_int.patch.FaceAlpha=1;
 H_halo_int.edge(1).Visible='off';
 H_halo_int.edge(2).Visible='off';
@@ -1351,43 +1343,46 @@ H_halo_int.edge(2).Visible='off';
 % SHADED ERR BAR
 H_res_ff=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
 H_res_ff.mainLine.Color=cvir(2,:);
-H_res_ff.mainLine.LineStyle='--';
+H_res_ff.mainLine.LineStyle='-';
 H_res_ff.mainLine.LineWidth=1;
 H_res_ff.mainLine.DisplayName='$\mathbf{r}$ resolved $\infty$';
 H_res_ff.patch.FaceColor=clvir(2,:);  
 H_res_ff.patch.FaceAlpha=pf_alpha;
-H_res_ff.edge(1).Visible='off';
-H_res_ff.edge(2).Visible='off';
-
-%%%%% interrogation time
-% SHADED ERR BAR
-H_res_r=shadedErrorBar(rad2deg(az),Br(:,iel_0),Brerr(:,iel_0),'r');
-H_res_r.mainLine.Color=cvir(1,:);
-H_res_r.mainLine.LineStyle='-';
-H_res_r.mainLine.LineWidth=1;
-H_res_r.mainLine.DisplayName='$\mathbf{r}$ resolved $t^*$';
-H_res_r.patch.FaceColor=clvir(1,:);  
-H_res_r.patch.FaceAlpha=pf_alpha;
-H_res_r.edge(1).Visible='off';
-H_res_r.edge(2).Visible='off';
+% H_res_ff.edge(1).Visible='off';
+% H_res_ff.edge(2).Visible='off';
+H_res_ff.edge(1).Color=clvir(2,:);
+H_res_ff.edge(2).Color=clvir(2,:);
 
 
-%%% ROI
-for ii=1:n_loc_disp
-    clearvars tp;
-    
-    iazel=loc_disp(ii,:);
-    taz_disp=azel_disp(ii,1);
-    tp=ploterr(rad2deg(taz_disp),Bk_eq(iazel(1)),[],Bkerr_eq(iazel(1)),...
-        mark_typ{ii},'hhxy',1);
-    
-    set(tp(1),'MarkerEdgeColor',c_loc(ii,:),...
-        'MarkerFaceColor',cl_loc(ii,:),...
-        'MarkerSize',config_fig.mark_siz,...
-        'DisplayName',num2str(rad2deg(taz_disp)));
-    set(tp(2),'Color',c_loc(ii,:));
-    
-end
+% %%%%% interrogation time
+% % SHADED ERR BAR
+% H_res_r=shadedErrorBar(rad2deg(az),Br(:,iel_0),Brerr(:,iel_0),'r');
+% H_res_r.mainLine.Color=cvir(1,:);
+% H_res_r.mainLine.LineStyle='-';
+% H_res_r.mainLine.LineWidth=1;
+% H_res_r.mainLine.DisplayName='$\mathbf{r}$ resolved $t^*$';
+% H_res_r.patch.FaceColor=clvir(1,:);  
+% H_res_r.patch.FaceAlpha=pf_alpha;
+% H_res_r.edge(1).Visible='off';
+% H_res_r.edge(2).Visible='off';
+
+
+% %%% ROI
+% for ii=1:n_loc_disp
+%     clearvars tp;
+%     
+%     iazel=loc_disp(ii,:);
+%     taz_disp=azel_disp(ii,1);
+%     tp=ploterr(rad2deg(taz_disp),Bk_eq(iazel(1)),[],Bkerr_eq(iazel(1)),...
+%         mark_typ{ii},'hhxy',1);
+%     
+%     set(tp(1),'MarkerEdgeColor',c_loc(ii,:),...
+%         'MarkerFaceColor',cl_loc(ii,:),...
+%         'MarkerSize',config_fig.mark_siz,...
+%         'DisplayName',num2str(rad2deg(taz_disp)));
+%     set(tp(2),'Color',c_loc(ii,:));
+%     
+% end
 
 
 %%% annotation
@@ -1403,7 +1398,6 @@ ylabel('$\mathrm{B}$ (G)');
 ax.XTick=-180:90:180;
 axis_snug(ax,[0,0.1]);
 
-
 % % legend
 % lgd=legend([H_res_r.mainLine,H_res_ff.mainLine,H_r_int.mainLine]);
 % lgd.Location='eastoutside';
@@ -1418,7 +1412,7 @@ if do_save_figs
 end
 
 
-%% BB B-difference around equator
+%% BB B-difference around equator (@ ff)
 dth=mean(diff(az));     % incremental diff angle scanned around equator (rad)
 dI_pi=round(pi/dth);    % # increments to shift for azimuthal BB
 
@@ -1438,10 +1432,9 @@ Bkerr_eq_bb=circshift(Bkerr_eq,dI_pi);
 dB_eq_bb=abs(Bk_eq_bb - Bk_eq);
 dBerr_eq_bb=sqrt(Bkerr_eq_bb.^2 + Bkerr_eq.^2);     % uncorrelated noise
 
-
 %%% vis
 figname='dBbb_ramsey_ff';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,6],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',f_ren);
 
 % B-field around equator @ theta and theta+pi
 subplot(2,1,1);
@@ -1455,9 +1448,6 @@ tp(2)=shadedErrorBar(rad2deg(az),Bk_eq_bb,Bkerr_eq_bb,'b',1);  % B-field at BB r
 ax=gca;
 set(ax,'Layer','Top');
 xlim([0,180]);      % periodic
-% ylim_0=ax.YLim;
-% ylim([0,ylim_0(2)]);
-ylim([0.52,0.545]);
 xticks(0:45:180);
 xlabel('$\theta$ (deg)');
 ylabel('$B$ (G)');
@@ -1484,9 +1474,8 @@ tp=shadedErrorBar(rad2deg(az),1e3*dB_eq_bb,1e3*dBerr_eq_bb,'k');
 ax=gca;
 set(ax,'Layer','Top');
 xlim([0,180]);      % periodic
-% ylim_0=ax.YLim;
-% ylim([0,ylim_0(2)]);
-ylim([0,10]);
+ylim_0=ax.YLim;
+ylim([0,ylim_0(2)]);
 xticks(0:45:180);
 xlabel('$\theta$ (deg)');
 ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
@@ -1495,73 +1484,71 @@ ax.FontSize=9;
 % ax.LineWidth=1;
 
 %% BB B-difference around equator (@ t star)
-% PSF filtered
-Br_eq_bb=circshift(Br(:,iel_0),dI_pi);
-Brerr_eq_bb=circshift(Brerr(:,iel_0),dI_pi);
-dBr_eq=abs(Br(:,iel_0)-Br_eq_bb);
-dBrerr_eq=sqrt(Brerr(:,iel_0).^2 + Brerr_eq_bb.^2);
-
-%%% vis
-figname='dBbb_ramsey_int';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,6],'Renderer',f_ren);
-
-% B-field around equator @ theta and theta+pi
-subplot(2,1,1);
-hold on;
-% plot(rad2deg(az),Bk_eq);            % B-field (G)
-% plot(rad2deg(az),Bk_eq_bb);         % B-field at BB region (G)
-clearvars tp;
-tp(1)=shadedErrorBar(rad2deg(az),Br(:,iel_0),Brerr(:,iel_0),'r',1);        % B-field (G)
-tp(2)=shadedErrorBar(rad2deg(az),Br_eq_bb,Brerr_eq_bb,'b',1);  % B-field at BB region (G)
-
-ax=gca;
-set(ax,'Layer','Top');
-xlim([0,180]);      % periodic
+% % PSF filtered
+% Br_eq_bb=circshift(Br(:,iel_0),dI_pi);
+% Brerr_eq_bb=circshift(Brerr(:,iel_0),dI_pi);
+% dBr_eq=abs(Br(:,iel_0)-Br_eq_bb);
+% dBrerr_eq=sqrt(Brerr(:,iel_0).^2 + Brerr_eq_bb.^2);
+% 
+% %%% vis
+% figname='dBbb_ramsey_r';
+% h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',f_ren);
+% 
+% % B-field around equator @ theta and theta+pi
+% subplot(2,1,1);
+% hold on;
+% % plot(rad2deg(az),Bk_eq);            % B-field (G)
+% % plot(rad2deg(az),Bk_eq_bb);         % B-field at BB region (G)
+% clearvars tp;
+% tp(1)=shadedErrorBar(rad2deg(az),Br(:,iel_0),Brerr(:,iel_0),'r',1);        % B-field (G)
+% tp(2)=shadedErrorBar(rad2deg(az),Br_eq_bb,Brerr_eq_bb,'b',1);  % B-field at BB region (G)
+% 
+% ax=gca;
+% set(ax,'Layer','Top');
+% xlim([0,180]);      % periodic
+% xticks(0:45:180);
+% xlabel('$\theta$ (deg)');
+% ylabel('$B$ (G)');
+% 
+% ax.FontSize=9;
+% % ax.LineWidth=1;
+% 
+% % lgd=legend([tp(1).mainLine,tp(2).mainLine],{'$\theta$','$\theta+\pi$'});
+% 
+% % B-field difference @ BB regions around equator
+% subplot(2,1,2);
+% hold on;
+% % plot(rad2deg(az),1e3*dB_eq_bb);         % BB B-field difference (G)
+% % plot(rad2deg(az),1e3*dBerr_eq_bb);      % uncertainty (G)
+% 
+% tp=shadedErrorBar(rad2deg(az),1e3*dBr_eq,1e3*dBrerr_eq,'k');
+% % tp.mainLine.Color=cvir(2,:);
+% % tp.mainLine.LineWidth=1;
+% % tp.patch.FaceColor=clvir(2,:);
+% % tp.patch.FaceAlpha=pf_alpha;
+% % tp.edge(1).Visible='off';
+% % tp.edge(2).Visible='off';
+% 
+% ax=gca;
+% set(ax,'Layer','Top');
+% xlim([0,180]);      % periodic
 % ylim_0=ax.YLim;
 % ylim([0,ylim_0(2)]);
-ylim([0.52,0.545]);
-xticks(0:45:180);
-xlabel('$\theta$ (deg)');
-ylabel('$B$ (G)');
+% 
+% xticks(0:45:180);
+% xlabel('$\theta$ (deg)');
+% ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
+% 
+% ax.FontSize=9;
+% % ax.LineWidth=1;
 
-ax.FontSize=9;
-% ax.LineWidth=1;
-
-% lgd=legend([tp(1).mainLine,tp(2).mainLine],{'$\theta$','$\theta+\pi$'});
-
-% B-field difference @ BB regions around equator
-subplot(2,1,2);
-hold on;
-% plot(rad2deg(az),1e3*dB_eq_bb);         % BB B-field difference (G)
-% plot(rad2deg(az),1e3*dBerr_eq_bb);      % uncertainty (G)
-
-tp=shadedErrorBar(rad2deg(az),1e3*dBr_eq,1e3*dBrerr_eq,'k');
-% tp.mainLine.Color=cvir(2,:);
-% tp.mainLine.LineWidth=1;
-% tp.patch.FaceColor=clvir(2,:);
-% tp.patch.FaceAlpha=pf_alpha;
-% tp.edge(1).Visible='off';
-% tp.edge(2).Visible='off';
-
-ax=gca;
-set(ax,'Layer','Top');
-xlim([0,180]);      % periodic
-% ylim_0=ax.YLim;
-% ylim([0,ylim_0(2)]);
-ylim([0,10]);
-xticks(0:45:180);
-xlabel('$\theta$ (deg)');
-ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
-
-ax.FontSize=9;
-% ax.LineWidth=1;
 
 %% dBdx (equator) (ff)
 dBdx_eq_ff=dB_eq_bb/d_sep;     % in G/m
 dBdx_eq_se_ff=dBerr_eq_bb/d_sep;     
 
 figname='dBdx_ramsey_ff';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,6],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',f_ren);
 tp=shadedErrorBar(rad2deg(az),dBdx_eq_ff,dBdx_eq_se_ff,'k');
 
 ax=gca;
@@ -1578,24 +1565,24 @@ ylabel('$d\mathrm{B}/dx$ (G/m)');
 
 
 %% dBdx (equator) (t star)
-dBdx_eq_int=dBr_eq/d_sep;     % in G/m
-dBdx_eq_se_int=dBrerr_eq/d_sep;     
-
-figname='dBdx_ramsey_ff';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,6],'Renderer',f_ren);
-tp=shadedErrorBar(rad2deg(az),dBdx_eq_int,dBdx_eq_se_int,'k');
-
-ax=gca;
-set(ax,'Layer','Top');
-
-xlim([0,180]);      % periodic
-ylim_Original=ax.YLim;
-ylim([0,ylim_Original(2)]);
-
-xticks(0:45:180);
-
-xlabel('$\theta$ (deg)');
-ylabel('$d\mathrm{B}/dx$ (G/m)');
+% dBdx_eq_int=dBr_eq/d_sep;     % in G/m
+% dBdx_eq_se_int=dBrerr_eq/d_sep;     
+% 
+% figname='dBdx_ramsey_r';
+% h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',f_ren);
+% tp=shadedErrorBar(rad2deg(az),dBdx_eq_int,dBdx_eq_se_int,'k');
+% 
+% ax=gca;
+% set(ax,'Layer','Top');
+% 
+% xlim([0,180]);      % periodic
+% ylim_Original=ax.YLim;
+% ylim([0,ylim_Original(2)]);
+% 
+% xticks(0:45:180);
+% 
+% xlabel('$\theta$ (deg)');
+% ylabel('$d\mathrm{B}/dx$ (G/m)');
 
 
 %% save outputs
