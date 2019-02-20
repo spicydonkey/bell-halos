@@ -373,7 +373,8 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% clean workspace
-clear txy zxy zxy0 zxy0_filt tzxy tzxy_mf tp_bec tp_bec0 tp_halo tr_bec0 tr_lim;
+clear txy zxy zxy0 zxy0_filt zxy0_bec tzxy tzxy_mf tp_bec tp_bec0 tp_halo tr_bec0 tr_lim;
+clear p_bec p_bec0 p_halo r_bec_capt r_crop* r_halo* r_thermal tbox_lim window_z_filt*;
 clear h_zxy*;       % clear figs
 
 
@@ -410,18 +411,22 @@ k_halo_ramsey_phi0=squeeze(k_halo_par(idx_ramsey_exp,idx_phi0,:));
 
 x_ramsey_phi0=squeeze(x_bec_par(idx_ramsey_exp,idx_phi0,:));    % BEC sub-dataset
 
-n_shot=cellfun(@(x) size(x,1),k_all_ramsey_phi0);       % number of shots per tau
-
 
 %% General halo/collision stuff
+% Ramsey (3ms)
 d_sep = 3e-3 * 120e-3;      % 3ms expansion at 120 mm/s
 sig_psf_r = 35e-6;      % rms width of point-spread function ~ 35um (BEC) (see supplementary in paper)
 
 sig_psf_beta=sig_psf_r/(d_sep/2);   % PSF rms width in angle (rad)
 % sig_filt_beta=sig_psf_beta/2;       % filter rms width (rad)
 
+% gradiometry (~1.5 ms)
+sig_psf_gradiometry=sig_psf_beta*2;     % ~twice uncertainty
+
 
 %% atom number and population
+n_shot=cellfun(@(x) size(x,1),k_all_ramsey_phi0);       % number of shots per tau
+
 % raw #spins: #atom in mJ halos
 Nm_all=cellfun(@(x) shotSize(x),k_all_ramsey_phi0,'UniformOutput',false);      
 Nm_halo=cellfun(@(x) shotSize(x),k_halo_ramsey_phi0,'UniformOutput',false);      
@@ -564,54 +569,20 @@ axis_snug(ax,[0.05,0.1]);
 
 
 %% Ramsey model
-%%% models
-% pop fraction per spin comp
-mramsey_mdl='y~c+amp*cos(om*x+phi)';
-mramsey_cname={'amp','om','phi','c'};
-mramsey_par0=[0.5,2*pi*1.5,0,0.5];
-
-idx_om_mramsey=2;     %find(cellfun(@(s) strcmp(s,'om'),mramsey_cname)==1);     % param-vec idx to 'om'
-
-% pop-inversion
+% polarisation/population inversion ---------------------------------------
 Pramsey_mdl='y~amp*cos(om*x+phi)';
 Pramsey_cname={'amp','om','phi'};
-Pramsey_par0=[0.5,2*pi*1.5,0];
+Pramsey_par0=[1,2*pi*1.5,pi];
 
 idx_om_Pramsey=2;     %find(cellfun(@(s) strcmp(s,'om'),Pramsey_cname)==1);
 
 
-%% fit to halo-avgd data
-%%% pop fraction per spin comp
-% collate data to fit
+%% collate all data x-values
 tt=arrayfun(@(x,n) x*ones(n,1),tau,n_shot,'UniformOutput',false);
 tt=vertcat(tt{:});
-yy=vertcat(pm_halo{:});
 
-% fit
-mramsey_fit_halo=cell(1,2);
-for ii=1:2
-    mramsey_fit_halo{ii}=fitnlm(1e6*tt,yy(:,ii),mramsey_mdl,mramsey_par0,'CoefficientNames',mramsey_cname);
-end
-
-% get fit params
-mramsey_fpar_halo=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),mramsey_fit_halo),...
-    1:numel(mramsey_cname),'UniformOutput',false);
-mramsey_fpar_halo=cat(1,mramsey_fpar_halo{:});
-
-mramsey_fparerr_halo=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),mramsey_fit_halo),...
-    1:numel(mramsey_cname),'UniformOutput',false);
-mramsey_fparerr_halo=cat(1,mramsey_fparerr_halo{:});
-% dims: PAR# X MJ
-
-om_mramsey_halo=mramsey_fpar_halo(idx_om_mramsey,:);
-omerr_mramsey_halo=mramsey_fparerr_halo(idx_om_mramsey,:);
-
-% magnetic field
-B_mramsey_halo=1e6*om_mramsey_halo/(2*pi*C_gymag);
-Berr_mramsey_halo=1e6*omerr_mramsey_halo/(2*pi*C_gymag);
-
-
-%%% pop-inversion
+%% fit to halo-avgd data
+%%% Polarisation --------------------------------------------------------
 % collate data to fit
 yy=vertcat(P_halo{:});
 
@@ -620,7 +591,6 @@ Pramsey_fit_halo=fitnlm(1e6*tt,yy,Pramsey_mdl,Pramsey_par0,'CoefficientNames',Pr
 
 % get fit params
 Pramsey_fpar_halo=Pramsey_fit_halo.Coefficients.Estimate;
-
 Pramsey_fparerr_halo=Pramsey_fit_halo.Coefficients.SE;
 
 % get freq
@@ -675,17 +645,18 @@ end
 %% atom number distribution: nk_m
 %%% Spatial zones
 % construct spatial zones at latlon grid + solid angle
-alpha=sig_psf_beta;     % half-cone angle of integration bin (rad)
+% alpha=sig_psf_beta;           % half-cone angle of integration bin (rad)
+alpha=sig_psf_gradiometry;      % bin-size like gradiometry (rad)
 lim_az=[-pi,pi];        % no inversion symmetry
 phi_max=pi/2;           
 lim_el=[-phi_max,phi_max];
 
-% n_az=200;                	% equispaced bins
-% n_el=100;
+n_az=120;                	% equispaced bins
+n_el=60;
 
-% QUICK DEBUG
-n_az=80;
-n_el=40;
+% % QUICK DEBUG
+% n_az=40;
+% n_el=20;
 
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
@@ -731,19 +702,8 @@ end
 Ninv_k=cellfun(@(x) -diff(x,1,4),Nm_k,'UniformOutput',false);
 N_k=cellfun(@(x) sum(x,4),Nm_k,'UniformOutput',false);
 
-%%% population
-%%%% spin-comp
-pm_k=cellfun(@(n,N) n./N,Nm_k,N_k,'UniformOutput',false);
-pm_k_avg=cellfun(@(x) squeeze(mean(x,3,'omitnan')),pm_k,'UniformOutput',false);
-pm_k_std=cellfun(@(x) squeeze(std(x,0,3,'omitnan')),pm_k,'UniformOutput',false);
-
-% multidim array: T_DELAY X AZ X EL X MJ
-pm_k_avg=cell2mat(cellfun(@(a) reshape(a,[1,size(a)]),pm_k_avg,'UniformOutput',false));
-pm_k_std=cell2mat(cellfun(@(a) reshape(a,[1,size(a)]),pm_k_std,'UniformOutput',false));
-pm_k_se=pm_k_std./sqrt(n_shot);     
-
-
-%%%% p-inversion
+%%% population 
+% polarisation ------------------------------------------------------------
 P_k=cellfun(@(n,N) n./N,Ninv_k,N_k,'UniformOutput',false);
 P_k_avg=cellfun(@(x) squeeze(mean(x,3,'omitnan')),P_k,'UniformOutput',false);
 P_k_std=cellfun(@(x) squeeze(std(x,0,3,'omitnan')),P_k,'UniformOutput',false);
@@ -768,53 +728,7 @@ P_eq_se=P_eq_std./sqrt(n_shot);
 
 
 %% k-resolved fit
-%%% spin-comp
-mramsey_fit_k=cell(n_az,n_el,2);    % dim: AZ X EL X MJ
-for ii=1:n_zone
-    [iaz,iel]=ind2sub([n_az,n_el],ii);
-    for jj=1:2
-        % collate data to fit
-        yy=cellfun(@(x) squeeze(x(iaz,iel,:,jj)),pm_k,'UniformOutput',false);
-        yy=vertcat(yy{:});       
-        
-        % fit
-        mramsey_fit_k{iaz,iel,jj}=fitnlm(1e6*tt,yy,mramsey_mdl,...
-            mramsey_par0,'CoefficientNames',mramsey_cname);
-    end
-end
-
-% get fit params
-mramsey_fpar_k=arrayfun(@(I) cellfun(@(f) f.Coefficients.Estimate(I),mramsey_fit_k),...
-    1:numel(mramsey_cname),'UniformOutput',false);
-mramsey_fpar_k=cat(ndims(mramsey_fpar_k{1})+1,mramsey_fpar_k{:});
-
-mramsey_fparerr_k=arrayfun(@(I) cellfun(@(f) f.Coefficients.SE(I),mramsey_fit_k),...
-    1:numel(mramsey_cname),'UniformOutput',false);
-mramsey_fparerr_k=cat(ndims(mramsey_fparerr_k{1})+1,mramsey_fparerr_k{:});
-% dims: AZ X EL X MJ X PAR#
-
-% get freq
-om_mramsey_k=mramsey_fpar_k(:,:,:,idx_om_mramsey);
-omerr_mramsey_k=mramsey_fparerr_k(:,:,:,idx_om_mramsey);
-% AZ X EL X MJ
-
-% % outlier to NaN
-% b_outlier=isoutlier(om_mramsey_mode);    % find outlier by Med Abs Dev
-% om_mramsey_mode_raw=om_mramsey_mode;      % store original raw data set
-% omerr_mramsey_mode_raw=omerr_mramsey_mode;
-% om_mramsey_mode(b_outlier)=NaN;          % outlier --> NaN
-% omerr_mramsey_mode(b_outlier)=NaN;
-
-% om_mramsey_mode_0=squeeze(mean(om_mramsey_mode,1,'omitnan'));   % mode-resolved L-freq avgd thru PHI_DELAY
-% n_samp=squeeze(sum(~b_outlier,1));       % num exp samples to average over
-% omerr_mramsey_mode_0=sqrt(squeeze(sum(omerr_mramsey_mode.^2,1,'omitnan')))./n_samp;
-
-% magnetic field
-B_mramsey_k=1e6*om_mramsey_k/(2*pi*C_gymag);
-Berr_mramsey_k=1e6*omerr_mramsey_k/(2*pi*C_gymag);
-
-
-%%% pop-inversion
+%%% pop-inversion --------------------------------------------------------
 Pramseyk_fit=cell(n_az,n_el);   % dim: AZ X EL
 for ii=1:n_zone
     [iaz,iel]=ind2sub([n_az,n_el],ii);
@@ -874,6 +788,18 @@ Bkerr_eq=Berrk_Pramsey(:,iel_0);
 % Br=gaussfilt_sph(Bk_Pramsey,gaz,gel,gaz,gel,sig_filt_beta);      
 % Brerr=sqrt(gaussfilt_sph(Berrk_Pramsey.^2,gaz,gel,gaz,gel,sig_filt_beta));
 
+%% VIS: fit params diagnostic
+h=figure('Name','fit_param_diagnostic');
+n_fit_param=size(Pramseyk_fpar,3);
+for ii=1:n_fit_param
+    ax=subplot(n_fit_param,1,ii);
+    imagesc(rad2deg(az),rad2deg(el),Pramseyk_fpar(:,:,ii)');
+    cbar=colorbar();
+    title(cbar,Pramsey_cname{ii})
+    ax.YDir='normal';
+%     xlabel('$\theta$');
+%     ylabel('$\phi$');
+end
 
 %% truncate sph-dist to within sensible elev-limits
 % config
@@ -926,7 +852,7 @@ Berr_Pramsey_eq=1e6*omerr_Pramsey_eq/(2*pi*C_gymag);
 
 
 %% regions to display Ramsey signal
-% max, min and theta=0 around equator
+% max, min and (0,0)
 loc_disp=[];    % row-array of (Iaz,Iel)-location to display
 azel_disp=[];   % (az,el)
 
@@ -965,59 +891,6 @@ azel_disp(end+1,:)=[az(iaz_Bmin),el(iel_Bmin)];
 
 % summary
 n_loc_disp=size(loc_disp,1);        % num of locations to display
-
-
-%% VIS: Mode-resolved Ramsey fringe: Pm
-figname='mramsey_fringe_mode';
-h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
-hold on;
-
-for ii=1:n_loc_disp
-    iazel=loc_disp(ii,:);
-    tazel=azel_disp(ii,:);
-        
-    tp=squeeze(pm_k_avg(:,iazel(1),iazel(2),:));   % T X MJ
-    tperr=squeeze(pm_k_se(:,iazel(1),iazel(2),:));
-    
-    subplot(1,n_loc_disp,ii);
-    hold on;
-    for jj=1:2
-        pexp=ploterr(1e6*tau,tp(:,jj),[],tperr(:,jj),mark_typ{jj},'hhxy',0);
-        set(pexp(1),'MarkerFaceColor',clvir(jj,:),'MarkerEdgeColor',cvir(jj,:),...
-            'DisplayName',str_ss{jj});
-        set(pexp(2),'Color',cvir(jj,:));
-        
-        yy=feval(mramsey_fit_k{iazel(1),iazel(2),jj},tt_fit);
-        pfit=plot(tt_fit,yy,'LineStyle',line_sty{jj},'Color',clvir(jj,:));
-        uistack(pfit,'bottom');
-    end
-    titlestr=sprintf('%s (%0.3g, %0.3g)','$(\theta,\phi)=$',...
-        rad2deg(tazel));
-    title(titlestr);
-    
-    % annotate subplot
-    ax=gca;
-    box on;
-    ax_ylim=ax.YLim;
-    ax_xlim=ax.XLim;
-    
-    set(ax,'Layer','Top');
-    ax.FontSize=fontsize;
-    ax.LineWidth=ax_lwidth;
-    xlabel('pulse delay $\tau~(\mu s)$');
-    ylabel('pop fraction $P_i$');
-    xlim(1e6*[min(tau),max(tau)]+[-0.1,0.1]);
-    ylim([-0.05,1.05]);
-end
-
-% save fig
-if do_save_figs
-    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
-    fpath=fullfile(dir_save,savefigname);
-    
-    saveas(h,strcat(fpath,'.fig'),'fig');
-    print(h,strcat(fpath,'.svg'),'-dsvg');
-end
 
 
 %% VIS (publication): Mode-resolved Ramsey fringe: P
@@ -1085,7 +958,7 @@ if do_save_figs
 end
 
 
-%% VIS (publication): Magnetometry @ far-field (detected)
+%% VIS (publication): Magnetometry (detected)
 figname='halo_magnetometry_ff';
 h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',f_ren);
 
@@ -1137,8 +1010,8 @@ set(cbar,'Position',pos_cbar);
 set(gca,'Position',pos_ax);
 
 
-%%% hatch-out truncated region
-% TODO
+% % hatch-out truncated region --------------------------
+% % TODO - vecrast
 % hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
 %     'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
 %     'FaceColor','none','EdgeColor','none');
@@ -1161,134 +1034,6 @@ if do_save_figs
     saveas(h,strcat(fpath,'.fig'),'fig');
     print(h,strcat(fpath,'.png'),'-dpng','-r300');
 end
-
-
-%% VIS (publication): Magnetometry predicted at interrogation
-% figname='halo_magnetometry_r';
-% h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',f_ren);
-% 
-% tp=plotFlatMapWrappedRad(gaz,gel,Br,'rect','texturemap');
-% 
-% % label ROI
-% hold on;
-% for ii=1:n_loc_disp
-%     tazel=rad2deg(azel_disp(ii,:));
-%     tp=plot(tazel(1),tazel(2),...
-%         'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
-%         'Marker',mark_typ{ii},'MarkerSize',config_fig.mark_siz);
-% end
-% 
-% % annotation
-% ax=gca;
-% set(ax,'Layer','Top');
-% box on;
-% % grid on;
-% ax.FontSize=config_fig.ax_fontsize;
-% ax.LineWidth=config_fig.ax_lwid;
-% 
-% % axis tight;
-% xlim([-180,180]);
-% ylim([-90,90]);
-% xticks(-180:90:180);
-% yticks(-90:45:90);
-% 
-% xlabel('$\theta$ (deg)');
-% ylabel('$\phi$ (deg)');
-% 
-% colormap('viridis');
-% 
-% %%% colorbar
-% % cbar=colorbar('west');
-% cbar=colorbar('eastoutside');
-% cbar.TickLabelInterpreter='latex';
-% cbar.Label.Interpreter='latex';
-% cbar.Label.String='$\mathrm{B}$ (G)';
-% cbar.Label.FontSize=config_fig.ax_fontsize;
-% cbar.FontSize=config_fig.ax_fontsize;
-% % change colorbar width
-% pos_ax=get(gca,'Position');
-% pos_cbar=get(cbar,'Position');
-% pos_cbar(3)=0.03;
-% set(cbar,'Position',pos_cbar);
-% set(gca,'Position',pos_ax);
-% 
-% %%% hatch-out truncated region
-% hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-%     'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
-%     'FaceColor','none','EdgeColor','none');
-% uistack(hpatch_trunc,'bottom');
-% H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
-%     'HatchColor','k','HatchLineWidth',config_fig.line_wid);
-
-
-%% VIS (publication): horizontally-split comparison
-% % DATA
-% B_ff_r_split=Bk_Pramsey;
-% B_ff_r_split(iaz_0:end,:)=Br(iaz_0:end,:);
-% 
-% % PLOT
-% figname='halo_magnetometry_split';
-% h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',f_ren);
-% 
-% tp=plotFlatMapWrappedRad(gaz,gel,B_ff_r_split,'rect','texturemap');
-% 
-% % label ROI
-% hold on;
-% for ii=1:n_loc_disp
-%     tazel=rad2deg(azel_disp(ii,:));
-%     tp=plot(tazel(1),tazel(2),...
-%         'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
-%         'Marker',mark_typ{ii},'MarkerSize',config_fig.mark_siz);
-% end
-% 
-% % annotation
-% ax=gca;
-% set(ax,'Layer','Top');
-% box on;
-% % grid on;
-% ax.FontSize=config_fig.ax_fontsize;
-% ax.LineWidth=config_fig.ax_lwid;
-% 
-% % axis tight;
-% xlim([-180,180]);
-% ylim([-90,90]);
-% xticks(-180:90:180);
-% yticks(-90:45:90);
-% 
-% xlabel('$\theta$ (deg)');
-% ylabel('$\phi$ (deg)');
-% 
-% colormap('viridis');
-% 
-% %%% colorbar
-% % cbar=colorbar('west');
-% cbar=colorbar('eastoutside');
-% cbar.TickLabelInterpreter='latex';
-% cbar.Label.Interpreter='latex';
-% cbar.Label.String='$\mathrm{B}$ (G)';
-% cbar.Label.FontSize=config_fig.ax_fontsize;
-% cbar.FontSize=config_fig.ax_fontsize;
-% % change colorbar width
-% pos_ax=get(gca,'Position');
-% pos_cbar=get(cbar,'Position');
-% pos_cbar(3)=0.03;
-% set(cbar,'Position',pos_cbar);
-% set(gca,'Position',pos_ax);
-% 
-% %%% hatch-out truncated region
-% % need to divide into two-regions (top,bottom) because of vecrast...
-% hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-%     'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
-%     'FaceColor','none','EdgeColor','none');
-% uistack(hpatch_trunc,'bottom');
-% H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
-%     'HatchColor','k','HatchLineWidth',config_fig.line_wid);
-% 
-% %%% indicate split
-% hpatch_star=patch('XData',[az(iaz_0),ax.XLim(2),ax.XLim(2),az(iaz_0)],...
-%     'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
-%     'FaceColor',clvir(1,:),'FaceAlpha',pf_alpha,'EdgeColor','none');
-% uistack(hpatch_star,'bottom');
 
 
 %% VIS (publication): Magnetic tomography: equatorial: P 
@@ -1352,19 +1097,6 @@ H_res_ff.edge(1).Color=clvir(2,:);
 H_res_ff.edge(2).Color=clvir(2,:);
 
 
-% %%%%% interrogation time
-% % SHADED ERR BAR
-% H_res_r=shadedErrorBar(rad2deg(az),Br(:,iel_0),Brerr(:,iel_0),'r');
-% H_res_r.mainLine.Color=cvir(1,:);
-% H_res_r.mainLine.LineStyle='-';
-% H_res_r.mainLine.LineWidth=1;
-% H_res_r.mainLine.DisplayName='$\mathbf{r}$ resolved $t^*$';
-% H_res_r.patch.FaceColor=clvir(1,:);  
-% H_res_r.patch.FaceAlpha=pf_alpha;
-% H_res_r.edge(1).Visible='off';
-% H_res_r.edge(2).Visible='off';
-
-
 % %%% ROI
 % for ii=1:n_loc_disp
 %     clearvars tp;
@@ -1410,7 +1142,7 @@ if do_save_figs
 end
 
 
-%% BB B-difference around equator (@ ff)
+%% BB B-difference around equator
 dth=mean(diff(az));     % incremental diff angle scanned around equator (rad)
 dI_pi=round(pi/dth);    % # increments to shift for azimuthal BB
 
@@ -1458,8 +1190,6 @@ ax.FontSize=9;
 % B-field difference @ BB regions around equator
 subplot(2,1,2);
 hold on;
-% plot(rad2deg(az),1e3*dB_eq_bb);         % BB B-field difference (G)
-% plot(rad2deg(az),1e3*dBerr_eq_bb);      % uncertainty (G)
 
 tp=shadedErrorBar(rad2deg(az),1e3*dB_eq_bb,1e3*dBerr_eq_bb,'k');
 % tp.mainLine.Color=cvir(2,:);
@@ -1481,73 +1211,23 @@ ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
 ax.FontSize=9;
 % ax.LineWidth=1;
 
-%% BB B-difference around equator (@ t star)
-% % PSF filtered
-% Br_eq_bb=circshift(Br(:,iel_0),dI_pi);
-% Brerr_eq_bb=circshift(Brerr(:,iel_0),dI_pi);
-% dBr_eq=abs(Br(:,iel_0)-Br_eq_bb);
-% dBrerr_eq=sqrt(Brerr(:,iel_0).^2 + Brerr_eq_bb.^2);
-% 
-% %%% vis
-% figname='dBbb_ramsey_r';
-% h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',f_ren);
-% 
-% % B-field around equator @ theta and theta+pi
-% subplot(2,1,1);
-% hold on;
-% % plot(rad2deg(az),Bk_eq);            % B-field (G)
-% % plot(rad2deg(az),Bk_eq_bb);         % B-field at BB region (G)
-% clearvars tp;
-% tp(1)=shadedErrorBar(rad2deg(az),Br(:,iel_0),Brerr(:,iel_0),'r',1);        % B-field (G)
-% tp(2)=shadedErrorBar(rad2deg(az),Br_eq_bb,Brerr_eq_bb,'b',1);  % B-field at BB region (G)
-% 
-% ax=gca;
-% set(ax,'Layer','Top');
-% xlim([0,180]);      % periodic
-% xticks(0:45:180);
-% xlabel('$\theta$ (deg)');
-% ylabel('$B$ (G)');
-% 
-% ax.FontSize=9;
-% % ax.LineWidth=1;
-% 
-% % lgd=legend([tp(1).mainLine,tp(2).mainLine],{'$\theta$','$\theta+\pi$'});
-% 
-% % B-field difference @ BB regions around equator
-% subplot(2,1,2);
-% hold on;
-% % plot(rad2deg(az),1e3*dB_eq_bb);         % BB B-field difference (G)
-% % plot(rad2deg(az),1e3*dBerr_eq_bb);      % uncertainty (G)
-% 
-% tp=shadedErrorBar(rad2deg(az),1e3*dBr_eq,1e3*dBrerr_eq,'k');
-% % tp.mainLine.Color=cvir(2,:);
-% % tp.mainLine.LineWidth=1;
-% % tp.patch.FaceColor=clvir(2,:);
-% % tp.patch.FaceAlpha=pf_alpha;
-% % tp.edge(1).Visible='off';
-% % tp.edge(2).Visible='off';
-% 
-% ax=gca;
-% set(ax,'Layer','Top');
-% xlim([0,180]);      % periodic
-% ylim_0=ax.YLim;
-% ylim([0,ylim_0(2)]);
-% 
-% xticks(0:45:180);
-% xlabel('$\theta$ (deg)');
-% ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
-% 
-% ax.FontSize=9;
-% % ax.LineWidth=1;
 
+%% dBdx (equator)
+% mean estimate of dBdx
+dBdx_eq=dB_eq_bb/d_sep;     % in G/m
 
-%% dBdx (equator) (ff)
-dBdx_eq_ff=dB_eq_bb/d_sep;     % in G/m
-dBdx_eq_se_ff=dBerr_eq_bb/d_sep;     
+% standard error
+%       in progress
+% error in separation dist
+dx_frerr=sqrt(2)*sig_psf_r/d_sep;       % frac-err of diff X
+dB_frerr=dBerr_eq_bb./dB_eq_bb;         % frac-err of diff B
+dBdx_eq_frerr=sqrt(dx_frerr^2+dB_frerr.^2); % frac-err of dBdx
+dBdx_eq_se=dBdx_eq_frerr.*dBdx_eq;
 
+% plot --------------------------------------------
 figname='dBdx_ramsey_ff';
 h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',f_ren);
-tp=shadedErrorBar(rad2deg(az),dBdx_eq_ff,dBdx_eq_se_ff,'k');
+tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdx_eq_se,'k');
 
 ax=gca;
 set(ax,'Layer','Top');
@@ -1562,34 +1242,22 @@ xlabel('$\theta$ (deg)');
 ylabel('$d\mathrm{B}/dx$ (G/m)');
 
 
-%% dBdx (equator) (t star)
-% dBdx_eq_int=dBr_eq/d_sep;     % in G/m
-% dBdx_eq_se_int=dBrerr_eq/d_sep;     
-% 
-% figname='dBdx_ramsey_r';
-% h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',f_ren);
-% tp=shadedErrorBar(rad2deg(az),dBdx_eq_int,dBdx_eq_se_int,'k');
-% 
-% ax=gca;
-% set(ax,'Layer','Top');
-% 
-% xlim([0,180]);      % periodic
-% ylim_Original=ax.YLim;
-% ylim([0,ylim_Original(2)]);
-% 
-% xticks(0:45:180);
-% 
-% xlabel('$\theta$ (deg)');
-% ylabel('$d\mathrm{B}/dx$ (G/m)');
-
-
 %% save outputs
-vars_to_save={'az','el','iel_0','gaz','gel',...
+vars_to_save={'az','el','iel_0','gaz','gel','alpha',...
     'tau','P_k_avg','P_k_se',...
+    'Pramseyk_fit','P_k',...
     'B_Pramsey_halo','Berr_Pramsey_halo',...
     'Bk_Pramsey','Berrk_Pramsey',...
     'Bk_eq','Bkerr_eq',...
-    'dBdx_eq_ff','dBdx_eq_se_ff'};  
+    'dBdx_eq','dBdx_eq_se'};  
+
+% check exist
+for ii=1:numel(vars_to_save)
+    tvarname=vars_to_save{ii};
+    if ~exist(tvarname,'var')
+        warning('variable %s does not exist.',tvarname);
+    end
+end
 
 save(['out_',getdatetimestr,'.mat'],vars_to_save{:});
 
