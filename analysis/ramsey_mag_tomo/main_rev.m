@@ -14,47 +14,30 @@
 %
 
 %% CONFIGS
-% save
-do_save_figs=false;
-dir_save='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\ramsey\prelim_20181128';
+% raw data ------------------------------------------------------
+run('config_v1');
 
-
-% Phys-constants
+% Phys-constants ------------------------------------------------
 Cphys=physConsts;
 C_gymag=Cphys.He_gymag;         % He* gyromagnetic ratio (gamma) [Hz/G]
 
+% vis -----------------------------------------------------------
+% publication
+config_fig = loadFigureConfig;      % load template
 
-% vis
+config_fig.pf_alpha=0.33;       % patch face alpha
+config_fig.mark_typ={'^','+','o','d'};
+
+config_fig.col_theme=viridis(3);
+config_fig.coll_theme=colshades(config_fig.col_theme);
+
+% misc
 f_units='normalized';
 f_pos=[0.2,0.2,0.2,0.3];
 f_pos_wide=[0.2,0.2,0.25,0.3];
-f_ren='painters';
 
-cvir=viridis(3);
-clvir=colshades(cvir);
-cvir2=viridis(5);
-clvir2=colshades(cvir2);
-[col,coll,cold]=palette(3);
-c_gray=0.8*ones(1,3);
-line_sty={'-','--',':','-.'};
-% mark_typ={'o','s','^','d'};
-mark_typ={'^','+','o','d'};
-% str_mm={'$x$','$y$','$z$'};
-str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
-% str_ss={'$m_J = 1$','$m_J = 0$'};
-% str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
-mark_siz=7;
-line_wid=1.5;
 fontsize=12;
 ax_lwidth=1.2;
-
-pf_alpha=0.33;      % patch face alpha
-
-config_fig = loadFigureConfig;
-
-%% load raw data
-run('config_v1');
-
 
 %% Get experimental params
 % load logfile
@@ -604,17 +587,17 @@ Berr_Pramsey_halo=1e6*omerr_Pramsey_halo/(2*pi*C_gymag);
 
 %% VIS: Ramsey fringe (pop-inv)
 figname='Pramsey_fringe_halo';
-h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',config_fig.rend);
 hold on;
 
 pexp=ploterr(1e6*tau,P_halo_avg,...
     [],P_halo_se,'o','hhxy',0);
-set(pexp(1),'MarkerFaceColor',clvir(1,:),'MarkerEdgeColor',cvir(1,:));
-set(pexp(2),'Color',cvir(1,:));
+set(pexp(1),'MarkerFaceColor',config_fig.coll_theme(1,:),'MarkerEdgeColor',config_fig.col_theme(1,:));
+set(pexp(2),'Color',config_fig.col_theme(1,:));
 
 tt_fit=1e6*linspace(min(tau),max(tau),1e3);     % x-axis range for fitted curve
 yy_fit=feval(Pramsey_fit_halo,tt_fit);
-pfit=plot(tt_fit,yy_fit,'LineStyle',line_sty{1},'Color',clvir(1,:));
+pfit=plot(tt_fit,yy_fit,'LineStyle',config_fig.line_sty{1},'Color',config_fig.coll_theme(1,:));
 uistack(pfit,'bottom');
 
 titlestr=sprintf('%s %0.3g(%0.1g) MHz','$f_L=$',om_Pramsey_halo/(2*pi),omerr_Pramsey_halo(idx_phi0)/(2*pi));
@@ -645,14 +628,15 @@ end
 %% atom number distribution: nk_m
 %%% Spatial zones
 % construct spatial zones at latlon grid + solid angle
-% alpha=sig_psf_beta;           % half-cone angle of integration bin (rad)
+% half-cone angle of integration bin (rad)
+% alpha=sig_psf_beta;          % limiting spatial resolution 
 alpha=sig_psf_gradiometry;      % bin-size like gradiometry (rad)
 lim_az=[-pi,pi];        % no inversion symmetry
 phi_max=pi/2;           
 lim_el=[-phi_max,phi_max];
 
-n_az=120;                	% equispaced bins
-n_el=60;
+n_az=200;                	% equispaced bins
+n_el=100;
 
 % % QUICK DEBUG
 % n_az=40;
@@ -900,7 +884,7 @@ cl_loc=[0,1,1]'*[1,1,1];
 
 
 figname='Pramsey_fringe_mode';
-h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',config_fig.rend);
 hold on;
 
 pleg=[];
@@ -913,7 +897,7 @@ for ii=1:n_loc_disp
     
     dY_data=(ii-2)*0.5;
     
-    pexp=ploterr(1e6*tau,dY_data + tp,[],tperr,mark_typ{ii},'hhxy',0);
+    pexp=ploterr(1e6*tau,dY_data + tp,[],tperr,config_fig.mark_typ{ii},'hhxy',0);
     set(pexp(1),'MarkerEdgeColor',c_loc(ii,:),...
         'MarkerFaceColor',cl_loc(ii,:),...
         'MarkerSize',config_fig.mark_siz,...
@@ -923,7 +907,7 @@ for ii=1:n_loc_disp
     
     yy=feval(Pramseyk_fit{iazel(1),iazel(2)},tt_fit);
     pfit=plot(tt_fit,dY_data + yy,...
-        'LineWidth',config_fig.line_wid,'LineStyle',line_sty{ii},'Color',c_loc(ii,:));
+        'LineWidth',config_fig.line_wid,'LineStyle',config_fig.line_sty{ii},'Color',c_loc(ii,:));
     uistack(pfit,'bottom');
 end
 ax=gca;
@@ -948,19 +932,9 @@ ylabel('polarisation');
 % lgd=legend(pleg);
 % title(lgd,'$(\theta,~\phi)$ (deg)');
 
-% save fig
-if do_save_figs
-    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
-    fpath=fullfile(dir_save,savefigname);
-    
-    saveas(h,strcat(fpath,'.fig'),'fig');
-    print(h,strcat(fpath,'.svg'),'-dsvg');
-end
-
-
 %% VIS (publication): Magnetometry (detected)
 figname='halo_magnetometry_ff';
-h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 
 tp=plotFlatMapWrappedRad(gaz,gel,Bk_Pramsey,'rect','texturemap');
 
@@ -972,7 +946,7 @@ for ii=1:n_loc_disp
     tazel=rad2deg(azel_disp(ii,:));
     tp=plot(tazel(1),tazel(2),...
         'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
-        'Marker',mark_typ{ii},'MarkerSize',config_fig.mark_siz);
+        'Marker',config_fig.mark_typ{ii},'MarkerSize',config_fig.mark_siz);
 end
 
 % annotation
@@ -1010,14 +984,14 @@ set(cbar,'Position',pos_cbar);
 set(gca,'Position',pos_ax);
 
 
-% % hatch-out truncated region --------------------------
-% % TODO - vecrast
-% hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-%     'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
-%     'FaceColor','none','EdgeColor','none');
-% uistack(hpatch_trunc,'bottom');
-% H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
-%     'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+% hatch-out truncated region --------------------------
+% TODO - vecrast
+hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+    'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+    'FaceColor','none','EdgeColor','none');
+uistack(hpatch_trunc,'bottom');
+H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
+    'HatchColor','k','HatchLineWidth',config_fig.line_wid);
 
 
 %---------------------------------------------
@@ -1026,25 +1000,15 @@ set(gca,'Position',pos_ax);
 % vecrast(h,strcat('B_dist_',getdatetimestr),600,'bottom','pdf')
 %---------------------------------------------
 
-% save fig
-if do_save_figs
-    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
-    fpath=fullfile(dir_save,savefigname);
-    
-    saveas(h,strcat(fpath,'.fig'),'fig');
-    print(h,strcat(fpath,'.png'),'-dpng','-r300');
-end
-
-
 %% VIS (publication): Magnetic tomography: equatorial: P 
 figname='B_equatorial_tomography_P';
-h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',config_fig.rend);
 hold on;
 
 % %%% EQ-integrated 
 % H_eq_int=shadedErrorBar([-180,180],B_Pramsey_eq*[1,1],Berr_Pramsey_eq*[1,1],'k');
 % H_eq_int.mainLine.LineWidth=1;
-% H_eq_int.patch.FaceAlpha=pf_alpha;
+% H_eq_int.patch.FaceAlpha=config_fig.pf_alpha;
 % H_eq_int.mainLine.DisplayName='$\theta$ int';
 % H_eq_int.edge(1).Visible='off';
 % H_eq_int.edge(2).Visible='off';
@@ -1079,22 +1043,22 @@ H_halo_int.edge(2).Visible='off';
 % %PLOTERR
 % tp=ploterr(rad2deg(az),Bk_eq,[],Bkerr_eq,'o','hhxy',0);
 % set(tp(1),'Marker','.','MarkerSize',4.5,...
-%     'MarkerFaceColor',clvir(2,:),'MarkerEdgeColor',cvir(2,:),...
+%     'MarkerFaceColor',config_fig.coll_theme(2,:),'MarkerEdgeColor',config_fig.col_theme(2,:),...
 %     'DisplayName','');
-% set(tp(2),'Color',cvir(2,:));
+% set(tp(2),'Color',config_fig.col_theme(2,:));
 
 % SHADED ERR BAR
 H_res_ff=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
-H_res_ff.mainLine.Color=cvir(2,:);
+H_res_ff.mainLine.Color=config_fig.col_theme(2,:);
 H_res_ff.mainLine.LineStyle='-';
 H_res_ff.mainLine.LineWidth=1;
 H_res_ff.mainLine.DisplayName='$\mathbf{r}$ resolved $\infty$';
-H_res_ff.patch.FaceColor=clvir(2,:);  
-H_res_ff.patch.FaceAlpha=pf_alpha;
+H_res_ff.patch.FaceColor=config_fig.coll_theme(2,:);  
+H_res_ff.patch.FaceAlpha=config_fig.pf_alpha;
 % H_res_ff.edge(1).Visible='off';
 % H_res_ff.edge(2).Visible='off';
-H_res_ff.edge(1).Color=clvir(2,:);
-H_res_ff.edge(2).Color=clvir(2,:);
+H_res_ff.edge(1).Color=config_fig.coll_theme(2,:);
+H_res_ff.edge(2).Color=config_fig.coll_theme(2,:);
 
 
 % %%% ROI
@@ -1104,7 +1068,7 @@ H_res_ff.edge(2).Color=clvir(2,:);
 %     iazel=loc_disp(ii,:);
 %     taz_disp=azel_disp(ii,1);
 %     tp=ploterr(rad2deg(taz_disp),Bk_eq(iazel(1)),[],Bkerr_eq(iazel(1)),...
-%         mark_typ{ii},'hhxy',1);
+%         config_fig.mark_typ{ii},'hhxy',1);
 %     
 %     set(tp(1),'MarkerEdgeColor',c_loc(ii,:),...
 %         'MarkerFaceColor',cl_loc(ii,:),...
@@ -1132,16 +1096,6 @@ axis_snug(ax,[0,0.1]);
 % lgd=legend([H_res_r.mainLine,H_res_ff.mainLine,H_r_int.mainLine]);
 % lgd.Location='eastoutside';
 
-% save fig
-if do_save_figs
-    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
-    fpath=fullfile(dir_save,savefigname);
-    
-    saveas(h,strcat(fpath,'.fig'),'fig');
-    print(h,strcat(fpath,'.svg'),'-dsvg');
-end
-
-
 %% BB B-difference around equator
 dth=mean(diff(az));     % incremental diff angle scanned around equator (rad)
 dI_pi=round(pi/dth);    % # increments to shift for azimuthal BB
@@ -1164,7 +1118,7 @@ dBerr_eq_bb=sqrt(Bkerr_eq_bb.^2 + Bkerr_eq.^2);     % uncorrelated noise
 
 %%% vis
 figname='dBbb_ramsey_ff';
-h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',config_fig.rend);
 
 % B-field around equator @ theta and theta+pi
 subplot(2,1,1);
@@ -1192,10 +1146,10 @@ subplot(2,1,2);
 hold on;
 
 tp=shadedErrorBar(rad2deg(az),1e3*dB_eq_bb,1e3*dBerr_eq_bb,'k');
-% tp.mainLine.Color=cvir(2,:);
+% tp.mainLine.Color=config_fig.col_theme(2,:);
 % tp.mainLine.LineWidth=1;
-% tp.patch.FaceColor=clvir(2,:);
-% tp.patch.FaceAlpha=pf_alpha;
+% tp.patch.FaceColor=config_fig.coll_theme(2,:);
+% tp.patch.FaceAlpha=config_fig.pf_alpha;
 % tp.edge(1).Visible='off';
 % tp.edge(2).Visible='off';
 
@@ -1226,7 +1180,7 @@ dBdx_eq_se=dBdx_eq_frerr.*dBdx_eq;
 
 % plot --------------------------------------------
 figname='dBdx_ramsey_ff';
-h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',f_ren);
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',config_fig.rend);
 tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdx_eq_se,'k');
 
 ax=gca;
@@ -1243,9 +1197,12 @@ ylabel('$d\mathrm{B}/dx$ (G/m)');
 
 
 %% save outputs
-vars_to_save={'az','el','iel_0','gaz','gel','alpha',...
+vars_to_save={'az','el','gaz','gel','alpha',...
+    'configs','config_fig',...
+    'iaz_0','iel_0','n_loc_disp','azel_disp',...
     'tau','P_k_avg','P_k_se',...
     'Pramseyk_fit','P_k',...
+    'tt_fit',...
     'B_Pramsey_halo','Berr_Pramsey_halo',...
     'Bk_Pramsey','Berrk_Pramsey',...
     'Bk_eq','Bkerr_eq',...
