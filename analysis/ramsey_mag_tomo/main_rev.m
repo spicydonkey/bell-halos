@@ -559,6 +559,8 @@ Pramsey_par0=[1,2*pi*1.5,pi];
 
 idx_om_Pramsey=2;     %find(cellfun(@(s) strcmp(s,'om'),Pramsey_cname)==1);
 
+% domain x to evaluate fit
+tt_fit=1e6*linspace(min(tau),max(tau),1e3);     % x-axis range for fitted curve
 
 %% collate all data x-values
 tt=arrayfun(@(x,n) x*ones(n,1),tau,n_shot,'UniformOutput',false);
@@ -595,7 +597,6 @@ pexp=ploterr(1e6*tau,P_halo_avg,...
 set(pexp(1),'MarkerFaceColor',config_fig.coll_theme(1,:),'MarkerEdgeColor',config_fig.col_theme(1,:));
 set(pexp(2),'Color',config_fig.col_theme(1,:));
 
-tt_fit=1e6*linspace(min(tau),max(tau),1e3);     % x-axis range for fitted curve
 yy_fit=feval(Pramsey_fit_halo,tt_fit);
 pfit=plot(tt_fit,yy_fit,'LineStyle',config_fig.line_sty{1},'Color',config_fig.coll_theme(1,:));
 uistack(pfit,'bottom');
