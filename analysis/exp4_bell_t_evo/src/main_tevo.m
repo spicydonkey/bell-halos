@@ -5,7 +5,9 @@
 tic
 
 %% CONFIGS
-% data file
+% preprocessed data file
+%   - normalised momentum vectors
+%   - categorised in t-delay
 fdata='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\exp4_tevo\exp4_20181029.mat';
 
 
@@ -32,51 +34,50 @@ lim_el=[-phi_max,phi_max];
 n_az=40;                	% equispaced bins
 n_el=20;
 
-az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
+% n_az=1;                	% equispaced bins
+% n_el=1;
 
+
+az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
 
 % g2 -------------------------------------------------------------
 n_dk=7;
 lim_dk=[-0.2,0.2];
 
 % bootstrapping
-bs_frac=0.1;      
-bs_nrep=20;
+bs_frac=0.1;        % 0.1   
+bs_nrep=10;         % 20
 
 
 % Physical constants ---------------------------------------------
 Cphys=physConsts;
 C_gymag=Cphys.He_gymag;         % He* gyromagnetic ratio (gamma) [Hz/G]
 
-
 % vis ----------------------------------------------------------------
+% publication
 config_fig = loadFigureConfig;
 
+config_fig.mark_typ={'+','o','^','d'};
+config_fig.line_sty={'-','--',':','-.'};
+
+config_fig.col_theme=parula(5);       % theme color
+config_fig.coll_theme=colshades(config_fig.col_theme);
+
+idx_col=2;     % mid-color 
+
+% misc
 f_units='normalized';
 f_pos=[0.2,0.2,0.2,0.3];
 f_pos_wide=[0.2,0.2,0.25,0.3];
-f_ren='painters';
+config_fig.rend='painters';
 
-[c,cl,cd]=palette(3);
-line_sty={'-','--',':','-.'};
-mark_typ={'+','o','^','d'};
 mark_siz=7;
 line_wid=1.5;
 fontsize=12;
 ax_lwidth=1.2;
 
-% theme color
-ctheme=parula(5);
-ctheme=ctheme(1:end-1,:);
-cltheme=colshades(ctheme);
 
-idx_col=2;     % mid-color 
-
-% marker colors
-c_loc=zeros(length(iaz_disp),3);        % *BLACK* markers (simple)
-cl_loc=[1,1,0]'*[1,1,1];
-
-%% load data
+%% load preprocessed data
 load(fdata);
 
 %% transform to RH coords
@@ -99,7 +100,9 @@ k_tau{1}=k_tau{1}(1:3000,:);
 %% create halo sections to investigate
 Vaz=linspace(lim_az(1),lim_az(2),n_az+1);
 Vaz=Vaz(1:end-1);       % exclude last
-Vel=linspace(lim_el(1),lim_el(2),n_el);
+% Vel=linspace(lim_el(1),lim_el(2),n_el);
+Vel=0;          % THIS LINE IS DEV investigation
+
 
 [vaz,vel]=ndgrid(Vaz,Vel);    % AZ-EL grid
 n_zone=numel(vaz);
@@ -219,7 +222,7 @@ end
 %%% ALL
 [cc,ccl,ccd]=palette(n_zone);
 
-h=figure('Name','triplet_halo_tevo','Units',f_units,'Position',f_pos,'Renderer',f_ren);
+h=figure('Name','triplet_halo_tevo','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
 hold on;
 
 for ii=1:n_zone
@@ -251,7 +254,7 @@ for ii=1:length(iaz_disp)
     
     % figure
     figure('Name',figname,...
-        'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
+        'Units',f_units,'Position',f_pos_wide,'Renderer',config_fig.rend);
     hold on;
     
     pleg=NaN(n_el,1);
@@ -268,10 +271,10 @@ for ii=1:length(iaz_disp)
 %             'LineWidth',line_wid,'Color',cc(jj,:));
 %         uistack(tpf,'bottom');
         
-        % 2
-        tpf=plot(t_fit,B0_fit2{iaz,jj},'-',...
-            'LineWidth',line_wid,'Color',cc(jj,:));
-        uistack(tpf,'bottom');
+%         % 2
+%         tpf=plot(t_fit,B0_fit2{iaz,jj},'-',...
+%             'LineWidth',line_wid,'Color',cc(jj,:));
+%         uistack(tpf,'bottom');
         
     end
     
@@ -295,7 +298,7 @@ end
 H=[];
 for ii=1:n_tau
     figname=sprintf('B0_sphdist_3d_%0.2f',tau(ii));
-    H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
     tB0=squeeze(B0(ii,:,:));
 
 %     tp=plot_sph_surf(vaz,vel,tB0);
@@ -333,7 +336,7 @@ end
 H=[];
 for ii=1:n_tau
     figname=sprintf('B0_sphdist_2d_%0.2f',tau(ii));
-    H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
     tB0=squeeze(B0(ii,:,:));
     
 %     tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),tB0,'eckert4','texturemap');
@@ -510,15 +513,19 @@ end
 
 
 %% STAT: regions to display parity signal
-% max, min and middle
+%%% VIS ============================================
+c_loc=zeros(length(iaz_disp),3);        % *BLACK* markers (simple)
+cl_loc=[1,1,0]'*[1,1,1];
+
+%%% max, min and middle ============================================
 loc_disp_2pi=[];    % row-array of (Iaz,Iel)-location to display (in 2*pi wrapped)
 azel_disp=[];   % (az,el)
 
-%%% theta,phi=(0,0) ----------------------------------------------
+% theta,phi=(0,0) ----------------------------------------------
 % loc_disp_2pi(end+1,:)=[iaz_0,iel_0];
 % azel_disp(end+1,:)=[az(iaz_0),el(iel_0)];
 
-%%% max -----------------------------------------------------------
+% max -----------------------------------------------------------
 dBdx_max=max(dBdx(:));
 [iaz_max,iel_max]=find(dBdx==dBdx_max);
 iaz_max=iaz_max(end);     % due to symmetry there can be multiple
@@ -526,7 +533,7 @@ iel_max=iel_max(end);
 loc_disp_2pi(end+1,:)=[iaz_max,iel_max];
 azel_disp(end+1,:)=[az(iaz_max),el(iel_max)];
 
-%%% min --------------------------------------------------------------
+% min --------------------------------------------------------------
 dBdx_min=min(dBdx(:));
 [iaz_min,iel_min]=find(dBdx==dBdx_min);
 iaz_min=iaz_min(1);
@@ -534,7 +541,7 @@ iel_min=iel_min(1);
 loc_disp_2pi(end+1,:)=[iaz_min,iel_min];
 azel_disp(end+1,:)=[az(iaz_min),el(iel_min)];
 
-%%% middle (in-between min-max) ----------------------------------------
+% middle (in-between min-max) ----------------------------------------
 iaz_mid=round(0.5*(iaz_max+iaz_min));
 iel_mid=round(0.5*(iel_max+iel_min));
 loc_disp_2pi(end+1,:)=[iaz_mid,iel_mid];
@@ -564,8 +571,8 @@ end
 
 %% vis: Parity evolution fit (publication)
 figname='B0_tevo_eqt';
-% figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
+% figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',config_fig.rend);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',config_fig.rend);
 hold on;
 
 % disp_iaz=iaz_disp;
@@ -579,7 +586,7 @@ for ii=1:n_loc_disp
 % tp=ploterr(tau,squeeze(B0(:,tiaz,iel_0)),[],squeeze(B0_bs_se(:,tiaz,iel_0)),'o','hhxy',0);
 
     tp=ploterr(tau,squeeze(B0(:,iazel(1),iazel(2))),[],squeeze(B0_bs_se(:,iazel(1),iazel(2))),'o','hhxy',0);
-    set(tp(1),'Marker',mark_typ{ii},'MarkerSize',4.5,...
+    set(tp(1),'Marker',config_fig.mark_typ{ii},'MarkerSize',4.5,...
         'MarkerFaceColor',cl_loc(ii,:),'Color',c_loc(ii,:),'DisplayName',num2str(rad2deg(Vaz(tiaz)),2));
     set(tp(2),'Color',c_loc(ii,:));
     pleg(ii)=tp(1);
@@ -588,17 +595,17 @@ for ii=1:n_loc_disp
 %     %%%% MODEL1
 %     % stationary before tau0 (Psi+ stationary --> parity=1)
 %     tpf=plot([0,T_so],[1,1],...
-%         line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
+%         config_fig.line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
 %     uistack(tpf,'bottom');
 %     
 %     % dynamics after turn-on
 %     tpf=plot(tau0_fit+T_so,B0_fit{tiaz,iel_0},...
-%         line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
+%         config_fig.line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
 %     uistack(tpf,'bottom');
 
     %%%% MODEL2
     tpf=plot(t_fit,B0_fit2{iazel(1),iazel(2)},...
-    line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
+    config_fig.line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
     uistack(tpf,'bottom');
 end
 
@@ -622,7 +629,7 @@ ylim(1.5*[-1,1]);
 
 
 %% vis: Model 1: deltaB (asymmetry measure) around halo: t-indep model (3D SPH)
-% h=figure('Name','deltaB_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
+% h=figure('Name','deltaB_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
 % 
 % % tp=plot_sph_surf(vaz,vel,1e3*deltaB);
 % [vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB);
@@ -648,7 +655,7 @@ ylim(1.5*[-1,1]);
 % cbar.Label.FontSize=fontsize;
 
 %% vis: dBdx around halo: Model2 (3D SPH)
-% h=figure('Name','dBdx_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
+% h=figure('Name','dBdx_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
 % 
 % % [vazf,velf,dBdxf]=autofill_cent_symm(vaz,vel,dBdx_ff);
 % % tp=plot_sph_surf(vazf,velf,dBdxf);
@@ -675,7 +682,7 @@ ylim(1.5*[-1,1]);
 % cbar.Label.FontSize=fontsize;
 
 %% vis: deltaB (asymmetry measure) around halo: t-indep model (2D PROJ MAP)
-% h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
+% h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
 % 
 % % tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),1e3*deltaB,'rect','texturemap');
 % tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaBf,'eckert4','texturemap');
@@ -696,7 +703,7 @@ ylim(1.5*[-1,1]);
 
 %% vis: dBdx - rectangular (publication) (@ff)
 figname='dBdx_rectmap_ff';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 
 tp=plotFlatMapWrappedRad(gaz,gel,dBdx,'rect','texturemap');
 % tp=plotFlatMapWrappedRad(gaz,gel,dBdx_se_ff,'rect','texturemap');
@@ -718,7 +725,7 @@ for ii=1:n_loc_disp
     tazel=azel_disp(ii,:);
     
 %     tiaz=disp_iaz(ii);
-    tp=plot(rad2deg(tazel(1)),rad2deg(tazel(2)),'Marker',mark_typ{ii},...
+    tp=plot(rad2deg(tazel(1)),rad2deg(tazel(2)),'Marker',config_fig.mark_typ{ii},...
         'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
         'MarkerSize',config_fig.mark_siz);
 end
@@ -759,18 +766,18 @@ set(gca,'Position',pos_ax);
 
 
 % hatch-out truncated region --------------------------
-% % hack: two separate hatched regions
-% hpatch_trunc(1)=patch('XData',180*[-1,1,1,-1],...
-%     'YData',[-90,-90,-45,-45],...
-%     'FaceColor','none','EdgeColor','none');
-% H_trunc(1)=hatchfill2(hpatch_trunc(1),'single','HatchAngle',45,'HatchDensity',20,...
-%     'HatchColor','k','HatchLineWidth',config_fig.line_wid);
-% 
-% hpatch_trunc(2)=patch('XData',180*[-1,1,1,-1],...
-%     'YData',[45,45,90,90],...
-%     'FaceColor','none','EdgeColor','none');
-% H_trunc(2)=hatchfill2(hpatch_trunc(2),'single','HatchAngle',45,'HatchDensity',20,...
-%     'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+% hack: two separate hatched regions
+hpatch_trunc(1)=patch('XData',180*[-1,1,1,-1],...
+    'YData',[-90,-90,-45,-45],...
+    'FaceColor','none','EdgeColor','none');
+H_trunc(1)=hatchfill2(hpatch_trunc(1),'single','HatchAngle',45,'HatchDensity',20,...
+    'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+
+hpatch_trunc(2)=patch('XData',180*[-1,1,1,-1],...
+    'YData',[45,45,90,90],...
+    'FaceColor','none','EdgeColor','none');
+H_trunc(2)=hatchfill2(hpatch_trunc(2),'single','HatchAngle',45,'HatchDensity',20,...
+    'HatchColor','k','HatchLineWidth',config_fig.line_wid);
 
 % TODO - vecrast (the whole axes as bottom layer)
 % hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
@@ -790,7 +797,7 @@ set(gca,'Position',pos_ax);
 
 %% vis: Model 1: deltaB - rectangular (publication)
 % figname='deltaB_rectmap';
-% h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',f_ren);
+% h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 % 
 % % AZIM in [0,pi]
 % vaz_pi=vaz;
@@ -806,7 +813,7 @@ set(gca,'Position',pos_ax);
 % hold on;
 % for ii=1:numel(disp_iaz)
 %     tiaz=disp_iaz(ii);
-%     tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',mark_typ{ii},...
+%     tp=plot(rad2deg(Vaz(tiaz)),rad2deg(Vel(iel_0)),'Marker',config_fig.mark_typ{ii},...
 %         'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
 %         'MarkerSize',config_fig.mark_siz);
 % end
@@ -862,10 +869,10 @@ set(gca,'Position',pos_ax);
 % %%% configs
 % p_xlim=[0,180];     % periodic BC
 % 
-% % ctheme=magma(5);
-% ctheme=parula(5);
-% ctheme=ctheme(1:end-1,:);
-% cltheme=colshades(ctheme);
+% % config_fig.col_theme=magma(5);
+% config_fig.col_theme=parula(5);
+% config_fig.col_theme=config_fig.col_theme(1:end-1,:);
+% config_fig.coll_theme=colshades(config_fig.col_theme);
 % 
 % idx_col=2;     % mid-color 
 % 
@@ -884,8 +891,8 @@ set(gca,'Position',pos_ax);
 % 
 % %%% PLOT
 % figname='dB_equatorial_tomography';
-% % h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',f_ren);
-% h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
+% % h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',config_fig.rend);
+% h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',config_fig.rend);
 % 
 % hold on;
 % 
@@ -897,21 +904,21 @@ set(gca,'Position',pos_ax);
 % 
 % tp=ploterr(rad2deg(Vaz(not_roi)),1e3*dB_eq(not_roi),[],1e3*dBerr_eq(not_roi),'.','hhxy',0);
 % set(tp(1),'Marker','*','MarkerSize',config_fig.mark_siz,...
-%     'MarkerFaceColor',[1,1,1],'MarkerEdgeColor',ctheme(idx_col,:));
-% set(tp(2),'Color',ctheme(idx_col,:));
+%     'MarkerFaceColor',[1,1,1],'MarkerEdgeColor',config_fig.col_theme(idx_col,:));
+% set(tp(2),'Color',config_fig.col_theme(idx_col,:));
 % pleg=tp(1);
 % 
 % % %%% SHADED ERR BAR
 % % tp=shadedErrorBar(rad2deg(Vaz),1e3*dB_eq,1e3*dBerr_eq,'r');
-% % tp.mainLine.Color='none';  %ctheme(idx_col,:);
+% % tp.mainLine.Color='none';  %config_fig.col_theme(idx_col,:);
 % % tp.mainLine.LineWidth=config_fig.ax_lwid;
-% % tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
+% % tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
 % % tp.patch.FaceAlpha=0.33;
 % % tp.edge(1).Visible='off';
 % % tp.edge(2).Visible='off';
 % 
 % % fit
-% pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',ctheme(idx_col,:),...
+% pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',config_fig.col_theme(idx_col,:),...
 %     'LineWidth',config_fig.ax_lwid);
 % uistack(pfit,'bottom');
 % 
@@ -931,7 +938,7 @@ set(gca,'Position',pos_ax);
 %     iazel=[disp_iaz(ii),iel_0];
 %     taz_disp=Vaz(iazel(1));    
 %     tp=ploterr(rad2deg(taz_disp),1e3*dB_eq(iazel(1)),[],1e3*dBerr_eq(iazel(1)),...
-%         mark_typ{ii},'hhxy',1);
+%         config_fig.mark_typ{ii},'hhxy',1);
 %     
 %     set(tp(1),'MarkerEdgeColor',c_loc(ii,:),...
 %         'MarkerFaceColor',cl_loc(ii,:),...
@@ -987,12 +994,12 @@ dBdxerr_eq=dBdx_se(:,iel_0);
 
 %%% PLOT
 figname='dBdx_equatorial_tomography';
-h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',f_ren);
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',config_fig.rend);
 hold on;
 
 % data-------------------------------------------------------------------
 % Ramsey estimate
-ramsey_fname='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ramsey_mag_tomo\out\out_20190220_142302.mat';
+ramsey_fname='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ramsey_mag_tomo\out\out_20190221_101042';
 
 vars_to_load={'az','el','dBdx_eq','dBdx_eq_se'};
 S_ramsey=load(ramsey_fname,vars_to_load{:});
@@ -1002,7 +1009,7 @@ tp=shadedErrorBar(rad2deg(S_ramsey.az),S_ramsey.dBdx_eq,S_ramsey.dBdx_eq_se,'k')
 tp.mainLine.Color=0.3*ones(1,3);    %  'k';    % 'none';
 tp.mainLine.LineWidth=1;
 tp.mainLine.LineStyle='--';
-% tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
+% tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
 % tp.patch.FaceAlpha=0.33;
 tp.edge(1).Visible='off';
 tp.edge(2).Visible='off';
@@ -1015,9 +1022,9 @@ tp.edge(2).Visible='off';
 
 % SHADED ERR BAR
 tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdxerr_eq,'r');
-tp.mainLine.Color=ctheme(idx_col,:);    % 'none';
+tp.mainLine.Color=config_fig.col_theme(idx_col,:);    % 'none';
 tp.mainLine.LineWidth=1;
-tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
+tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
 tp.patch.FaceAlpha=0.33;
 tp.edge(1).Visible='off';
 tp.edge(2).Visible='off';
@@ -1029,7 +1036,7 @@ tp.edge(2).Visible='off';
 %     iazel=[disp_iaz(ii),iel_0];
 %     taz_disp=Vaz(iazel(1));    
 %     tp=ploterr(rad2deg(taz_disp),dBdx_eq(iazel(1)),[],dBdxerr_eq(iazel(1)),...
-%         mark_typ{ii},'hhxy',1);
+%         config_fig.mark_typ{ii},'hhxy',1);
 %     
 %     set(tp(1),'MarkerEdgeColor',c_loc(ii,:),...
 %         'MarkerFaceColor',cl_loc(ii,:),...
@@ -1072,9 +1079,9 @@ tp.edge(2).Visible='off';
 
 % gradiometry
 tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdxerr_eq,'r');
-tp.mainLine.Color=ctheme(idx_col,:);    % 'none';
+tp.mainLine.Color=config_fig.col_theme(idx_col,:);    % 'none';
 tp.mainLine.LineWidth=1;
-tp.patch.FaceColor=ctheme(idx_col,:);       %cltheme(idx_col,:);
+tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
 tp.patch.FaceAlpha=0.33;
 tp.edge(1).Visible='off';
 tp.edge(2).Visible='off';
@@ -1087,7 +1094,7 @@ xlim(90+10*[-1,1]);
 ylim(dBdx_pi2*(1+1*[-1,1]));
 % set(ax2,'XTickLabel',[]);
 ax2.FontSize=ax.FontSize-1;
-
+ax2.TickLength=5*ax2.TickLength;
 
 %% save output
 %TODO
