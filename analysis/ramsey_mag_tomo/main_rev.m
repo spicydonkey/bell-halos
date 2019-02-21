@@ -986,13 +986,35 @@ set(gca,'Position',pos_ax);
 
 
 % hatch-out truncated region --------------------------
-% TODO - vecrast
-hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
-    'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
-    'FaceColor','none','EdgeColor','none');
-uistack(hpatch_trunc,'bottom');
-H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
-    'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+% hack: two separate hatched regions
+patch_xdata{1}=[ax.XLim(1), ax.XLim(2), ax.XLim(2), ax.XLim(1)];
+patch_ydata{1}=[ax.YLim(1), ax.YLim(1), -rad2deg(el_trunc), -rad2deg(el_trunc)];
+
+patch_xdata{2}=[ax.XLim(1), ax.XLim(2), ax.XLim(2), ax.XLim(1)];
+patch_ydata{2}=[rad2deg(el_trunc), rad2deg(el_trunc), ax.YLim(2), ax.YLim(2)];
+
+for ii=1:2
+    hpatch_trunc(ii)=patch('XData',patch_xdata{ii},...
+        'YData',patch_ydata{ii},...
+        'FaceColor','none','EdgeColor','none');
+    H_trunc(ii)=hatchfill2(hpatch_trunc(ii),'single','HatchAngle',45,'HatchDensity',20,...
+        'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+    uistack(H_trunc(ii),'bottom');
+end
+
+% hpatch_trunc(2)=patch('XData',180*[-1,1,1,-1],...
+%     'YData',[45,45,90,90],...
+%     'FaceColor','none','EdgeColor','none');
+% H_trunc(2)=hatchfill2(hpatch_trunc(2),'single','HatchAngle',45,'HatchDensity',20,...
+%     'HatchColor','k','HatchLineWidth',config_fig.line_wid);
+
+% TODO: get vecrast working with code below
+% hpatch_trunc=patch('XData',[ax.XLim(1),ax.XLim(2),ax.XLim(2),ax.XLim(1)],...
+%     'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+%     'FaceColor','none','EdgeColor','none');
+% uistack(hpatch_trunc,'bottom');
+% H_trunc=hatchfill2(hpatch_trunc,'single','HatchAngle',45,'HatchDensity',20,...
+%     'HatchColor','k','HatchLineWidth',config_fig.line_wid);
 
 
 %---------------------------------------------
@@ -1096,6 +1118,44 @@ axis_snug(ax,[0,0.1]);
 % % legend
 % lgd=legend([H_res_r.mainLine,H_res_ff.mainLine,H_r_int.mainLine]);
 % lgd.Location='eastoutside';
+
+
+% %%% Zoomed (fluctuation) - INSET -------------------------------------
+% ax2=axes('Position',[.7 .5 .2 .4]);      % 'YAxisLocation','right','XAxisLocation','top'
+% set(ax2,'Layer','top');
+% box on;
+% hold on; 
+% 
+% % Ramsey
+% %%% halo integrated (no BEC) 
+% H_halo_int=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'k');
+% H_halo_int.mainLine.LineWidth=1;
+% H_halo_int.mainLine.LineStyle='--';
+% H_halo_int.mainLine.DisplayName='$\mathbf{r}$ int';
+% H_halo_int.mainLine.Visible='off';
+% H_halo_int.patch.FaceColor=0.8*ones(1,3);
+% H_halo_int.patch.FaceAlpha=1;
+% H_halo_int.edge(1).Visible='off';
+% H_halo_int.edge(2).Visible='off';
+% 
+% %%% spatial resolved predictions
+% H_res_ff=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
+% H_res_ff.mainLine.Color=config_fig.col_theme(2,:);
+% H_res_ff.mainLine.LineStyle='-';
+% H_res_ff.mainLine.LineWidth=1;
+% H_res_ff.mainLine.DisplayName='$\mathbf{r}$ resolved $\infty$';
+% H_res_ff.patch.FaceColor=config_fig.coll_theme(2,:);  
+% H_res_ff.patch.FaceAlpha=config_fig.pf_alpha;
+% H_res_ff.edge(1).Color=config_fig.coll_theme(2,:);
+% H_res_ff.edge(2).Color=config_fig.coll_theme(2,:);
+% 
+% % annotation
+% % zoom to theta=0
+% xlim(10*[-1,1]);
+% ylim([0.528,0.545]);
+% ax2.FontSize=ax.FontSize-1;
+% ax2.TickLength=2*ax2.TickLength;    % increase ticklength
+
 
 %% BB B-difference around equator
 dth=mean(diff(az));     % incremental diff angle scanned around equator (rad)
