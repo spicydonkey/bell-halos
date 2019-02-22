@@ -34,11 +34,11 @@ configs.exp.sig_beta_grad=configs.exp.r_bec/(configs.exp.d_sep_grad/2);
 configs.bins.az_lim=[0,pi];
 configs.bins.el_lim=[0,0];      % pi/4*[-1,1]
 
-configs.bins.n_az=2;
+configs.bins.n_az=6;
 configs.bins.n_el=1;
 
 % half-cone angle
-configs.bins.alpha_scan=pi*logspace(-1,0.5,20);     % min: atom num limited; max: asymptote at pi/2 
+configs.bins.alpha_scan=pi*logspace(-1,0,30);     % min: atom num limited; max: asymptote at pi/2 
 
 
 % g2 -------------------------------------------------------------
@@ -48,7 +48,7 @@ configs.lim_dk=[-0.2,0.2];
 
 % bootstrapping --------------------------------------------------
 configs.bootstrap.samp_frac=0.2;
-configs.bootstrap.n_rep=10;
+configs.bootstrap.n_rep=40;
 
 
 % Physical constants ---------------------------------------------
@@ -116,6 +116,7 @@ n_zone=numel(gaz);
 % [~,iel_0]=min(abs(el));        % idx to ~zero elev angle (equator)
 
 
+
 %% create g2 params
 dk_ed_vec=linspace(configs.lim_dk(1),configs.lim_dk(2),configs.g2.n_dk+1);
 dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
@@ -148,7 +149,7 @@ H_parity=figure('Name','triplet_halo_tevo','Units',f_units,'Position',f_pos,'Ren
 % number crunching!
 for i_alpha = 1:numel(configs.bins.alpha_scan)
     alpha = configs.bins.alpha_scan(i_alpha);
-    %% g2 ===============================================================
+    %% g2 ===============================================================    
     n_tau=length(k_tau);
     
     % preallocate
@@ -342,6 +343,9 @@ for i_alpha = 1:numel(configs.bins.alpha_scan)
 end
 
 %% DATA VIS ============================================================
+col_zones=parula(configs.bins.n_az);
+
+
 %% VIS: parity vs bin-size
 h=figure('Name','binsize_vs_parity','Units',config_fig.units,'Position',[0,0,8.6,4.5*3],'Renderer',config_fig.rend);
 
@@ -359,11 +363,15 @@ for kk=1:length(tau_plot)
             tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
             
             tp=shadedErrorBar(configs.bins.alpha_scan/pi,squeeze(v_Pi0(itau,ii,jj,:)),squeeze(v_Pi0_bs_se(itau,ii,jj,:)));
-            tp.mainLine.LineStyle=config_fig.line_sty{ii};
+            tp.mainLine.LineStyle=config_fig.line_sty{1};
+            tp.mainLine.Color=col_zones(ii,:);
             tp.mainLine.DisplayName=sprintf('%0.3g, %0.3g',gaz(ii),gel(jj));
             tp.patch.FaceAlpha=0.33;
-            tp.edge(1).LineStyle=config_fig.line_sty{ii};
-            tp.edge(2).LineStyle=config_fig.line_sty{ii};
+            tp.patch.FaceColor=col_zones(ii,:);
+            tp.edge(1).LineStyle=config_fig.line_sty{1};
+            tp.edge(2).LineStyle=config_fig.line_sty{1};
+            tp.edge(1).Color=col_zones(ii,:);
+            tp.edge(1).Color=col_zones(ii,:);
             
             pleg(end+1)=tp.mainLine;
         end
@@ -421,17 +429,15 @@ for kk=1:length(tau_plot)
             tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
             
             tp=plot(configs.bins.alpha_scan/pi,squeeze(v_Pi0_bs_se(itau,ii,jj,:)));
-            tp.LineStyle=config_fig.line_sty{ii};
+            tp.LineStyle=config_fig.line_sty{1};
             tp.Marker='none';
-            tp.Color='k';
+%             tp.Color='k';
+            tp.Color=col_zones(ii,:);
             tp.DisplayName=sprintf('%0.3g, %0.3g',gaz(ii),gel(jj));
-            
             
             pleg(end+1)=tp;
         end
     end
-
-    
     title(sprintf('%0.2g ms',tau(itau)));
     
     % annotation
@@ -479,10 +485,13 @@ for ii=1:configs.bins.n_az
         tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
 
         tp=shadedErrorBar(configs.bins.alpha_scan/pi,squeeze(v_dBdx(ii,jj,:)),squeeze(v_dBdx_se(ii,jj,:)));
-        tp.mainLine.LineStyle=config_fig.line_sty{ii};
+        tp.mainLine.LineStyle=config_fig.line_sty{1};
         tp.mainLine.DisplayName=sprintf('%0.3g, %0.3g',gaz(ii),gel(jj));
         tp.patch.FaceAlpha=0.33;
-
+        
+        tp.mainLine.Color=col_zones(ii,:);
+        tp.patch.FaceColor=col_zones(ii,:);
+        
         pleg(end+1)=tp.mainLine;
     end
 end
@@ -525,10 +534,11 @@ for ii=1:configs.bins.n_az
     for jj=1:configs.bins.n_el
         tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
         tp=plot(configs.bins.alpha_scan/pi,squeeze(v_dBdx_se(ii,jj,:)));
-%         tp=plot(configs.bins.alpha_scan,squeeze(Berr_alpha(ii,jj,:)));
-        tp.LineStyle=config_fig.line_sty{ii};
+        tp.LineStyle=config_fig.line_sty{1};
         tp.Marker='none';
-        tp.Color='k';
+%         tp.Color='k';
+        tp.Color=col_zones(ii,:);
+        
     end
 end
 
@@ -558,7 +568,7 @@ uistack(o_cutoff,'bottom');
 vars_to_save={'configs','config_fig',...
     'v_beta','v_beta_se','v_dBdx','v_dBdx_se',...
     'v_Pi0', 'v_Pi0_bs_se',...
-    'tau',...
+    'tau','n_tau',...
     };
 
 % check exists
