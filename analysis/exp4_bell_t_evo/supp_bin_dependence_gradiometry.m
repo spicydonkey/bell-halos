@@ -34,11 +34,11 @@ configs.exp.sig_beta_grad=configs.exp.r_bec/(configs.exp.d_sep_grad/2);
 configs.bins.az_lim=[0,pi];
 configs.bins.el_lim=[0,0];      % pi/4*[-1,1]
 
-configs.bins.n_az=3;
+configs.bins.n_az=2;
 configs.bins.n_el=1;
 
 % half-cone angle
-configs.bins.alpha_scan=pi*logspace(log10(configs_exp.sig_beta_ramsey/pi),log10(1),10);
+configs.bins.alpha_scan=pi*logspace(-1,0.5,20);     % min: atom num limited; max: asymptote at pi/2 
 
 
 % g2 -------------------------------------------------------------
@@ -47,7 +47,7 @@ configs.lim_dk=[-0.2,0.2];
 
 
 % bootstrapping --------------------------------------------------
-configs.bootstrap.samp_frac=0.1;
+configs.bootstrap.samp_frac=0.2;
 configs.bootstrap.n_rep=10;
 
 
@@ -127,6 +127,8 @@ dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
 %% LOOP analysis
 % initialise
 temp_nan=NaN(configs.bins.n_az,configs.bins.n_el,length(configs.bins.alpha_scan));
+temp_nan2=NaN(length(k_tau),configs.bins.n_az,configs.bins.n_el,length(configs.bins.alpha_scan));
+% temp_cell=cell(length(configs.bins.alpha_scan),1);
 
 v_beta=temp_nan;
 v_beta_se=temp_nan;
@@ -136,6 +138,10 @@ v_dBdx_se=temp_nan;
 
 % v_fit={};
 % v_Pi0_fit={};
+
+v_Pi0 = temp_nan2;
+v_Pi0_bs_se = temp_nan2;
+
 
 H_parity=figure('Name','triplet_halo_tevo','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
 
@@ -242,6 +248,11 @@ for i_alpha = 1:numel(configs.bins.alpha_scan)
         end
     end
     
+    %% store result -----------------------------------------------
+    v_Pi0(:,:,:,i_alpha) = Pi0;
+    v_Pi0_bs_se(:,:,:,i_alpha) = Pi0_bs_se;
+    
+    
     %% vis: Parity - ALL
     %%% ALL
     [cc,ccl,ccd]=palette(n_zone);
@@ -330,8 +341,135 @@ for i_alpha = 1:numel(configs.bins.alpha_scan)
 %     v_Pi0_fit{end+1} = Pi0_fit2;
 end
 
-%% VIS: binsize vs mean ==================================================
-h=figure('Name','binsize_vs_mean_dBdx','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
+%% DATA VIS ============================================================
+%% VIS: parity vs bin-size
+h=figure('Name','binsize_vs_parity','Units',config_fig.units,'Position',[0,0,8.6,4.5*3],'Renderer',config_fig.rend);
+
+tau_plot=round(linspace(1,n_tau,3));
+
+for kk=1:length(tau_plot)
+    itau=tau_plot(kk);
+    subplot(3,1,kk);
+    ax=gca;
+    hold on;
+    
+    pleg=[];
+    for ii=1:configs.bins.n_az
+        for jj=1:configs.bins.n_el
+            tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
+            
+            tp=shadedErrorBar(configs.bins.alpha_scan/pi,squeeze(v_Pi0(itau,ii,jj,:)),squeeze(v_Pi0_bs_se(itau,ii,jj,:)));
+            tp.mainLine.LineStyle=config_fig.line_sty{ii};
+            tp.mainLine.DisplayName=sprintf('%0.3g, %0.3g',gaz(ii),gel(jj));
+            tp.patch.FaceAlpha=0.33;
+            tp.edge(1).LineStyle=config_fig.line_sty{ii};
+            tp.edge(2).LineStyle=config_fig.line_sty{ii};
+            
+            pleg(end+1)=tp.mainLine;
+        end
+    end
+
+    
+    title(sprintf('%0.2g ms',tau(itau)));
+    
+    % annotation
+    set(ax,'Layer','top');
+    set(ax,'XScale','log');
+    xlabel('bin size $\alpha/\pi$');
+    ylabel('Parity');
+    box on;
+    ax.FontSize=config_fig.ax_fontsize;
+    ax.LineWidth=config_fig.ax_lwid;
+    
+    ax.XLim(1)=0.1;     % below this not enough data for g2
+    ylim(1.5*[-1, 1]);
+    
+    
+    % bin cut-off ----------------------
+    alpha_max=0.5*pi;        % cutoff for entanglement analysis
+    xdata_cutoff=[alpha_max/pi,ax.XLim(2),ax.XLim(2),alpha_max/pi];
+    col_cutoff = 0.9*ones(1,3);
+    
+    o_cutoff=patch('XData',xdata_cutoff,'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+        'FaceColor',col_cutoff,'EdgeColor','none');
+    uistack(o_cutoff,'bottom');
+    
+    if kk==1
+        lgd=legend(pleg);
+        lgd.Title.String='$\theta, \phi$';
+        lgd.Location='southeast';
+        lgd.Box='off';
+    end
+end
+
+
+
+%% VIS: ERR parity vs bin-size
+h=figure('Name','binsize_vs_parity_err','Units',config_fig.units,'Position',[0,0,8.6,4.5*3],'Renderer',config_fig.rend);
+
+tau_plot=round(linspace(1,n_tau,3));
+
+for kk=1:length(tau_plot)
+    itau=tau_plot(kk);
+    subplot(3,1,kk);
+    ax=gca;
+    hold on;
+    
+    pleg=[];
+    for ii=1:configs.bins.n_az
+        for jj=1:configs.bins.n_el            
+            tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
+            
+            tp=plot(configs.bins.alpha_scan/pi,squeeze(v_Pi0_bs_se(itau,ii,jj,:)));
+            tp.LineStyle=config_fig.line_sty{ii};
+            tp.Marker='none';
+            tp.Color='k';
+            tp.DisplayName=sprintf('%0.3g, %0.3g',gaz(ii),gel(jj));
+            
+            
+            pleg(end+1)=tp;
+        end
+    end
+
+    
+    title(sprintf('%0.2g ms',tau(itau)));
+    
+    % annotation
+    set(ax,'Layer','top');
+    set(ax,'XScale','log');
+    set(ax,'YScale','log');
+    xlabel('bin size $\alpha/\pi$');
+    ylabel('Unc Parity');
+    box on;
+    ax.FontSize=config_fig.ax_fontsize;
+    ax.LineWidth=config_fig.ax_lwid;
+    
+    ax.XLim(1)=0.1;     % below this not enough data for g2
+%     ylim(1.5*[-1, 1]);
+    
+    % bin cut-off ----------------------
+    alpha_max=0.5*pi;        % cutoff for entanglement analysis
+    xdata_cutoff=[alpha_max/pi,ax.XLim(2),ax.XLim(2),alpha_max/pi];
+    col_cutoff = 0.9*ones(1,3);
+    
+    o_cutoff=patch('XData',xdata_cutoff,'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+        'FaceColor',col_cutoff,'EdgeColor','none');
+    uistack(o_cutoff,'bottom');
+    
+    % legend---------------------------
+    if kk==1
+        lgd=legend(pleg);
+        lgd.Title.String='$\theta, \phi$';
+        lgd.Location='northeast';
+        lgd.Box='off';
+    end
+end
+
+
+% TODO: if run out of linestyles, do with colors?
+%
+%% VIS: binsize vs mean
+h=figure('Name','binsize_vs_dBdx','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 ax=gca;
 hold on;
 
@@ -341,7 +479,7 @@ for ii=1:configs.bins.n_az
         tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
 
         tp=shadedErrorBar(configs.bins.alpha_scan/pi,squeeze(v_dBdx(ii,jj,:)),squeeze(v_dBdx_se(ii,jj,:)));
-        tp.mainLine.LineStyle=config_fig.line_sty{tI};
+        tp.mainLine.LineStyle=config_fig.line_sty{ii};
         tp.mainLine.DisplayName=sprintf('%0.3g, %0.3g',gaz(ii),gel(jj));
         tp.patch.FaceAlpha=0.33;
 
@@ -349,23 +487,38 @@ for ii=1:configs.bins.n_az
     end
 end
 
+% annotation
+set(ax,'Layer','top');
+set(ax,'XScale','log');
+xlabel('bin size $\alpha/\pi$');
+ylabel('$dB/dx$ (G/m)');
+box on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+ax.XLim(1)=0.1;     % below this not enough data for g2
+ylim([0, 5]);
+
+
+% bin cut-off ----------------------
+alpha_max=0.5*pi;        % cutoff for entanglement analysis
+xdata_cutoff=[alpha_max/pi,ax.XLim(2),ax.XLim(2),alpha_max/pi];
+col_cutoff = 0.9*ones(1,3);
+
+o_cutoff=patch('XData',xdata_cutoff,'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+    'FaceColor',col_cutoff,'EdgeColor','none');
+uistack(o_cutoff,'bottom');
+
+% legend ----------------------
 lgd=legend(pleg);
 lgd.Title.String='$\theta, \phi$';
 lgd.Location='northeast';
 lgd.Box='off';
 
-% annotation
-set(ax,'Layer','top');
-set(ax,'XScale','log');
-xlabel('bin size $\alpha/\pi$');
-ylabel('Mean (G/m)');
-box on;
-ax.FontSize=config_fig.ax_fontsize;
-ax.LineWidth=config_fig.ax_lwid;
 
 
 %% VIS: binsize vs error
-h=figure('Name','binsize_vs_error_dBdx','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
+h=figure('Name','binsize_vs_dBdx_err','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 ax=gca;
 hold on;
 for ii=1:configs.bins.n_az
@@ -373,7 +526,7 @@ for ii=1:configs.bins.n_az
         tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
         tp=plot(configs.bins.alpha_scan/pi,squeeze(v_dBdx_se(ii,jj,:)));
 %         tp=plot(configs.bins.alpha_scan,squeeze(Berr_alpha(ii,jj,:)));
-        tp.LineStyle=config_fig.line_sty{tI};
+        tp.LineStyle=config_fig.line_sty{ii};
         tp.Marker='none';
         tp.Color='k';
     end
@@ -384,16 +537,28 @@ set(ax,'Layer','top');
 set(ax,'XScale','log');
 set(ax,'YScale','log');
 xlabel('bin size $\alpha/\pi$');
-ylabel('Uncertainty (G/m)');
+ylabel('Unc $dB/dx$ (G/m)');
 box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
 
+ax.XLim(1)=0.1;     % below this not enough data for g2
+
+% bin cut-off ----------------------
+alpha_max=0.5*pi;        % cutoff for entanglement analysis
+xdata_cutoff=[alpha_max/pi,ax.XLim(2),ax.XLim(2),alpha_max/pi];
+col_cutoff = 0.9*ones(1,3);
+
+o_cutoff=patch('XData',xdata_cutoff,'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+    'FaceColor',col_cutoff,'EdgeColor','none');
+uistack(o_cutoff,'bottom');
 
 
 %% save
 vars_to_save={'configs','config_fig',...
     'v_beta','v_beta_se','v_dBdx','v_dBdx_se',...
+    'v_Pi0', 'v_Pi0_bs_se',...
+    'tau',...
     };
 
 % check exists

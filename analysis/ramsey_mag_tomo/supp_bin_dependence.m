@@ -13,6 +13,9 @@ path_mat_file='C:\Users\HE BEC\Dropbox\phd\projects\halo_metrology\analysis\rams
 c_alpha=logspace(log10(0.01),log10(1),200);       % factors of alpha
 alpha=pi*c_alpha;
 
+beta_ramsey=pi*0.0619;   % PSF rms width in angle (rad)
+
+
 % sampling locations
 az=pi*[0,1];
 el=pi/2*[0];
@@ -131,7 +134,7 @@ for kk=1:n_alpha
 end
 
 %% VIS: binsize vs mean
-h=figure('Name','binsize_vs_mean','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
+h=figure('Name','binsize_vs_B','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 ax=gca;
 hold on;
 
@@ -149,28 +152,35 @@ for ii=1:n_az
     end
 end
 
+set(ax,'Layer','top');
+set(ax,'XScale','log');
+xlabel('bin size $\alpha/\pi$');
+ylabel('$B$ (G)');
+box on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+% % annotation ----------------------
+% line_resol=line([beta_ramsey,beta_ramsey]/pi,ax.YLim,'LineStyle','--','Color','k');
+% uistack(line_resol,'bottom');
+
+
+% legend -------------------------------
 lgd=legend(pleg);
 lgd.Title.String='$\theta, \phi$';
 lgd.Location='southeast';
 lgd.Box='off';
 
-set(ax,'Layer','top');
-set(ax,'XScale','log');
-xlabel('bin size $\alpha/\pi$');
-ylabel('Mean (G)');
-box on;
-ax.FontSize=config_fig.ax_fontsize;
-ax.LineWidth=config_fig.ax_lwid;
 
 %% VIS: binsize vs error
-h=figure('Name','binsize_vs_error','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
+h=figure('Name','binsize_vs_B_err','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 ax=gca;
 hold on;
 for ii=1:n_az
     for jj=1:n_el
         tI=sub2ind([n_az,n_el],ii,jj);
 %         tp=plot(alpha/pi,squeeze(Berr_alpha(ii,jj,:)));
-        tp=plot(alpha,squeeze(Berr_alpha(ii,jj,:)));
+        tp=plot(alpha/pi,squeeze(Berr_alpha(ii,jj,:)));
         tp.LineStyle=config_fig.line_sty{tI};
         tp.Marker='none';
         tp.Color='k';
@@ -180,7 +190,30 @@ set(ax,'Layer','top');
 set(ax,'XScale','log');
 set(ax,'YScale','log');
 xlabel('bin size $\alpha/\pi$');
-ylabel('Uncertainty (G)');
+ylabel('Unc $B$ (G)');
 box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
+
+% % annotation ----------------------
+% line_resol=line([beta_ramsey,beta_ramsey]/pi,ax.YLim,'LineStyle','--','Color','k');
+% uistack(line_resol,'bottom');
+
+
+%% save ===============================================
+vars_to_save={'path_mat_file','config_fig',...
+    'alpha','az','el','n_az','n_el',...
+    'B_alpha','Berr_alpha',...
+    };
+
+% check exists
+for ii=1:numel(vars_to_save)
+    tvarname=vars_to_save{ii};
+    if ~exist(tvarname,'var')
+        warning('variable %s does not exist.',tvarname);
+    end
+end
+
+% save
+save(['supp_binsize_',getdatetimestr,'.mat'],vars_to_save{:});
+
