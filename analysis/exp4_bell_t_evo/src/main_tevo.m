@@ -31,12 +31,8 @@ lim_az=[0,pi];              % limit of azim angle (exc +pi)
 phi_max=pi/4;
 lim_el=[-phi_max,phi_max];
 
-n_az=40;                	% equispaced bins
-n_el=20;
-
-% n_az=1;                	% equispaced bins
-% n_el=1;
-
+n_az=80;                	% equispaced bins
+n_el=40;
 
 az_disp=deg2rad([0,45,90]);     % azim sections (great circles) to display
 
@@ -46,7 +42,7 @@ lim_dk=[-0.2,0.2];
 
 % bootstrapping
 bs_frac=0.1;        % 0.1   
-bs_nrep=10;         % 20
+bs_nrep=2;         % 20
 
 
 % Physical constants ---------------------------------------------
