@@ -43,7 +43,7 @@ configs.bins.alpha_scan=pi*logspace(-1,0,30);     % min: atom num limited; max: 
 
 % g2 -------------------------------------------------------------
 configs.g2.n_dk=7;
-configs.lim_dk=[-0.2,0.2];
+configs.g2.lim_dk=[-0.2,0.2];
 
 
 % bootstrapping --------------------------------------------------
@@ -118,7 +118,7 @@ n_zone=numel(gaz);
 
 
 %% create g2 params
-dk_ed_vec=linspace(configs.lim_dk(1),configs.lim_dk(2),configs.g2.n_dk+1);
+dk_ed_vec=linspace(configs.g2.lim_dk(1),configs.g2.lim_dk(2),configs.g2.n_dk+1);
 dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
 [~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
 dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
