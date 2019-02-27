@@ -33,8 +33,8 @@ configs.exp.sig_beta_grad=configs.exp.r_bec/(configs.exp.d_sep_grad/2);
 configs.bins.az_lim=[0,pi];
 configs.bins.el_lim=pi/4*[-1,1];      
 
-configs.bins.n_az=60;
-configs.bins.n_el=30;
+configs.bins.n_az=100;
+configs.bins.n_el=50;
 
 % bin size (half-cone angle)
 configs.bins.alpha=configs.exp.sig_beta_grad;      
@@ -47,8 +47,8 @@ configs.g2.n_dk=7;
 configs.g2.lim_dk=[-0.2,0.2];
 
 % bootstrapping --------------------------------------------------
-configs.bootstrap.samp_frac=0.2;
-configs.bootstrap.B=40;
+configs.bootstrap.samp_frac=0.05;
+configs.bootstrap.B=2;
 
 
 % Physical constants ---------------------------------------------
@@ -557,8 +557,8 @@ for ii=1:n_loc_disp
     end
         
     % get index location
-    loc_disp_orig(ii,1)=find(Vaz==azel_disp_orig(ii,1));
-    loc_disp_orig(ii,2)=find(Vel==azel_disp_orig(ii,2));
+    [~,loc_disp_orig(ii,1)]=min(abs(Vaz-azel_disp_orig(ii,1)));
+    [~,loc_disp_orig(ii,2)]=min(abs(Vel-azel_disp_orig(ii,2)));
 end
 
 
@@ -576,9 +576,11 @@ for ii=1:n_loc_disp
 %     tiaz=iaz_disp(ii);
 % tp=ploterr(tau,squeeze(B0(:,tiaz,iel_0)),[],squeeze(B0_bs_se(:,tiaz,iel_0)),'o','hhxy',0);
 
+    temp_name=sprintf('%0.3g, %0.3g',tazel(1),tazel(2));        % location (th,phi) 
+
     tp=ploterr(tau,squeeze(Pi0(:,iazel(1),iazel(2))),[],squeeze(Pi0_bs_se(:,iazel(1),iazel(2))),'o','hhxy',0);
     set(tp(1),'Marker',config_fig.mark_typ{ii},'MarkerSize',4.5,...
-        'MarkerFaceColor',cl_loc(ii,:),'Color',c_loc(ii,:),'DisplayName',num2str(rad2deg(Vaz(tiaz)),2));
+        'MarkerFaceColor',cl_loc(ii,:),'Color',c_loc(ii,:),'DisplayName',temp_name);
     set(tp(2),'Color',c_loc(ii,:));
     pleg(ii)=tp(1);
     
