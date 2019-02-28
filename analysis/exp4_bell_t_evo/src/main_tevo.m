@@ -48,7 +48,8 @@ configs.g2.lim_dk=[-0.2,0.2];
 
 % bootstrapping --------------------------------------------------
 configs.bootstrap.samp_frac=0.05;
-configs.bootstrap.B=2;
+configs.bootstrap.B_fast=2;
+configs.bootstrap.B=100;
 
 
 % Physical constants ---------------------------------------------
@@ -154,10 +155,6 @@ for ii=1:n_tau
         tel=vel(jj);
         
         % capture vecs in section
-%         [~,b_A]=cellfun(@(x) inCone(x,taz,tel,configs.bins.alpha),k,'UniformOutput',false);     % in k
-%         [~,b_B]=cellfun(@(x) inCone(x,taz+pi,-tel,configs.bins.alpha),k,'UniformOutput',false);    % in -k
-%         b_AB=cellfun(@(b1,b2) b1|b2,b_A,b_B,'UniformOutput',false);        % in both
-%         k_in=cellfun(@(x,b) x(b,:),k,b_AB,'UniformOutput',false);
         k_in=cellfun(@(x) inDoubleCone(x,taz,tel,configs.bins.alpha),k,'UniformOutput',false);
 
         %% g2
@@ -175,7 +172,7 @@ for ii=1:n_tau
         %% BOOTSTRAPPING
         % set up
         bs_nsamp=round(configs.bootstrap.samp_frac*n_data_size);    % # data to sample for bs
-        bs_Isamp=cellfun(@(c) randi(n_data_size,[bs_nsamp,1]), cell(configs.bootstrap.B,1),...
+        bs_Isamp=cellfun(@(c) randi(n_data_size,[bs_nsamp,1]), cell(configs.bootstrap.B_fast,1),...
             'UniformOutput',false);
 
         %%% run
@@ -186,7 +183,7 @@ for ii=1:n_tau
         tg0_bs=cellfun(@(g) g(idx_dk0,idx_dk0,idx_dk0),tg2_bs);    % corr strength
         
         % B
-        [tB_bs,tPi0_bs]=g2toE(mean(tg0_bs(:,1:2),2),tg0_bs(:,3));
+        [tB_bs,tPi_bs]=g2toE(mean(tg0_bs(:,1:2),2),tg0_bs(:,3));
         
         %%% statistics
 %         tg2_bs_cat=cell(1,3);       % tidy bs sampled g2
@@ -202,7 +199,7 @@ for ii=1:n_tau
 %         tB_bs_mu=mean(tB_bs,1);
 %         tB0_bs_mu=mean(tB0_bs,1);
 %         tB_bs_se=sqrt(configs.bootstrap.samp_frac)*std(tB_bs,0,1);
-        tB0_bs_se=sqrt(configs.bootstrap.samp_frac)*std(tPi0_bs,0,1);
+        tB0_bs_se=sqrt(configs.bootstrap.samp_frac)*std(tPi_bs,0,1);
         
         %%% store
 %         g2_bs_mu(:,ii,iaz,iel)=tg2_bs_mu(:);
@@ -562,9 +559,8 @@ for ii=1:n_loc_disp
 end
 
 
-%% vis: Parity evolution fit (publication)
-figname='B0_tevo_eqt';
-% figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',config_fig.rend);
+%% vis: Parity evolution fit (PRELIM - no error analysis)
+figname='Pi_vs_t_prelim';
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',config_fig.rend);
 hold on;
 
@@ -573,9 +569,6 @@ for ii=1:n_loc_disp
     iazel=loc_disp_orig(ii,:);
     tazel=azel_disp_orig(ii,:);
     
-%     tiaz=iaz_disp(ii);
-% tp=ploterr(tau,squeeze(B0(:,tiaz,iel_0)),[],squeeze(B0_bs_se(:,tiaz,iel_0)),'o','hhxy',0);
-
     temp_name=sprintf('%0.3g, %0.3g',tazel(1),tazel(2));        % location (th,phi) 
 
     tp=ploterr(tau,squeeze(Pi0(:,iazel(1),iazel(2))),[],squeeze(Pi0_bs_se(:,iazel(1),iazel(2))),'o','hhxy',0);
@@ -597,6 +590,151 @@ for ii=1:n_loc_disp
 %     uistack(tpf,'bottom');
 
     %%%% MODEL2
+    tpf=plot(t_fit,Pi0_fit2{iazel(1),iazel(2)},...
+    config_fig.line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
+    uistack(tpf,'bottom');
+end
+
+% annotation
+box on;
+ax=gca;
+set(ax,'Layer','Top');
+xlabel('$\tau~(\textrm{ms})$');
+% ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
+ylabel('parity');
+
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+xlim([0.7,1.8]);
+ylim(1.5*[-1,1]);
+% axis auto;
+
+% lgd=legend(pleg,'Location','SouthWest');
+% title(lgd,'Azimuth $\theta$ (deg)');
+
+
+
+%% Focused analysis: bootstrap until convergence
+% magnetic gradient estimation does not require statiscal analysis of
+% individual data-point, which is thankfully extremely computationally
+% expensive.
+% given the representative spatial regions to perform interrogate for
+% an intense stat analysis we perform bootstrapping on them
+
+% preallocate
+c_loc_3=cell(3,n_tau,n_loc_disp);     % DIM: corr X tau X idx2location
+c_loc_2=cell(n_tau,n_loc_disp);       % DIM: tau X idx2location
+m_loc_3=NaN(3,n_tau,n_loc_disp);    
+m_loc_2=NaN(n_tau,n_loc_disp);
+
+g2_loc=c_loc_3;
+g0_loc=m_loc_3;    
+B_loc=m_loc_2;
+Pi_loc=m_loc_2;
+
+g2_loc_bs_mu=c_loc_3;
+g2_loc_bs_se=c_loc_3;
+g0_loc_bs_mu=m_loc_3;
+g0_loc_bs_se=m_loc_3;
+B_loc_bs_mu=m_loc_2;
+B_loc_bs_se=m_loc_2;
+Pi_loc_bs_mu=m_loc_2;
+Pi_loc_bs_se=m_loc_2;
+
+for ii=1:n_tau
+    %%
+    k=k_tau{ii};
+    n_data_size=size(k,1);
+    
+    progressbar(0);
+    for jj=1:n_loc_disp
+        %%
+        % get location to analyse
+        iaz = loc_disp_orig(jj,1);
+        iel = loc_disp_orig(jj,2);
+        
+        taz = azel_disp(jj,1);
+        tel = azel_disp(jj,2);     
+
+        % capture vecs in section
+        k_in=cellfun(@(x) inDoubleCone(x,taz,tel,configs.bins.alpha),k,'UniformOutput',false);
+
+        %% g2 =========================================================
+        tg2=summary_disthalo_g2(k_in,dk_ed,0,0,0,0);
+        
+        tg0=cellfun(@(g) g(idx_dk0,idx_dk0,idx_dk0),tg2);    % BB corr strength
+        [tB,tB0]=g2toE(mean(tg0(1:2)),tg0(3));      % correlator/parity
+        
+        % store
+        g2_loc(:,ii,jj)=tg2(:);
+        g0_loc(:,jj)=tg0;
+        B_loc(ii,jj)=tB;
+        Pi_loc(ii,jj)=tB0;
+        
+        % BOOTSTRAPPING ---------------------------------------------
+        bs_Isamp=cellfun(@(c) randi(n_data_size,[n_data_size,1]), cell(configs.bootstrap.B,1),...
+            'UniformOutput',false);
+
+        % g2 analysis
+        tg2_bs=cellfun(@(I) summary_disthalo_g2(k_in(I,:),dk_ed,0,0,0,0),bs_Isamp,...
+            'UniformOutput',false);
+        tg2_bs=cat(1,tg2_bs{:});    % g2 dist from bs
+        tg0_bs=cellfun(@(g) g(idx_dk0,idx_dk0,idx_dk0),tg2_bs);    % corr strength
+        
+        % B
+        [tB_bs,tPi_bs]=g2toE(mean(tg0_bs(:,1:2),2),tg0_bs(:,3));
+        
+        %%% statistics
+        tg2_bs_cat=cell(1,3);       % tidy bs sampled g2
+        for kk=1:3
+            tg2_bs_cat{kk}=cat(4,tg2_bs{:,kk});
+        end
+        tg2_bs_mu=cellfun(@(x) mean(x,4),tg2_bs_cat,'UniformOutput',false);
+        tg2_bs_se=cellfun(@(x) std(x,0,4),tg2_bs_cat,'UniformOutput',false);
+
+        tg0_bs_mu=mean(tg0_bs,1);
+        tg0_bs_se=std(tg0_bs,0,1);
+        
+        tB_bs_mu=mean(tB_bs,1);
+        tPi_bs_mu=mean(tPi_bs,1);
+        tB_bs_se=std(tB_bs,0,1);
+        tPi_bs_se=std(tPi_bs,0,1);
+        
+        %%% store
+        g2_loc_bs_mu(:,ii,jj)=tg2_bs_mu(:);
+        g2_loc_bs_se(:,ii,jj)=tg2_bs_se(:);
+        g0_loc_bs_mu(:,ii,jj)=tg0_bs_mu;
+        g0_loc_bs_se(:,ii,jj)=tg0_bs_se;
+        B_loc_bs_mu(ii,jj)=tB_bs_mu;
+        B_loc_bs_se(ii,jj)=tB_bs_se;
+        Pi_loc_bs_mu(ii,jj)=tPi_bs_mu;
+        Pi_loc_bs_se(ii,jj)=tPi_bs_se;
+        
+        progressbar(jj/n_loc_disp);
+    end
+end
+
+
+%% vis: Parity evolution fit: bootstrapped (publication)
+figname='Pi_vs_t_bootstrap';
+h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',config_fig.rend);
+hold on;
+
+pleg=NaN(n_loc_disp,1);
+for ii=1:n_loc_disp
+    iazel=loc_disp_orig(ii,:);
+    tazel=azel_disp_orig(ii,:);
+    
+    temp_name=sprintf('%0.3g, %0.3g',tazel(1),tazel(2));        % location (th,phi) 
+
+    tp=ploterr(tau,squeeze(Pi0(:,iazel(1),iazel(2))),[],squeeze(Pi_loc_bs_se(:,ii)),'o','hhxy',0);
+    set(tp(1),'Marker',config_fig.mark_typ{ii},'MarkerSize',4.5,...
+        'MarkerFaceColor',cl_loc(ii,:),'Color',c_loc(ii,:),'DisplayName',temp_name);
+    set(tp(2),'Color',c_loc(ii,:));
+    pleg(ii)=tp(1);
+    
+    % fitted MODEL2
     tpf=plot(t_fit,Pi0_fit2{iazel(1),iazel(2)},...
     config_fig.line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
     uistack(tpf,'bottom');
@@ -892,7 +1030,7 @@ ylabel('spatial pdf');
 
 %% VIS: Model 1: Diff B: Equatorial tomography (publication)
 % %%% calibration
-% % nuller characterisation at ±y measurement
+% % independent measurement with vector gradiometer
 % dBdy=0.4;           % mG/mm
 % dBdy_ferr=0.6;      % fractional error
 % th_exp=pi/2;        % deltaY - measurement direction
@@ -1001,7 +1139,7 @@ ylabel('spatial pdf');
 
 %% VIS: dBdr Equatorial tomography (publication)
 %%% calibration
-% % nuller characterisation at ±y measurement
+% % independent measurement with vector gradiometer
 % dBdy=0.4;           % mG/mm
 % dBdy_ferr=0.6;      % fractional error
 % th_exp=pi/2;     % deltaY - measurement direction
