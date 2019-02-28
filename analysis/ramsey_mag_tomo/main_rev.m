@@ -983,6 +983,8 @@ pos_cbar=get(cbar,'Position');
 pos_cbar(3)=0.03;
 set(cbar,'Position',pos_cbar);
 set(gca,'Position',pos_ax);
+% colorbar limits
+Btomo_cbar_lim = cbar.Limits;
 
 
 % hatch-out truncated region --------------------------
@@ -1022,6 +1024,44 @@ end
 % e.g.
 % vecrast(h,strcat('B_dist_',getdatetimestr),600,'bottom','pdf')
 %---------------------------------------------
+
+%% VIS: histogram of B
+figname='B_histogram_spatial';
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',config_fig.rend);
+
+hold on;
+
+% naive one without lat-lon grid weights
+X = Bk_Pramsey(~isnan(Bk_Pramsey));       % rid of NaNs
+Bhist = histogram(X,'Normalization','pdf');
+Bhist.DisplayStyle='stairs';
+Bhist.EdgeColor='k';
+Bhist.FaceColor='none';
+Bhist.DisplayName='data';
+
+% fit Gaussian
+Xmean = mean(X(:));
+Xstd = std(X(:));
+xlim0=xlim;
+xx = linspace(xlim0(1),xlim0(2),1e3);
+yy = gaus_pdf(xx,Xmean,Xstd);
+p_fit = plot(xx,yy,'r-','LineWidth',1);
+p_fit.DisplayName='$\mathcal{N}(\bar\mu,\bar\sigma^2)$';
+
+% set xlims to colorbar of tomography
+xlim(Btomo_cbar_lim);
+
+% annotate
+ax=gca;
+set(ax,'Layer','Top');
+box on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+lgd=legend([Bhist,p_fit]);
+
+xlabel('$B$ (G)');
+ylabel('spatial pdf');
+
 
 %% VIS (publication): Magnetic tomography: equatorial: P 
 figname='B_equatorial_tomography_P';
@@ -1174,7 +1214,8 @@ Bk_eq_bb=circshift(Bk_eq,dI_pi);
 Bkerr_eq_bb=circshift(Bkerr_eq,dI_pi);
 
 % BB-difference
-dB_eq_bb=abs(Bk_eq_bb - Bk_eq);
+% dB_eq_bb=abs(Bk_eq_bb - Bk_eq);
+dB_eq_bb=Bk_eq - Bk_eq_bb;
 dBerr_eq_bb=sqrt(Bkerr_eq_bb.^2 + Bkerr_eq.^2);     % uncorrelated noise
 
 %%% vis
@@ -1218,7 +1259,7 @@ ax=gca;
 set(ax,'Layer','Top');
 xlim([0,180]);      % periodic
 ylim_0=ax.YLim;
-ylim([0,ylim_0(2)]);
+% ylim([0,ylim_0(2)]);
 xticks(0:45:180);
 xlabel('$\theta$ (deg)');
 ylabel('$\Delta B_{\mathrm{BB}}$ (mG)');
@@ -1237,7 +1278,7 @@ dBdx_eq=dB_eq_bb/d_sep;     % in G/m
 dx_frerr=sqrt(2)*sig_psf_r/d_sep;       % frac-err of diff X
 dB_frerr=dBerr_eq_bb./dB_eq_bb;         % frac-err of diff B
 dBdx_eq_frerr=sqrt(dx_frerr^2+dB_frerr.^2); % frac-err of dBdx
-dBdx_eq_se=dBdx_eq_frerr.*dBdx_eq;
+dBdx_eq_se=abs(dBdx_eq_frerr.*dBdx_eq);
 
 % plot --------------------------------------------
 figname='dBdx_ramsey_ff';
@@ -1249,7 +1290,7 @@ set(ax,'Layer','Top');
 
 xlim([0,180]);      % periodic
 ylim_Original=ax.YLim;
-ylim([0,ylim_Original(2)]);
+% ylim([0,ylim_Original(2)]);
 
 xticks(0:45:180);
 
