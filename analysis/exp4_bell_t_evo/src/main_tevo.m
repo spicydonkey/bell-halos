@@ -130,17 +130,17 @@ m3=NaN(n_tau,configs.bins.n_az,configs.bins.n_el);
 
 % g2=c4;
 % g0=m4;    
+B=m3;
 Pi=m3;
-Pi0=m3;
 
 % g2_bs_mu=c4;
 % g2_bs_se=c4;
 % g0_bs_mu=m4;
 % g0_bs_se=m4;
 % B_bs_mu=m3;
-% B0_bs_mu=m3;
 % B_bs_se=m3;
-Pi0_bs_se=m3;
+% Pi_bs_mu=m3;
+Pi_bs_se=m3;
 
 for ii=1:n_tau
     %%
@@ -166,8 +166,8 @@ for ii=1:n_tau
         %%% store
 %         g2(:,ii,iaz,iel)=tg2(:);
 %         g0(:,ii,iaz,iel)=tg0;
-        Pi(ii,iaz,iel)=tB;
-        Pi0(ii,iaz,iel)=tB0;
+        B(ii,iaz,iel)=tB;
+        Pi(ii,iaz,iel)=tB0;
         
         %% BOOTSTRAPPING
         % set up
@@ -209,7 +209,7 @@ for ii=1:n_tau
 %         B_bs_mu(ii,iaz,iel)=tB_bs_mu;
 %         B0_bs_mu(ii,iaz,iel)=tB0_bs_mu;
 %         B_bs_se(ii,iaz,iel)=tB_bs_se;
-        Pi0_bs_se(ii,iaz,iel)=tB0_bs_se;
+        Pi_bs_se(ii,iaz,iel)=tB0_bs_se;
         
         progressbar(jj/n_zone);
     end
@@ -225,7 +225,7 @@ hold on;
 for ii=1:n_zone
     [iaz,iel]=ind2sub([configs.bins.n_az,configs.bins.n_el],ii);
     
-    tp=ploterr(tau,Pi0(:,iaz,iel),[],Pi0_bs_se(:,iaz,iel),'-o','hhxy',0);
+    tp=ploterr(tau,Pi(:,iaz,iel),[],Pi_bs_se(:,iaz,iel),'-o','hhxy',0);
     set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
         'MarkerFaceColor',ccl(ii,:),'Color',cc(ii,:));
     set(tp(2),'LineWidth',line_wid,'Color',cc(ii,:));
@@ -256,7 +256,7 @@ for ii=1:length(iaz_disp)
     
     pleg=NaN(configs.bins.n_el,1);
     for jj=1:configs.bins.n_el
-        tp=ploterr(tau,squeeze(Pi0(:,iaz,jj)),[],squeeze(Pi0_bs_se(:,iaz,jj)),'o','hhxy',0);
+        tp=ploterr(tau,squeeze(Pi(:,iaz,jj)),[],squeeze(Pi_bs_se(:,iaz,jj)),'o','hhxy',0);
         set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
             'MarkerFaceColor',ccl(jj,:),'Color',cc(jj,:),'DisplayName',num2str(rad2deg(Vel(jj)),2));
         set(tp(2),'LineWidth',line_wid,'Color',cc(jj,:));
@@ -296,7 +296,7 @@ H=[];
 for ii=1:n_tau
     figname=sprintf('B0_sphdist_3d_%0.2f',tau(ii));
     H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
-    tB0=squeeze(Pi0(ii,:,:));
+    tB0=squeeze(Pi(ii,:,:));
 
 %     tp=plot_sph_surf(vaz,vel,tB0);
     [vazf,velf,tB0f]=autofill_cent_symm(vaz,vel,tB0);
@@ -334,7 +334,7 @@ H=[];
 for ii=1:n_tau
     figname=sprintf('B0_sphdist_2d_%0.2f',tau(ii));
     H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
-    tB0=squeeze(Pi0(ii,:,:));
+    tB0=squeeze(Pi(ii,:,:));
     
 %     tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),tB0,'eckert4','texturemap');
     [vazf,velf,tB0f]=autofill_cent_symm(vaz,vel,tB0);
@@ -443,7 +443,7 @@ mdl_tevo2.fit=cell(configs.bins.n_az,configs.bins.n_el);
 for ii=1:n_zone
     [iaz,iel]=ind2sub([configs.bins.n_az,configs.bins.n_el],ii);
     
-    tB0=Pi0(:,iaz,iel);
+    tB0=Pi(:,iaz,iel);
     mdl_tevo2.fit{iaz,iel}=fitnlm(tau,tB0,mdl_tevo2.mdl,mdl_tevo2.par0,...
         'CoefficientNames',mdl_tevo2.cname,'Options',mdl_tevo2.fopt);
 end
@@ -452,7 +452,7 @@ end
 t_fit=linspace(0,5,1e3);     % time since collision pulse to eval fit
 mdl_tevo2.fit_par=arrayfun(@(I) cellfun(@(m) m.Coefficients.Estimate(I),mdl_tevo2.fit),1:numel(mdl_tevo2.cname),'UniformOutput',false);
 mdl_tevo2.fit_par_se=arrayfun(@(I) cellfun(@(m) m.Coefficients.SE(I),mdl_tevo2.fit),1:numel(mdl_tevo2.cname),'UniformOutput',false);
-Pi0_fit2=cellfun(@(f) feval(f,t_fit),mdl_tevo2.fit,'UniformOutput',false);
+Pi_fit2=cellfun(@(f) feval(f,t_fit),mdl_tevo2.fit,'UniformOutput',false);
 
 
 %%% Magnetic field gradient: dBdr -----------------------------------------
@@ -473,9 +473,9 @@ iaz_0=find(az==0);
 el=gel(1,:);
 
 % % outlier to NaN (ones that have 1e4 mean errors)
-% b_outlier=isoutlier(dBdx_se_ff);
-% dBdx_ff(b_outlier)=NaN;
-% dBdx_se_ff(b_outlier)=NaN;
+% b_outlier=isoutlier(dBdr_se_ff);
+% dBdr_ff(b_outlier)=NaN;
+% dBdr_se_ff(b_outlier)=NaN;
 
 
 %% VIS: fit params diagnostic
@@ -516,16 +516,16 @@ azel_disp=[];   % (az,el)
 % azel_disp(end+1,:)=[az(iaz_0),el(iel_0)];
 
 % max -----------------------------------------------------------
-dBdx_max=max(dBdr(:));
-[iaz_max,iel_max]=find(dBdr==dBdx_max);
+dBdr_max=max(dBdr(:));
+[iaz_max,iel_max]=find(dBdr==dBdr_max);
 iaz_max=iaz_max(end);     % due to symmetry there can be multiple
 iel_max=iel_max(end);
 loc_disp_2pi(end+1,:)=[iaz_max,iel_max];
 azel_disp(end+1,:)=[az(iaz_max),el(iel_max)];
 
 % min --------------------------------------------------------------
-dBdx_min=min(dBdr(:));
-[iaz_min,iel_min]=find(dBdr==dBdx_min);
+dBdr_min=min(dBdr(:));
+[iaz_min,iel_min]=find(dBdr==dBdr_min);
 iaz_min=iaz_min(1);
 iel_min=iel_min(1);
 loc_disp_2pi(end+1,:)=[iaz_min,iel_min];
@@ -571,7 +571,7 @@ for ii=1:n_loc_disp
     
     temp_name=sprintf('%0.3g, %0.3g',tazel(1),tazel(2));        % location (th,phi) 
 
-    tp=ploterr(tau,squeeze(Pi0(:,iazel(1),iazel(2))),[],squeeze(Pi0_bs_se(:,iazel(1),iazel(2))),'o','hhxy',0);
+    tp=ploterr(tau,squeeze(Pi(:,iazel(1),iazel(2))),[],squeeze(Pi_bs_se(:,iazel(1),iazel(2))),'o','hhxy',0);
     set(tp(1),'Marker',config_fig.mark_typ{ii},'MarkerSize',4.5,...
         'MarkerFaceColor',cl_loc(ii,:),'Color',c_loc(ii,:),'DisplayName',temp_name);
     set(tp(2),'Color',c_loc(ii,:));
@@ -590,7 +590,7 @@ for ii=1:n_loc_disp
 %     uistack(tpf,'bottom');
 
     %%%% MODEL2
-    tpf=plot(t_fit,Pi0_fit2{iazel(1),iazel(2)},...
+    tpf=plot(t_fit,Pi_fit2{iazel(1),iazel(2)},...
     config_fig.line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
     uistack(tpf,'bottom');
 end
@@ -728,14 +728,14 @@ for ii=1:n_loc_disp
     
     temp_name=sprintf('%0.3g, %0.3g',tazel(1),tazel(2));        % location (th,phi) 
 
-    tp=ploterr(tau,squeeze(Pi0(:,iazel(1),iazel(2))),[],squeeze(Pi_loc_bs_se(:,ii)),'o','hhxy',0);
+    tp=ploterr(tau,squeeze(Pi(:,iazel(1),iazel(2))),[],squeeze(Pi_loc_bs_se(:,ii)),'o','hhxy',0);
     set(tp(1),'Marker',config_fig.mark_typ{ii},'MarkerSize',4.5,...
         'MarkerFaceColor',cl_loc(ii,:),'Color',c_loc(ii,:),'DisplayName',temp_name);
     set(tp(2),'Color',c_loc(ii,:));
     pleg(ii)=tp(1);
     
     % fitted MODEL2
-    tpf=plot(t_fit,Pi0_fit2{iazel(1),iazel(2)},...
+    tpf=plot(t_fit,Pi_fit2{iazel(1),iazel(2)},...
     config_fig.line_sty{ii},'LineWidth',config_fig.line_wid,'Color',c_loc(ii,:));
     uistack(tpf,'bottom');
 end
@@ -786,10 +786,10 @@ ylim(1.5*[-1,1]);
 % cbar.Label.FontSize=fontsize;
 
 %% vis: dBdr around halo: Model2 (3D SPH)
-% h=figure('Name','dBdx_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
+% h=figure('Name','dBdr_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
 % 
-% % [vazf,velf,dBdxf]=autofill_cent_symm(vaz,vel,dBdx_ff);
-% % tp=plot_sph_surf(vazf,velf,dBdxf);
+% % [vazf,velf,dBdrf]=autofill_cent_symm(vaz,vel,dBdr_ff);
+% % tp=plot_sph_surf(vazf,velf,dBdrf);
 % tp=plot_sph_surf(gaz,gel,dBdr);
 % 
 % 
@@ -833,21 +833,21 @@ ylim(1.5*[-1,1]);
 
 
 %% vis: dBdr - rectangular (publication) (@ff)
-figname='dBdx_rectmap_ff';
+figname='dBdr_rectmap_ff';
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 
 tp=plotFlatMapWrappedRad(gaz,gel,dBdr,'rect','texturemap');
-% tp=plotFlatMapWrappedRad(gaz,gel,dBdx_se_ff,'rect','texturemap');
+% tp=plotFlatMapWrappedRad(gaz,gel,dBdr_se_ff,'rect','texturemap');
 
 % % AZIM in [0,pi]
 % vaz_pi=vaz;
 % vaz_pi(end+1,:)=vaz_pi(1,:)+pi;
 % vel_pi=vel;
 % vel_pi(end+1,:)=vel_pi(1,:);
-% dBdx_pi=dBdr;
-% dBdx_pi(end+1,:)=fliplr(dBdx_pi(1,:));
-% tp=plotFlatMap(rad2deg(vel_pi),rad2deg(vaz_pi),dBdx_pi,'rect','texturemap');
-% tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),dBdx_r,'rect','texturemap');
+% dBdr_pi=dBdr;
+% dBdr_pi(end+1,:)=fliplr(dBdr_pi(1,:));
+% tp=plotFlatMap(rad2deg(vel_pi),rad2deg(vaz_pi),dBdr_pi,'rect','texturemap');
+% tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),dBdr_r,'rect','texturemap');
 
 % label ROI
 hold on;
@@ -1164,7 +1164,7 @@ dBdrerr_eq=dBdr_se(:,iel_0);
 % yy=feval(fit_dB_eq,xx);
 
 %%% PLOT
-figname='dBdx_equatorial_tomography';
+figname='dBdr_equatorial_tomography';
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',config_fig.rend);
 hold on;
 
@@ -1260,9 +1260,9 @@ tp.edge(2).Visible='off';
 % annotation
 % zoom to theta=pi/2
 [~,iaz_pi2]=min(abs(az-pi/2));
-dBdx_pi2=dBdr_eq(iaz_pi2);
+dBdr_pi2=dBdr_eq(iaz_pi2);
 xlim(90+10*[-1,1]);
-ylim(dBdx_pi2*(1+1*[-1,1]));
+ylim(dBdr_pi2*(1+1*[-1,1]));
 % set(ax2,'XTickLabel',[]);
 ax2.FontSize=ax.FontSize-1;
 ax2.TickLength=5*ax2.TickLength;
@@ -1273,12 +1273,17 @@ vars_to_save={'configs','config_fig',...
     'Vaz','Vel','vaz','vel',...
     'n_zone','az','el','iel_0','gaz','gel',...
     'tau','n_tau',...
-    'Pi0','Pi0_bs_se',...
+    'Pi','Pi_bs_se',...
     'mdl_tevo2','t_fit','Pi0_fit2',...
     'beta','beta_se',...
     'dBdr','dBdr_se',...
     'dBdr_eq','dBdrerr_eq',...
     'ramsey_fname',...
+    'c_loc','cl_loc','loc_disp_2pi','azel_disp','n_loc_disp','loc_disp_orig','azel_disp_orig',...
+    'g2_loc','g0_loc','Pi_loc',...
+    'g2_loc_bs_mu','g2_loc_bs_se','g0_loc_bs_mu','g0_loc_bs_se',...
+    'Pi_loc_bs_mu','Pi_loc_bs_se',...
+    
     };  
 
 
