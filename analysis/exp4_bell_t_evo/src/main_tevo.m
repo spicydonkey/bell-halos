@@ -33,8 +33,8 @@ configs.exp.sig_beta_grad=configs.exp.r_bec/(configs.exp.d_sep_grad/2);
 configs.bins.az_lim=[0,pi];
 configs.bins.el_lim=pi/4*[-1,1];      
 
-configs.bins.n_az=100;
-configs.bins.n_el=50;
+configs.bins.n_az=60;
+configs.bins.n_el=30;
 
 % bin size (half-cone angle)
 configs.bins.alpha=configs.exp.sig_beta_grad;      
@@ -400,16 +400,16 @@ end
 
 %% Model 2: constant B-field gradient + variable creation time
 % MODEL:
-%      B(x) = B0 + dBdx * x    --- const grad mag-field
+%      B(x) = B0 + dBdr * x    --- const grad mag-field
 %      x(t) = v * (t - t0)     --- const velocity; created at t0
-% DeltaB(t) = B(xA) - B(xB) = dBdx * (2*v*(t-t0))    --- diff B-field
+% DeltaB(t) = B(xA) - B(xB) = dBdr * (2*v*(t-t0))    --- diff B-field
 %
 %%%
 % parity vs. phase
 %   parity = cos( 2*PHI(t) )
 %  where 
 %   PHI(t) = C_gymag \int DeltaB(t) dt
-%          = C_gymag * dBdx * v * (t-t0)^2
+%          = C_gymag * dBdr * v * (t-t0)^2
 %          = beta * (t-t0)^2
 %
 % CHECK ABOVE
@@ -458,17 +458,17 @@ mdl_tevo2.fit_par_se=arrayfun(@(I) cellfun(@(m) m.Coefficients.SE(I),mdl_tevo2.f
 Pi0_fit2=cellfun(@(f) feval(f,t_fit),mdl_tevo2.fit,'UniformOutput',false);
 
 
-%%% Magnetic field gradient: dBdx -----------------------------------------
+%%% Magnetic field gradient: dBdr -----------------------------------------
 beta=abs(mdl_tevo2.fit_par{1});             % get fit params and ensure sign is positive
 beta_se=abs(mdl_tevo2.fit_par_se{1});
 
 % far-field
-dBdx=1e6*beta/(configs.exp.v_sep*C_gymag/2);            % [G/m] (factor to convert time-scaling ms^-2 --> s^-2)
-dBdx_se=1e6*beta_se/(configs.exp.v_sep*C_gymag/2);      
+dBdr=1e6*beta/(configs.exp.v_sep*C_gymag/2);            % [G/m] (factor to convert time-scaling ms^-2 --> s^-2)
+dBdr_se=1e6*beta_se/(configs.exp.v_sep*C_gymag/2);      
 
 % fill by inversion symmetry
-[gaz,gel,dBdx]=autofill_cent_symm(vaz,vel,dBdx);
-[~,~,dBdx_se]=autofill_cent_symm(vaz,vel,dBdx_se);
+[gaz,gel,dBdr]=autofill_cent_symm(vaz,vel,dBdr);
+[~,~,dBdr_se]=autofill_cent_symm(vaz,vel,dBdr_se);
 
 % define 2pi-wrap filled az-el vectors
 az=gaz(:,1)';
@@ -507,7 +507,7 @@ end
 
 %% STAT: regions to display parity signal
 %%% VIS ============================================
-c_loc=zeros(length(iaz_disp),3);        % *BLACK* markers (simple)
+c_loc=zeros(3,3);        % *BLACK* markers (simple)
 cl_loc=[1,1,0]'*[1,1,1];
 
 %%% max, min and middle ============================================
@@ -519,16 +519,16 @@ azel_disp=[];   % (az,el)
 % azel_disp(end+1,:)=[az(iaz_0),el(iel_0)];
 
 % max -----------------------------------------------------------
-dBdx_max=max(dBdx(:));
-[iaz_max,iel_max]=find(dBdx==dBdx_max);
+dBdx_max=max(dBdr(:));
+[iaz_max,iel_max]=find(dBdr==dBdx_max);
 iaz_max=iaz_max(end);     % due to symmetry there can be multiple
 iel_max=iel_max(end);
 loc_disp_2pi(end+1,:)=[iaz_max,iel_max];
 azel_disp(end+1,:)=[az(iaz_max),el(iel_max)];
 
 % min --------------------------------------------------------------
-dBdx_min=min(dBdx(:));
-[iaz_min,iel_min]=find(dBdx==dBdx_min);
+dBdx_min=min(dBdr(:));
+[iaz_min,iel_min]=find(dBdr==dBdx_min);
 iaz_min=iaz_min(1);
 iel_min=iel_min(1);
 loc_disp_2pi(end+1,:)=[iaz_min,iel_min];
@@ -647,12 +647,12 @@ ylim(1.5*[-1,1]);
 % cbar.Label.String='$\Delta \mathrm{B}$ (mG)';
 % cbar.Label.FontSize=fontsize;
 
-%% vis: dBdx around halo: Model2 (3D SPH)
+%% vis: dBdr around halo: Model2 (3D SPH)
 % h=figure('Name','dBdx_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
 % 
 % % [vazf,velf,dBdxf]=autofill_cent_symm(vaz,vel,dBdx_ff);
 % % tp=plot_sph_surf(vazf,velf,dBdxf);
-% tp=plot_sph_surf(gaz,gel,dBdx);
+% tp=plot_sph_surf(gaz,gel,dBdr);
 % 
 % 
 % % annotation
@@ -694,11 +694,11 @@ ylim(1.5*[-1,1]);
 % cbar.Label.FontSize=fontsize;
 
 
-%% vis: dBdx - rectangular (publication) (@ff)
+%% vis: dBdr - rectangular (publication) (@ff)
 figname='dBdx_rectmap_ff';
 h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 
-tp=plotFlatMapWrappedRad(gaz,gel,dBdx,'rect','texturemap');
+tp=plotFlatMapWrappedRad(gaz,gel,dBdr,'rect','texturemap');
 % tp=plotFlatMapWrappedRad(gaz,gel,dBdx_se_ff,'rect','texturemap');
 
 % % AZIM in [0,pi]
@@ -706,7 +706,7 @@ tp=plotFlatMapWrappedRad(gaz,gel,dBdx,'rect','texturemap');
 % vaz_pi(end+1,:)=vaz_pi(1,:)+pi;
 % vel_pi=vel;
 % vel_pi(end+1,:)=vel_pi(1,:);
-% dBdx_pi=dBdx;
+% dBdx_pi=dBdr;
 % dBdx_pi(end+1,:)=fliplr(dBdx_pi(1,:));
 % tp=plotFlatMap(rad2deg(vel_pi),rad2deg(vaz_pi),dBdx_pi,'rect','texturemap');
 % tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),dBdx_r,'rect','texturemap');
@@ -749,6 +749,8 @@ cbar.Label.Interpreter='latex';
 cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
 cbar.Label.FontSize=config_fig.ax_fontsize;
 cbar.FontSize=config_fig.ax_fontsize;
+dBdr_cbar_lim=cbar.Limits;
+
 
 % change colorbar width
 pos_ax=get(gca,'Position');
@@ -786,6 +788,44 @@ H_trunc(2)=hatchfill2(hpatch_trunc(2),'single','HatchAngle',45,'HatchDensity',20
 % e.g.
 % vecrast(h,strcat('dB_dist_',getdatetimestr),600,'bottom','pdf')
 %---------------------------------------------
+
+%% VIS: histogram of dBdr
+figname='dBdr_histogram_spatial';
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',config_fig.rend);
+
+hold on;
+
+% naive one without lat-lon grid weights
+X = dBdr(~isnan(dBdr));       % rid of NaNs
+Bhist = histogram(X,'Normalization','pdf');
+Bhist.DisplayStyle='stairs';
+Bhist.EdgeColor='k';
+Bhist.FaceColor='none';
+Bhist.DisplayName='data';
+
+% % fit Gaussian
+% Xmean = mean(X(:));
+% Xstd = std(X(:));
+% xlim0=xlim;
+% xx = linspace(xlim0(1),xlim0(2),1e3);
+% yy = gaus_pdf(xx,Xmean,Xstd);
+% p_fit = plot(xx,yy,'r-','LineWidth',1);
+% p_fit.DisplayName='$\mathcal{N}(\bar\mu,\bar\sigma^2)$';
+
+% set xlims to colorbar of tomography
+xlim(dBdr_cbar_lim);
+
+% annotate
+ax=gca;
+set(ax,'Layer','Top');
+box on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+% lgd=legend([Bhist,p_fit]);
+
+xlabel('$d\mathrm{B}/dr$ (G/m)');
+ylabel('spatial pdf');
+
 
 
 %% vis: Model 1: deltaB - rectangular (publication)
@@ -959,7 +999,7 @@ H_trunc(2)=hatchfill2(hpatch_trunc(2),'single','HatchAngle',45,'HatchDensity',20
 % % lgd=legend(pleg);
 
 
-%% VIS: dBdx Equatorial tomography (publication)
+%% VIS: dBdr Equatorial tomography (publication)
 %%% calibration
 % % nuller characterisation at ±y measurement
 % dBdy=0.4;           % mG/mm
@@ -973,8 +1013,8 @@ p_xlim=[0,180];     % periodic BC
 idx_col=2;     % mid-color 
 
 %%% DATA
-dBdx_eq=dBdx(:,iel_0);      % delta magnetic field around equator
-dBdxerr_eq=dBdx_se(:,iel_0);      
+dBdr_eq=dBdr(:,iel_0);      % delta magnetic field around equator
+dBdrerr_eq=dBdr_se(:,iel_0);      
 
 % % fit
 % sine_mdl='y~c+amp*cos(2*x+phi)';      % periodic boundary condition fixes OMEGA
@@ -1014,7 +1054,7 @@ tp.edge(2).Visible='off';
 % not_roi(iaz_0+iaz_disp-1)=false;
 
 % SHADED ERR BAR
-tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdxerr_eq,'r');
+tp=shadedErrorBar(rad2deg(az),dBdr_eq,dBdrerr_eq,'r');
 tp.mainLine.Color=config_fig.col_theme(idx_col,:);    % 'none';
 tp.mainLine.LineWidth=1;
 tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
@@ -1028,7 +1068,7 @@ tp.edge(2).Visible='off';
 %     
 %     iazel=[iaz_disp(ii),iel_0];
 %     taz_disp=Vaz(iazel(1));    
-%     tp=ploterr(rad2deg(taz_disp),dBdx_eq(iazel(1)),[],dBdxerr_eq(iazel(1)),...
+%     tp=ploterr(rad2deg(taz_disp),dBdr_eq(iazel(1)),[],dBdrerr_eq(iazel(1)),...
 %         config_fig.mark_typ{ii},'hhxy',1);
 %     
 %     set(tp(1),'MarkerEdgeColor',c_loc(ii,:),...
@@ -1046,7 +1086,7 @@ ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
 
 xlabel('$\theta$ (deg)');
-ylabel('$d\mathrm{B}/dx$ (G/m)');
+ylabel('$d\mathrm{B}/dr$ (G/m)');
 
 axis tight;
 ylim_0=ax.YLim;
@@ -1071,7 +1111,7 @@ tp.edge(1).Visible='off';
 tp.edge(2).Visible='off';
 
 % gradiometry
-tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdxerr_eq,'r');
+tp=shadedErrorBar(rad2deg(az),dBdr_eq,dBdrerr_eq,'r');
 tp.mainLine.Color=config_fig.col_theme(idx_col,:);    % 'none';
 tp.mainLine.LineWidth=1;
 tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
@@ -1082,7 +1122,7 @@ tp.edge(2).Visible='off';
 % annotation
 % zoom to theta=pi/2
 [~,iaz_pi2]=min(abs(az-pi/2));
-dBdx_pi2=dBdx_eq(iaz_pi2);
+dBdx_pi2=dBdr_eq(iaz_pi2);
 xlim(90+10*[-1,1]);
 ylim(dBdx_pi2*(1+1*[-1,1]));
 % set(ax2,'XTickLabel',[]);
@@ -1098,8 +1138,8 @@ vars_to_save={'configs','config_fig',...
     'Pi0','Pi0_bs_se',...
     'mdl_tevo2','t_fit','Pi0_fit2',...
     'beta','beta_se',...
-    'dBdx','dBdx_se',...
-    'dBdx_eq','dBdxerr_eq',...
+    'dBdr','dBdr_se',...
+    'dBdr_eq','dBdrerr_eq',...
     'ramsey_fname',...
     };  
 
