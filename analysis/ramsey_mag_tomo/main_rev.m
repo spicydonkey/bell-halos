@@ -404,7 +404,10 @@ sig_psf_beta=sig_psf_r/(d_sep/2);   % PSF rms width in angle (rad)
 % sig_filt_beta=sig_psf_beta/2;       % filter rms width (rad)
 
 % gradiometry (~1.5 ms)
-sig_psf_gradiometry=sig_psf_beta*2;     % ~twice uncertainty
+% sig_psf_gradiometry=sig_psf_beta*2;     % ~twice uncertainty
+% 1.7 ms
+sig_psf_gradiometry=0.156*pi;     % ~twice uncertainty
+
 
 
 %% atom number and population
@@ -616,14 +619,14 @@ ax.LineWidth=ax_lwidth;
 xlabel('pulse delay $\tau~(\mu s)$');
 ylabel('$P$');
 
-% save fig
-if do_save_figs
-    savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
-    fpath=fullfile(dir_save,savefigname);
-    
-    saveas(h,strcat(fpath,'.fig'),'fig');
-    print(h,strcat(fpath,'.svg'),'-dsvg');
-end
+% % save fig
+% if do_save_figs
+%     savefigname=sprintf('fig_%s_%s',figname,getdatetimestr);
+%     fpath=fullfile(dir_save,savefigname);
+%     
+%     saveas(h,strcat(fpath,'.fig'),'fig');
+%     print(h,strcat(fpath,'.svg'),'-dsvg');
+% end
 
 
 %% atom number distribution: nk_m
@@ -640,8 +643,8 @@ n_az=200;                	% equispaced bins
 n_el=100;
 
 % % QUICK DEBUG
-% n_az=40;
-% n_el=20;
+% n_az=100;
+% n_el=50;
 
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
@@ -1059,7 +1062,7 @@ ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
 lgd=legend([Bhist,p_fit]);
 
-xlabel('$B$ (G)');
+xlabel('$\mathrm{B}$ (G)');
 ylabel('spatial pdf');
 
 
