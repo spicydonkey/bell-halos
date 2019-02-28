@@ -728,7 +728,7 @@ for ii=1:n_loc_disp
     
     temp_name=sprintf('%0.3g, %0.3g',tazel(1),tazel(2));        % location (th,phi) 
 
-    tp=ploterr(tau,squeeze(Pi(:,iazel(1),iazel(2))),[],squeeze(Pi_loc_bs_se(:,ii)),'o','hhxy',0);
+    tp=ploterr(tau,Pi_loc(:,ii),[],Pi_loc_bs_se(:,ii),'o','hhxy',0);
     set(tp(1),'Marker',config_fig.mark_typ{ii},'MarkerSize',4.5,...
         'MarkerFaceColor',cl_loc(ii,:),'Color',c_loc(ii,:),'DisplayName',temp_name);
     set(tp(2),'Color',c_loc(ii,:));
