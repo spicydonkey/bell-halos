@@ -200,6 +200,37 @@ ax.LineWidth=config_fig.ax_lwid;
 % uistack(line_resol,'bottom');
 
 
+%% VIS: binsize vs error (scaling)
+h=figure('Name','binsize_vs_B_err','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
+ax=gca;
+hold on;
+for ii=1:n_az
+    for jj=1:n_el
+        tI=sub2ind([n_az,n_el],ii,jj);
+
+        y_scaled = (alpha/pi)'.*squeeze(Berr_alpha(ii,jj,:));
+        y_scaled = y_scaled/y_scaled(1);
+        
+        tp=plot(alpha/pi,y_scaled);
+        tp.LineStyle=config_fig.line_sty{tI};
+        tp.Marker='none';
+        tp.Color='k';
+    end
+end
+set(ax,'Layer','top');
+set(ax,'XScale','log');
+set(ax,'YScale','log');
+xlabel('bin size $\alpha/\pi$');
+ylabel('Unc $B \alpha$ (arb. unit)');
+box on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+% % annotation ----------------------
+% line_resol=line([beta_ramsey,beta_ramsey]/pi,ax.YLim,'LineStyle','--','Color','k');
+% uistack(line_resol,'bottom');
+
+
 %% save ===============================================
 vars_to_save={'path_mat_file','config_fig',...
     'alpha','az','el','n_az','n_el',...
