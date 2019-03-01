@@ -1170,13 +1170,14 @@ hold on;
 
 % data-------------------------------------------------------------------
 % Ramsey estimate
-ramsey_fname='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ramsey_mag_tomo\out\out_20190221_101042';
+% ramsey_fname='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ramsey_mag_tomo\out\out_20190221_101042';
+ramsey_fname='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ramsey_mag_tomo\out\out_20190228_190145';
 
 vars_to_load={'az','el','dBdx_eq','dBdx_eq_se'};
 S_ramsey=load(ramsey_fname,vars_to_load{:});
 
 % SHADED ERR BAR
-tp=shadedErrorBar(rad2deg(S_ramsey.az),S_ramsey.dBdx_eq,S_ramsey.dBdx_eq_se,'k');
+tp=shadedErrorBar(rad2deg(S_ramsey.az),abs(S_ramsey.dBdx_eq),S_ramsey.dBdx_eq_se,'k');
 tp.mainLine.Color=0.3*ones(1,3);    %  'k';    % 'none';
 tp.mainLine.LineWidth=1;
 tp.mainLine.LineStyle='--';
@@ -1229,6 +1230,7 @@ ylabel('$d\mathrm{B}/dr$ (G/m)');
 axis tight;
 ylim_0=ax.YLim;
 ylim([0,ylim_0(2)]);
+% ylim([0,20]);
 xlim(p_xlim);
 ax.XTick=0:45:180;
 
@@ -1262,7 +1264,8 @@ tp.edge(2).Visible='off';
 [~,iaz_pi2]=min(abs(az-pi/2));
 dBdr_pi2=dBdr_eq(iaz_pi2);
 xlim(90+10*[-1,1]);
-ylim(dBdr_pi2*(1+1*[-1,1]));
+% ylim(dBdr_pi2*(1+1*[-1,1]));
+ylim([0,1]);
 % set(ax2,'XTickLabel',[]);
 ax2.FontSize=ax.FontSize-1;
 ax2.TickLength=5*ax2.TickLength;
@@ -1274,7 +1277,7 @@ vars_to_save={'configs','config_fig',...
     'n_zone','az','el','iel_0','gaz','gel',...
     'tau','n_tau',...
     'Pi','Pi_bs_se',...
-    'mdl_tevo2','t_fit','Pi0_fit2',...
+    'mdl_tevo2','t_fit','Pi_fit2',...
     'beta','beta_se',...
     'dBdr','dBdr_se',...
     'dBdr_eq','dBdrerr_eq',...
