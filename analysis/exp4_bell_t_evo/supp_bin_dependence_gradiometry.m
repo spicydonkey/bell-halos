@@ -371,7 +371,7 @@ for kk=1:length(tau_plot)
             tp.edge(1).LineStyle=config_fig.line_sty{1};
             tp.edge(2).LineStyle=config_fig.line_sty{1};
             tp.edge(1).Color=col_zones(ii,:);
-            tp.edge(1).Color=col_zones(ii,:);
+            tp.edge(2).Color=col_zones(ii,:);
             
             pleg(end+1)=tp.mainLine;
         end
@@ -462,13 +462,76 @@ for kk=1:length(tau_plot)
         'FaceColor',col_cutoff,'EdgeColor','none');
     uistack(o_cutoff,'bottom');
     
-    % legend---------------------------
-    if kk==1
-        lgd=legend(pleg);
-        lgd.Title.String='$\theta, \phi$';
-        lgd.Location='northeast';
-        lgd.Box='off';
+%     % legend---------------------------
+%     if kk==1
+%         lgd=legend(pleg);
+%         lgd.Title.String='$\theta, \phi$';
+%         lgd.Location='northeast';
+%         lgd.Box='off';
+%     end
+end
+
+
+%% VIS: ERR parity vs bin-size (scaling)
+h=figure('Name','binsize_vs_parity_err_scaling','Units',config_fig.units,'Position',[0,0,8.6,4.5*3],'Renderer',config_fig.rend);
+
+tau_plot=round(linspace(1,n_tau,3));
+
+for kk=1:length(tau_plot)
+    itau=tau_plot(kk);
+    subplot(3,1,kk);
+    ax=gca;
+    hold on;
+    
+    pleg=[];
+    for ii=1:configs.bins.n_az
+        for jj=1:configs.bins.n_el            
+            tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
+                    
+            y_scaled = (configs.bins.alpha_scan/pi)'.*squeeze(v_Pi0_bs_se(itau,ii,jj,:));
+            y_scaled = y_scaled/y_scaled(1);
+            
+            tp=plot(configs.bins.alpha_scan/pi,y_scaled);
+            tp.LineStyle=config_fig.line_sty{1};
+            tp.Marker='none';
+%             tp.Color='k';
+            tp.Color=col_zones(ii,:);
+            tp.DisplayName=sprintf('%0.3g, %0.3g',gaz(ii),gel(jj));
+            
+            pleg(end+1)=tp;
+        end
     end
+    title(sprintf('%0.2g ms',tau(itau)));
+    
+    % annotation
+    set(ax,'Layer','top');
+    set(ax,'XScale','log');
+    set(ax,'YScale','log');
+    xlabel('bin size $\alpha/\pi$');
+    ylabel('$\alpha\cdot$unc (arb. units)');
+    box on;
+    ax.FontSize=config_fig.ax_fontsize;
+    ax.LineWidth=config_fig.ax_lwid;
+    
+    ax.XLim(1)=0.1;     % below this not enough data for g2
+%     ylim(1.5*[-1, 1]);
+    
+    % bin cut-off ----------------------
+    alpha_max=0.5*pi;        % cutoff for entanglement analysis
+    xdata_cutoff=[alpha_max/pi,ax.XLim(2),ax.XLim(2),alpha_max/pi];
+    col_cutoff = 0.9*ones(1,3);
+    
+    o_cutoff=patch('XData',xdata_cutoff,'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+        'FaceColor',col_cutoff,'EdgeColor','none');
+    uistack(o_cutoff,'bottom');
+    
+%     % legend---------------------------
+%     if kk==1
+%         lgd=legend(pleg);
+%         lgd.Title.String='$\theta, \phi$';
+%         lgd.Location='northeast';
+%         lgd.Box='off';
+%     end
 end
 
 
@@ -491,6 +554,8 @@ for ii=1:configs.bins.n_az
         
         tp.mainLine.Color=col_zones(ii,:);
         tp.patch.FaceColor=col_zones(ii,:);
+        tp.edge(1).Color=col_zones(ii,:);
+        tp.edge(2).Color=col_zones(ii,:);
         
         pleg(end+1)=tp.mainLine;
     end
@@ -500,7 +565,7 @@ end
 set(ax,'Layer','top');
 set(ax,'XScale','log');
 xlabel('bin size $\alpha/\pi$');
-ylabel('$dB/dx$ (G/m)');
+ylabel('$dB/dr$ (G/m)');
 box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
@@ -547,7 +612,49 @@ set(ax,'Layer','top');
 set(ax,'XScale','log');
 set(ax,'YScale','log');
 xlabel('bin size $\alpha/\pi$');
-ylabel('Unc $dB/dx$ (G/m)');
+ylabel('Unc $dB/dr$ (G/m)');
+box on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+ax.XLim(1)=0.1;     % below this not enough data for g2
+
+% bin cut-off ----------------------
+alpha_max=0.5*pi;        % cutoff for entanglement analysis
+xdata_cutoff=[alpha_max/pi,ax.XLim(2),ax.XLim(2),alpha_max/pi];
+col_cutoff = 0.9*ones(1,3);
+
+o_cutoff=patch('XData',xdata_cutoff,'YData',[ax.YLim(1),ax.YLim(1),ax.YLim(2),ax.YLim(2)],...
+    'FaceColor',col_cutoff,'EdgeColor','none');
+uistack(o_cutoff,'bottom');
+
+
+%% VIS: binsize vs error (scaling)
+h=figure('Name','binsize_vs_dBdx_err_scaling','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
+ax=gca;
+hold on;
+for ii=1:configs.bins.n_az
+    for jj=1:configs.bins.n_el
+        tI=sub2ind([configs.bins.n_az,configs.bins.n_el],ii,jj);
+        
+        y_scaled = (configs.bins.alpha_scan/pi)'.*squeeze(v_dBdx_se(ii,jj,:));
+        y_scaled = y_scaled/y_scaled(1);
+        
+        tp=plot(configs.bins.alpha_scan/pi,y_scaled);
+        tp.LineStyle=config_fig.line_sty{1};
+        tp.Marker='none';
+%         tp.Color='k';
+        tp.Color=col_zones(ii,:);
+        
+    end
+end
+
+% annotation
+set(ax,'Layer','top');
+set(ax,'XScale','log');
+set(ax,'YScale','log');
+xlabel('bin size $\alpha/\pi$');
+ylabel('$\alpha\cdot$unc (arb. unit)');
 box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
