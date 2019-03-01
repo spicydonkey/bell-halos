@@ -221,7 +221,7 @@ set(ax,'Layer','top');
 set(ax,'XScale','log');
 set(ax,'YScale','log');
 xlabel('bin size $\alpha/\pi$');
-ylabel('Unc $B \alpha$ (arb. unit)');
+ylabel('$\alpha\cdot$unc (arb. unit)');
 box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
