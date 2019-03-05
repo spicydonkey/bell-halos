@@ -880,22 +880,26 @@ ylabel('$\phi$ (deg)');
 
 colormap('parula');
 cbar=colorbar('eastoutside');
-clim_original=cbar.Limits;
-cbar.Limits=[0,clim_original(2)];
+% clim_original=cbar.Limits;
+% cbar.Limits=[0,clim_original(2)];
 cbar.TickLabelInterpreter='latex';
-cbar.Label.Interpreter='latex';
-cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
-cbar.Label.FontSize=config_fig.ax_fontsize;
+% cbar.Label.Interpreter='latex';
+% cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
+% cbar.Label.FontSize=config_fig.ax_fontsize;
+title(cbar,'$d\mathrm{B}/dx$ (G/m)','Interpreter','latex');       % title on top
 cbar.FontSize=config_fig.ax_fontsize;
-dBdr_cbar_lim=cbar.Limits;
 
-
-% change colorbar width
+% change colorbar position
+ax_pos = plotboxpos(ax);
 pos_ax=get(gca,'Position');
 pos_cbar=get(cbar,'Position');
-pos_cbar(3)=0.03;
+pos_cbar(3)=0.025;
+pos_cbar(1)=ax_pos(1)+ax_pos(3)+1*pos_cbar(3);
 set(cbar,'Position',pos_cbar);
-set(gca,'Position',pos_ax);
+set(gca,'Position',pos_ax);     % return axis to original
+% colorbar limits
+dBdr_cbar_lim=cbar.Limits;
+set(cbar,'Ticks',dBdr_cbar_lim);       % ticks ONLY at colorbar lims
 
 
 % hatch-out truncated region --------------------------
@@ -935,7 +939,7 @@ hold on;
 
 % naive one without lat-lon grid weights
 X = dBdr(~isnan(dBdr));       % rid of NaNs
-Bhist = histogram(X,'Normalization','pdf');
+Bhist = histogram(X,50,'Normalization','pdf');
 Bhist.DisplayStyle='stairs';
 Bhist.EdgeColor='k';
 Bhist.FaceColor='none';

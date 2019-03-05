@@ -988,7 +988,7 @@ pos_cbar=get(cbar,'Position');
 pos_cbar(3)=0.025;
 pos_cbar(1)=ax_pos(1)+ax_pos(3)+1*pos_cbar(3);
 set(cbar,'Position',pos_cbar);
-set(gca,'Position',pos_ax);
+set(gca,'Position',pos_ax);     % return axis to original
 % colorbar limits
 Btomo_cbar_lim = cbar.Limits;
 set(cbar,'Ticks',Btomo_cbar_lim);       % ticks ONLY at colorbar lims
