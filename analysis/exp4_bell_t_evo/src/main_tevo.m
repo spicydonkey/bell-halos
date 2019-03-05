@@ -884,9 +884,9 @@ cbar=colorbar('eastoutside');
 % cbar.Limits=[0,clim_original(2)];
 cbar.TickLabelInterpreter='latex';
 % cbar.Label.Interpreter='latex';
-% cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
+% cbar.Label.String='$d\mathrm{B}/dr$ (G/m)';
 % cbar.Label.FontSize=config_fig.ax_fontsize;
-title(cbar,'$d\mathrm{B}/dx$ (G/m)','Interpreter','latex');       % title on top
+title(cbar,'$d\mathrm{B}/dr$ (G/m)','Interpreter','latex');       % title on top
 cbar.FontSize=config_fig.ax_fontsize;
 
 % change colorbar position
