@@ -480,31 +480,83 @@ P_bec_std=vertcat(P_bec_std{:});
 P_bec_se=P_bec_std./sqrt(n_shot);
 
 
-%% VIS
+%% VIS: HALO COLLECTIVE RAMSEY SIGNAL
+% configs
+col_spin={'b','r'};     % mJ = 1, 0
+
+% PLOT =====================================================
+figname='halo_ramsey_signal';
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,config_fig.pagewidth,6],...
+    'Renderer',config_fig.rend);
+hold on;
+
+% detected atom number ------------------------------------------------
+subplot(1,2,1);
+hold on;
+for ii=1:2    
+    tp_halo=ploterr(1e6*tau,Nm_halo_avg(:,ii),[],Nm_halo_se(:,ii),'o-');
+    set(tp_halo(1),'Color',col_spin{ii},'MarkerFaceColor',col_spin{ii},...
+        'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
+    set(tp_halo(2),'Color',col_spin{ii},'LineWidth',config_fig.line_wid);
+end
+
+ax=gca;
+box on;
+set(ax,'Layer','Top');
+set(ax,'FontSize',config_fig.ax_fontsize);
+set(ax,'LineWidth',config_fig.ax_lwid);
+
+axis_snug(ax,[0.05,0.1]);
+
+xlabel('pulse delay $\tau~(\mu s)$');
+ylabel('\# detected $N_i$');
+
+% Polarisation ------------------------------------------------
+subplot(1,2,2);
+hold on;
+
+tp_halo=ploterr(1e6*tau,P_halo_avg,[],P_halo_se,'o-');
+set(tp_halo(1),'Color','k','MarkerFaceColor','k',...
+    'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
+set(tp_halo(2),'Color','k',...
+    'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
+
+ax=gca;
+box on;
+set(ax,'Layer','Top');
+set(ax,'FontSize',config_fig.ax_fontsize);
+set(ax,'LineWidth',config_fig.ax_lwid);
+
+xlabel('pulse delay $\tau~(\mu s)$');
+ylabel('polarisation');
+axis_snug(ax,[0.05,0.1]);
+
+%% VIS: BEC COLLECTIVE RAMSEY SIGNAL
 % configs
 i_bec=1:2;
 mrk_bec={'v','^'};      % marker types for BEC: triangle DOWN/UP
 col_spin={'b','r'};     % mJ = 1, 0
 
-%%% detected atom number
-figname='bec_halo_num';
-h=figure('Name',figname,'Units',config_fig.units,'Position',config_fig.pos_2col,...
+% PLOT =====================================================
+figname='bec_ramsey_signal';
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,config_fig.pagewidth,6],...
     'Renderer',config_fig.rend);
 hold on;
 
-for ii=1:2
-    % halo
-    tp_halo=ploterr(1e6*tau,Nm_halo_avg(:,ii),[],Nm_halo_se(:,ii),'o-');
-    set(tp_halo(1),'Color',col_spin{ii},'MarkerFaceColor',col_spin{ii},...
-        'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
-    set(tp_halo(2),'Color',col_spin{ii},'LineWidth',config_fig.line_wid);
-    
-    % bec
-    for jj=i_bec
+% detected atom number ----------------------------------------
+subplot(1,2,1);
+hold on;
+
+for ii=1:2      % SPIN component
+    for jj=i_bec    % BEC North/South
         tp_bec=ploterr(1e6*tau,Nm_bec_avg(:,ii,jj),[],Nm_bec_se(:,ii,jj),'--');
         set(tp_bec(1),'Color',col_spin{ii},'MarkerFaceColor','w','Marker',mrk_bec{jj},...
             'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
         set(tp_bec(2),'Color',col_spin{ii},'LineWidth',config_fig.line_wid);
+        
+        if jj==1
+            tp_bec(1).MarkerFaceColor=tp_bec(1).Color;
+        end
     end
 end
 
@@ -520,20 +572,9 @@ xlabel('pulse delay $\tau~(\mu s)$');
 ylabel('\# detected $N_i$');
 
 
-
-%%% Polarisation
-figname='bec_halo_pol';
-h=figure('Name',figname,'Units',config_fig.units,'Position',config_fig.pos_2col,...
-    'Renderer',config_fig.rend);
+% Polarisation -----------------------------------------
+subplot(1,2,2);
 hold on;
-
-% halo
-tp_halo=ploterr(1e6*tau,P_halo_avg,[],P_halo_se,'o-');
-set(tp_halo(1),'Color','k','MarkerFaceColor','k',...
-    'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
-set(tp_halo(2),'Color','k',...
-    'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
-
 % bec
 for jj=i_bec
     tp_bec=ploterr(1e6*tau,P_bec_avg(:,jj),[],P_bec_se(:,jj),'--');
@@ -541,6 +582,9 @@ for jj=i_bec
         'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
     set(tp_bec(2),'Color','k',...
         'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
+    if jj==1
+        tp_bec(1).MarkerFaceColor=tp_bec(1).Color;
+    end
 end
 
 ax=gca;
