@@ -976,18 +976,22 @@ colormap('viridis');
 % cbar=colorbar('west');
 cbar=colorbar('eastoutside');
 cbar.TickLabelInterpreter='latex';
-cbar.Label.Interpreter='latex';
-cbar.Label.String='$\mathrm{B}$ (G)';
-cbar.Label.FontSize=config_fig.ax_fontsize;
+% cbar.Label.Interpreter='latex';
+% cbar.Label.String='$\mathrm{B}$ (G)';
+% cbar.Label.FontSize=config_fig.ax_fontsize;
+title(cbar,'$\mathrm{B}$ (G)','Interpreter','latex');       % title on top
 cbar.FontSize=config_fig.ax_fontsize;
-% change colorbar width
+% change colorbar position
+ax_pos = plotboxpos(ax);
 pos_ax=get(gca,'Position');
 pos_cbar=get(cbar,'Position');
-pos_cbar(3)=0.03;
+pos_cbar(3)=0.025;
+pos_cbar(1)=ax_pos(1)+ax_pos(3)+1*pos_cbar(3);
 set(cbar,'Position',pos_cbar);
 set(gca,'Position',pos_ax);
 % colorbar limits
 Btomo_cbar_lim = cbar.Limits;
+set(cbar,'Ticks',Btomo_cbar_lim);       % ticks ONLY at colorbar lims
 
 
 % hatch-out truncated region --------------------------
@@ -1061,6 +1065,7 @@ box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
 lgd=legend([Bhist,p_fit]);
+lgd.Location='best' ;
 
 xlabel('$\mathrm{B}$ (G)');
 ylabel('spatial pdf');
