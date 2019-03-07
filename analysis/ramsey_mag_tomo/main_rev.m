@@ -79,15 +79,6 @@ b_paramset=cellfun(@(idx) ismember(shot_id,idx),...
 % b_paramset=horzcat(b_paramset{:});
 
 
-% DEBUG
-% h_txy_raw=figure;
-% plot_zxy(txy,1e5);
-% axis equal;
-% xlabel('x');
-% ylabel('y');
-% zlabel('t');
-% view([0,0]);
-
 h_zxy_raw=figure;
 plot_zxy(zxy,1e5);
 axis equal;
@@ -95,6 +86,111 @@ xlabel('x');
 ylabel('y');
 zlabel('z');
 view([0,0]);
+
+%% VIS: 3D scatter raw data -----------------------------------
+idx_Ramsey=1;       % pi/2 pulse
+idx_phi0=1;         % phase delay = 0
+idx_tau_vis = 1:4:16;   % indices of taus to visualise
+n_tau_vis=length(idx_tau_vis);
+b_sel=b_paramset(idx_Ramsey,idx_phi0,:);
+
+
+% ZXY with Z-values relative to initial v_z=0 free-fall
+t_trapSO=0;         % time at trap switchoff
+t_tof=0.416;        % free-fall TOF till detection
+zxy_zrel=cellfun(@(r) r - [vz*(t_trapSO+t_tof),0,0],zxy,'uni',0);
+% TODO code TXY --> ZXY where rel-Z is already calculated
+%   relZ will be proportional to v_z at trapSO
+
+for ii = 1:n_tau_vis
+    H_zxy_raw_3d = figure('Name','zxy_raw_3d','Units',config_fig.units,'Position',[0 0 8.6 12],'Renderer',config_fig.rend);
+    hold on;
+    
+    % select Ramsey
+    idx_tau=idx_tau_vis(ii);
+%     b_sel=b_paramset{idx_Ramsey,idx_phi0,idx_tau};
+    zxy_zrel_sel=zxy_zrel(b_sel{idx_tau});
+    
+    s = vis_zxy_3d(1e3*zxy_zrel_sel{1});
+    
+    ax=gca;
+    set(ax,'XLim',1e3*configs.load.window{2});
+    set(ax,'YLim',1e3*configs.load.window{3});
+    xlabel('$x$ (mm)');
+    ylabel('$y$ (mm)');
+    zlabel('$z^*$ (mm)');
+    
+    titlestr = sprintf('%s = %0.3g %s','$\tau$',1e6*par_comp{3}(idx_tau),'$\mu$s');
+    title(titlestr);
+    
+    H_zxy_raw_3d.Name=strcat(H_zxy_raw_3d.Name,'_',num2str(1e6*par_comp{3}(idx_tau)));
+end
+
+%% VIS: projection raw data -----------------------------------
+img_ax = 'xz';
+img_lim = {configs.load.window{2}, 1e-3*[-200,100]};
+img_pitch = {1e-3, 1e-3};
+
+I=cell(n_tau_vis,1);
+
+% side-by-side ------------------------------------------
+H = figure;
+for ii = 1:n_tau_vis
+    ax=subplot(1,n_tau_vis,ii);
+    
+    % select data subset (Ramsey) @ particular tau
+    idx_tau=idx_tau_vis(ii);
+%     b_sel=b_paramset{idx_Ramsey,idx_phi0,idx_tau};
+    zxy_zrel_sel=zxy_zrel(b_sel{idx_tau});
+    
+    ZXY_this=cat(1,zxy_zrel_sel{:});
+    [I{ii},xx,yy] = zxy2img(ZXY_this,img_ax,img_lim,img_pitch);
+    imagesc(ax,'XData',xx,'YData',yy,'CData',log10(I{ii}));
+    
+    axis tight;
+    axis equal;
+    axis off;
+    
+    if ii==length(idx_tau_vis)
+        pos0=ax.Position;   %original axes position
+        % colorbar
+        cbar=colorbar('eastoutside');
+        cbar.Label.String='log_{10}(atom number)';
+        %return axes pos
+        ax.Position=pos0;
+    end
+end
+
+% juxtaposed images ------------------------------------------
+Icat = cat(2,I{:});     % along horizontal
+
+H_xz_raw_proj = figure('Name','xz_raw_proj','Units',config_fig.units,'Position',[0 0 13 12],'Renderer',config_fig.rend);
+imagesc('XData',xx*n_tau_vis,'YData',yy,'CData',log10(Icat));
+
+ax=gca;
+axis tight;
+axis equal;
+axis off;
+pos0=ax.Position;   %original axes position
+
+cbar=colorbar('eastoutside');       % colorbar
+cbar.Label.String='log_{10}(atom number)';
+ax.Position=pos0;   %return axes pos
+boxpos0=plotboxpos(ax);
+cbar.Position(3)=cbar.Position(3)/3;
+cbar.Position(1)=boxpos0(1)+boxpos0(3)+cbar.Position(3);
+colormap('inferno');
+
+% annotation
+for ii=1:n_tau_vis
+    idx_tau=idx_tau_vis(ii);
+    tt = 1e6*par_comp{3}(idx_tau);
+    tx = xx(1)*n_tau_vis + (ii-1+0.5)*diff(headtail(xx));
+    ty = yy(end) + 0.02*diff(headtail(yy));
+    
+    textstr = sprintf('%s = %0.3g %s','$\tau$',tt,'$\mu$s');
+    text(tx,ty,textstr,'HorizontalAlignment','center','VerticalAlignment','bottom');
+end
 
 
 %% distinguish mF and capture halo
@@ -149,6 +245,155 @@ xlabel('x');
 ylabel('y');
 zlabel('z');
 view([0,0]);
+
+
+%% VIS
+% plot spin (mJ) distinguished result + halo centered (oscillations
+% cancelled)
+
+% 3D scatter -----------------------------------
+for ii=1:2  %mJ    
+    H=figure;
+    
+    for jj=1:n_tau_vis
+        subplot(1,n_tau_vis,jj);
+        
+        idx_tau=idx_tau_vis(jj);
+        
+        Z = zxy0{find(b_sel{idx_tau},1),ii};
+        vis_zxy_3d(1e3*Z);
+        
+        ax=gca;
+        
+        ax_lim=[-35,35];
+        set(ax,'XLim',ax_lim);
+        set(ax,'YLim',ax_lim);
+        set(ax,'ZLim',ax_lim);
+    end
+end
+
+%% VIS: Images
+% 2D projection  ---------------------------------------------------
+b_cat = any(cat(2,b_sel{:}),2);     % any shot belonging to this experiment
+img_lim = {35e-3*[-1,1],35e-3*[-1,1]};
+img_pitch = {0.2e-3,0.2e-3};
+
+% XY
+H=figure('Name','mJ_xy_proj','Units',config_fig.units,'Position',[0 0 6 12],'Renderer',config_fig.rend);
+for ii=1:2
+    subplot(2,1,ii);
+    
+    Z=cat(1,zxy0{b_cat,ii});        % concatenate all mJ=ii atoms
+    
+    [I,xx,yy]=zxy2img(Z,'xy',img_lim,img_pitch);
+    
+    imagesc('XData',1e3*xx,'YData',1e3*yy,'CData',log10(I));
+    
+    ax=gca;
+    axis tight;
+    axis equal;
+    colormap('inferno');
+    xlabel('$x$ (mm)');
+    ylabel('$y$ (mm)');
+    
+%     % colorbar
+%     pos0=ax.Position;   %original axes position
+%     cbar=colorbar('eastoutside');
+%     cbar.Label.String='log_{10}(atom number)';
+%     ax.Position=pos0;   %return axes pos
+%     boxpos0=plotboxpos(ax);
+%     cbar.Position(3)=cbar.Position(3)/3;
+%     cbar.Position(1)=boxpos0(1)+boxpos0(3)+cbar.Position(3);
+%     colormap('inferno');
+end
+
+% XZ
+H=figure('Name','mJ_xz_proj','Units',config_fig.units,'Position',[0 0 6 12],'Renderer',config_fig.rend);
+for ii=1:2
+    subplot(2,1,ii);
+    
+    Z=cat(1,zxy0{b_cat,ii});        % concatenate all mJ=ii atoms
+    
+    [I,xx,yy]=zxy2img(Z,'xz',img_lim,img_pitch);
+    
+    imagesc('XData',1e3*xx,'YData',1e3*yy,'CData',log10(I));
+    
+    ax=gca;
+    axis tight;
+    axis equal;
+    colormap('inferno');
+    xlabel('$x$ (mm)');
+    ylabel('$z$ (mm)');
+    
+%     % colorbar
+%     pos0=ax.Position;   %original axes position
+%     cbar=colorbar('eastoutside');
+%     cbar.Label.String='log_{10}(atom number)';
+%     ax.Position=pos0;   %return axes pos
+%     boxpos0=plotboxpos(ax);
+%     cbar.Position(3)=cbar.Position(3)/3;
+%     cbar.Position(1)=boxpos0(1)+boxpos0(3)+cbar.Position(3);
+%     colormap('inferno');
+end
+
+%% XY-slices -----------------------------------------
+img_lim = {35e-3*[-1,1],35e-3*[-1,1]};
+img_pitch = {0.4e-3,0.4e-3};
+
+z0 = linspace(-26e-3,26e-3,5);
+dz = 52e-3/20;
+
+H=figure('Name','mJ_xy_slice','Units',config_fig.units,'Position',[0 0 26 12],'Renderer',config_fig.rend);
+
+lim_zslice = arrayfun(@(z) z + dz*[-1,1],z0,'uni',0);
+
+for ii=1:2
+    Z=cat(1,zxy0{b_cat,ii});        % concatenate all mJ=ii atoms
+    
+    Zsliced = cellfun(@(z) boxcull(Z,{z,[],[]}),lim_zslice,'uni',0);
+    
+    I=cellfun(@(z) zxy2img(z,'xy',img_lim,img_pitch),Zsliced,'uni',0);
+    
+    Icat=cat(2,I{:});      % stitch images horizontally
+    
+    ax=subplot(2,1,ii);
+    imagesc('XData',length(z0)*img_lim{1},...
+        'YData',img_lim{2},...
+        'CData',log10(Icat));
+    
+    
+    axis equal;
+    axis tight;
+    axis off;
+%     ax.XTickLabel=[];
+%     ax.YTickLabel=[];
+    colormap('inferno');
+    
+    % colorbar
+    pos0=ax.Position;   %original axes position
+    cbar=colorbar('eastoutside');       
+    cbar.Label.String='log_{10}(atom number)';
+    ax.Position=pos0;   %return axes pos
+    boxpos0=plotboxpos(ax);
+    cbar.Position(3)=cbar.Position(3)/3;
+    cbar.Position(1)=boxpos0(1)+boxpos0(3)+cbar.Position(3);
+    colormap('inferno');
+    
+    % annotation
+    if ii==1
+        for jj=1:length(z0)
+            xx=img_lim{1};
+            yy=img_lim{2};
+            
+            tz = 1e3*z0(jj);
+            tx = xx(1)*length(z0) + (jj-1+0.5)*diff(headtail(xx));
+            ty = yy(end) + 0.02*diff(headtail(yy));
+            
+            textstr = sprintf('$z$ = %0.3g mm',tz);
+            text(tx,ty,textstr,'HorizontalAlignment','center','VerticalAlignment','bottom');
+        end
+    end
+end
 
 
 %% filter data
@@ -267,6 +512,52 @@ v_ellip=[v_ellip{:}];   % form as struct array
 
 % VIS
 scatter_halo(k_halo);
+
+
+%% VIS - ellipsoid fit (3D)
+H=figure('Name','ellipsoid_fit','Units',config_fig.units,'Position',[0 0 18 8.6],'Renderer',config_fig.rend);
+
+for ii=1:2
+    subplot(1,2,ii);
+    hold on;
+    
+    % raw data
+    Z = zxy0_filt(:,ii);        % truncated halo raw data points
+    s_data = vis_zxy_3d(cat(1,Z{1:10}));        % display only a few shots
+    s_data.SizeData=s_data.SizeData/2;      % smaller
+    
+    % ellipsoid
+    tV=v_ellip(ii);
+    ax_Ellipsoid{ii}=vis_ellipsoid(tV.cent,tV.rad,tV.vaxis,tV.v);
+    
+    axis tight;
+    axis equal;
+    xlabel('$x$ (m)');
+    ylabel('$y$ (m)');
+    zlabel('$z$ (m)');
+    
+    axis vis3d;
+    camlight;
+    lighting phong;
+end
+H.Renderer='opengl';        % gives better image even when rasterised
+% print this via HR PNG printer
+%   print(gcf,'foo.png','-dpng','-r600');
+% or 
+%   print_pnghr(gcf);
+
+
+%% VIS - ellipsoid fit (2D slice)
+% TODO
+H=figure;
+
+for ii=1:2
+    % loop through Z-slices
+        % slice density image (XY)
+    
+        % fitted ellipsoid contour
+    
+end
 
 
 %% filter post-processed data
