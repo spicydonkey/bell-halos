@@ -603,12 +603,9 @@ for ii=1:2
     Z = cat(1,zxy0_filt{b_cat,ii});         % concatenate all mJ=ii atoms (truncated)
     [H,hh]=vis_halo_distribution(Z);
     
-    figname=strcat('halo_distribution_',num2str(ii));
+    figname=strcat('zxy_halo_distribution_',num2str(ii));
     H.Name=figname;
 end
-
-
-%% VIS - unit-sphere mapped (unprocessed)
 
 
 %% filter post-processed data
@@ -630,9 +627,22 @@ for ii=1:n_mf
     k_halo_filt(:,ii)=cellfun(@(x) boxcull(x,tbox_lim),k_halo_filt(:,ii),'UniformOutput',false);
 end
 
-
 % DEBUG
 scatter_halo(k_halo_filt);
+
+
+%% VIS - halo distribution (PROCESSED)
+for ii=1:2
+    K = cat(1,k_halo_filt{b_cat,ii});
+    
+    [H,hh,ax]=vis_halo_distribution(K);
+    
+    figname=strcat('K_halo_distribution_',num2str(ii));
+    H.Name=figname;
+    
+    % annotate
+    xlabel(ax(1),'k');
+end
 
 
 %% transform raw spatial clouds
@@ -651,6 +661,20 @@ k_all_filt = cfilter_norm(k_all,configs.filt2.r_crop(1),configs.filt2.r_crop(2))
 
 % VIS
 scatter_halo(k_all_filt);
+
+
+%% VIS - halo distribution (PROCESSED)
+% for ii=1:2
+%     K = cat(1,k_all_filt{b_cat,ii});
+%     
+%     [H,hh,ax]=vis_halo_distribution(K);
+%     
+%     figname=strcat('K_halo_distribution_all_',num2str(ii));
+%     H.Name=figname;
+%     
+%     % annotate
+%     xlabel(ax(1),'k');
+% end
 
 
 %% select data to analyse
