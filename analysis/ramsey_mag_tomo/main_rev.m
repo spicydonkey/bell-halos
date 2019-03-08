@@ -599,76 +599,14 @@ end
 
 
 %% VIS - halo distribution (unprocessed)
-% configs
-nbins_r = 100;          % # radial bins
-nbins_azel = [60,30];  % az/el grid size
-azel_alpha = 0.05*pi;        % half-cone angle
-nbins_az=100;
-nbins_el=100;
-
-
-% TODO - wrap this halo distribution visualiser
 for ii=1:2
-    H=figure('Units',config_fig.units,'Position',[0 0 8.6 12],'Renderer',config_fig.rend);
+    Z = cat(1,zxy0_filt{b_cat,ii});         % concatenate all mJ=ii atoms (truncated)
+    [H,hh]=vis_halo_distribution(Z);
+    
     figname=strcat('halo_distribution_',num2str(ii));
     H.Name=figname;
-    
-    Z = cat(1,zxy0_filt{b_cat,ii});         % concatenate all mJ=ii atoms (truncated)
-    
-    % radial dist ---------------------------------
-    ax=subplot(4,1,1);
-    Znorm=vnorm(Z,2);
-    r_ed=linspace(min(Znorm),max(Znorm),nbins_r+1);
-    [n_r,r_cent,b]=radialprofile(Znorm,r_ed,1);
-	b.Color='k';
-    set(ax,'Layer','top');
-    
-
-    % 2D lat-lon dist ---------------------------------
-    ax=subplot(4,1,2);
-    [taz,tel]=sphgrid(nbins_azel(1),nbins_azel(2));
-    
-    n_azel=arrayfun(@(th,ph) size(inCone(Z,th,ph,azel_alpha),1),...
-        taz,tel)/cone_solang(azel_alpha);     % norm by conical angle
-    
-    p=plotFlatMapWrappedRad(taz,tel,n_azel,'rect');
-    p.CData=p.CData/max(p.CData(:));    % normalise to max
-    axis tight;
-    axis equal;
-    cbar=colorbar();
-    cbar.Label.String='P';
-    set(ax,'Layer','top');
-    
-    
-    % Th/Phi dependency =============================
-    Zsphpol=zxy2sphpol(Z);
-    
-    % azim dependency
-    ax=subplot(4,1,3);
-    [N_az,az_ed]=histcounts(Zsphpol(:,1)/pi,nbins_az);
-    N_az=N_az/max(N_az);    % norm to max
-    b=stairs(edge2cent(az_ed),N_az);
-    b.Color='k';
-    xlabel('\theta/\pi');
-    ylabel('P');
-    xlim([-1,1]);
-    set(ax,'Layer','top');
-    
-    
-    % elev dependency ----------------------------
-    ax=subplot(4,1,4);
-    [N_el,el_ed]=histcounts(Zsphpol(:,2)/pi,nbins_el,'Normalization','pdf');
-    elev_bin_vol=abs(diff(cone_solang(elev2polar(pi*el_ed))));
-    N_el=N_el./elev_bin_vol;     % normalise by bin vol
-    N_el=N_el/max(N_el);        % normalise by max
-    b=stairs(edge2cent(el_ed),N_el);
-    b.Color='k';
-    
-    xlabel('\phi/\pi');
-    ylabel('P');
-    xlim([-0.5,0.5]);
-    set(ax,'Layer','top');
 end
+
 
 %% VIS - unit-sphere mapped (unprocessed)
 
