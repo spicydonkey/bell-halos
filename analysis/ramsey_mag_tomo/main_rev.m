@@ -515,36 +515,20 @@ scatter_halo(k_halo);
 
 
 %% VIS - ellipsoid fit (3D)
-H=figure('Name','ellipsoid_fit','Units',config_fig.units,'Position',[0 0 18 8.6],'Renderer',config_fig.rend);
-
 for ii=1:2
-    subplot(1,2,ii);
-    hold on;
-    
-    % raw data
     Z = zxy0_filt(b_cat,ii);        % truncated halo raw data points
-    s_data = vis_zxy_3d(cat(1,Z{1:10}));        % display only a few shots
-    s_data.SizeData=s_data.SizeData/2;      % smaller
+    tV=v_ellip(ii);      % ellipsoid data
     
-    % ellipsoid
-    tV=v_ellip(ii);
-    ax_Ellipsoid{ii}=vis_ellipsoid(tV.cent,tV.rad,tV.vaxis,tV.v);
+    H = vis_ellipsoid_fit(zxy2xyz(cat(1,Z{:})),tV.cent,tV.rad,tV.vaxis,tV.v);
     
-    axis tight;
-    axis equal;
-    xlabel('$x$ (m)');
-    ylabel('$y$ (m)');
-    zlabel('$z$ (m)');
+    figname=strcat('ellipsoid_fit_',num2str(ii));
+    H.Name=figname;
     
-    axis vis3d;
-    camlight;
-    lighting phong;
+    % print this via HR PNG printer
+    %   print(gcf,'foo.png','-dpng','-r600');
+    % or
+    %   print_pnghr(gcf);
 end
-H.Renderer='opengl';        % gives better image even when rasterised
-% print this via HR PNG printer
-%   print(gcf,'foo.png','-dpng','-r600');
-% or 
-%   print_pnghr(gcf);
 
 
 %% VIS - ellipsoid fit (2D slice)
@@ -563,6 +547,7 @@ ax_ngrid=100;
     linspace(img_lim{2}(1),img_lim{2}(2),ax_ngrid));
 
 H=figure('Name','ellipsoid_fit_contour','Units',config_fig.units,'Position',[0 0 26 9.5],'Renderer',config_fig.rend);
+hax=tight_subplot(2,length(z0),0,0.05,0.1);
 counter=1;
 for ii=1:2
     Z = cat(1,zxy0_filt{b_cat,ii});         % concatenate all mJ=ii atoms (truncated)
@@ -572,7 +557,9 @@ for ii=1:2
     I=cellfun(@(z) zxy2img(z,'xy',img_lim,img_pitch),Zsliced,'uni',0);
     
     for jj=1:length(z0)
-        ax=subplot(2,length(z0),counter);
+        ax=hax(counter);
+        axes(ax);
+        
         hold on;
         
         imagesc('XData',img_lim{1},'YData',img_lim{2},'CData',log10(I{jj}));
@@ -608,21 +595,6 @@ for ii=1:2
         
         counter=counter+1;
     end
-    
-%     % annotation
-%     if ii==1
-%         for jj=1:length(z0)
-%             xx=img_lim{1};
-%             yy=img_lim{2};
-%             
-%             tz = 1e3*z0(jj);
-%             tx = xx(1)*length(z0) + (jj-1+0.5)*diff(headtail(xx));
-%             ty = yy(end) + 0.02*diff(headtail(yy));
-%             
-%             textstr = sprintf('$z$ = %0.3g mm',tz);
-%             text(tx,ty,textstr,'HorizontalAlignment','center','VerticalAlignment','bottom');
-%         end
-%     end
 end
 
 
