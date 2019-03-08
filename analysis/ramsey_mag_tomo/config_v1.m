@@ -10,7 +10,8 @@ vz=exp_param.vz;
 
 
 %% CONFIGS
-configs.path.base='C:\Users\HE BEC\data\halo_metrology\pulse_phase_delay';
+% configs.path.base='C:\Users\HE BEC\data\halo_metrology\pulse_phase_delay';
+configs.path.base='~/Documents/laboro/data/bell/pulse_phase_delay';
 configs.path.data=configs.path.base;
 
 configs.path.out=fullfile(configs.path.base,'out');
