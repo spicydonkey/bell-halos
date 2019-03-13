@@ -598,6 +598,77 @@ for ii=1:2
 end
 
 
+
+%% VIS - ellipsoid fit (2D slice): mJ separately
+% configs ------------------------------
+img_lim = {35e-3*[-1,1],35e-3*[-1,1]};
+img_pitch = {0.4e-3,0.4e-3};
+
+zf = 0.75;       % factor from max radii
+z0 = linspace(-26e-3*zf,26e-3*zf,5);
+dz = 52e-3/20;
+
+lim_zslice = arrayfun(@(z) z + dz*[-1,1],z0,'uni',0);
+
+ax_ngrid=100;
+[xx,yy]=ndgrid(linspace(img_lim{1}(1),img_lim{1}(2),ax_ngrid),...
+    linspace(img_lim{2}(1),img_lim{2}(2),ax_ngrid));
+
+
+for ii=1:2
+    H=figure('Name','ellipsoid_fit_contour','Units',config_fig.units,'Position',[0 0 26 5.5],'Renderer',config_fig.rend);
+    H.Name=sprintf('%s_%d',H.Name,ii);
+    
+    hax=tight_subplot(1,length(z0),0,0.05,0.1);
+    counter=1;
+    
+    Z = cat(1,zxy0_filt{b_cat,ii});         % concatenate all mJ=ii atoms (truncated)
+    % loop through Z-slices
+    Zsliced = cellfun(@(z) boxcull(Z,{z,[],[]}),lim_zslice,'uni',0);
+    % slice density image (XY)
+    I=cellfun(@(z) zxy2img(z,'xy',img_lim,img_pitch),Zsliced,'uni',0);
+    
+    for jj=1:length(z0)
+        ax=hax(counter);
+        axes(ax);
+        
+        hold on;
+        
+        imagesc('XData',img_lim{1},'YData',img_lim{2},'CData',log10(I{jj}));
+        colormap('inferno')
+        
+        % fitted ellipsoid contour
+        f_ellip=ellipsoidEqn(v_ellip(ii).v,xx,yy,z0(jj)*ones(size(xx)));
+        [c,h]=contour(xx,yy,f_ellip,'LevelList',[0]);   % contour at this slice
+        h.LineColor='g';
+        h.LineStyle='--';
+        h.LineWidth=1.5;
+        
+        axis equal;
+        axis tight;
+        axis off;
+        
+        %title
+        textstr = sprintf('$z$ = %0.3g mm',1e3*z0(jj));
+        title(textstr);
+        
+        % colorbar
+        if jj==length(z0)
+            pos0=ax.Position;   %original axes position
+            cbar=colorbar('eastoutside');
+            cbar.Label.String='log_{10}(atom number)';
+            ax.Position=pos0;   %return axes pos
+            boxpos0=plotboxpos(ax);
+            cbar.Position(3)=cbar.Position(3)/3;
+            cbar.Position(1)=boxpos0(1)+boxpos0(3)+cbar.Position(3);
+            colormap('inferno');
+        end
+        
+        counter=counter+1;
+    end
+end
+
+
 %% VIS - halo distribution (unprocessed)
 for ii=1:2
     Z = cat(1,zxy0_filt{b_cat,ii});         % concatenate all mJ=ii atoms (truncated)
@@ -616,6 +687,8 @@ k_halo_filt=cfilter_norm(k_halo,r_crop2(1),r_crop2(2));
 %%% z-cap
 % build box window for halo between caps
 z_cap2=configs.filt2.z_cap;
+% z_cap2=sin(deg2rad(50));
+
 window_z_filt2=cell(1,n_mf);
 for ii=1:n_mf
     window_z_filt2{ii}={z_cap2*[-1,1],[],[]};
