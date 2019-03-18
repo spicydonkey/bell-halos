@@ -14,6 +14,11 @@
 % DKS
 %
 
+%% configs
+% vis -----------------------------------------------------------
+% publication
+config_fig = loadFigureConfig;      % load template
+
 
 %% load raw data
 run('config_v1');
@@ -345,18 +350,17 @@ P_mJ_halo_avg=cat(2,P_mJ_halo_avg{:});
 P_mJ_halo_std=cat(2,P_mJ_halo_std{:});
 
 
-%% DATA VISUALIZATION
+%% DATA VISUALIZATION (both mJ)
 % config
-font_siz_reg=12;
-font_siz_sml=10;
-font_siz_lrg=14;
-mark_siz=7;
-line_wid=1.1;
+font_siz_reg=9;
+font_siz_sml=9;
+mark_siz=5;
+line_wid=1.2;
 [c0,clight,cdark]=palette(n_mf);
 mark_typ={'o','^','d'};
 
 %%% plot
-hf=figure('Name','spinecho_halo');
+hf=figure('Name','spinecho_halo','Units','normalized','Position',[0,0,0.3,0.2]);
 hold on;
 
 
@@ -377,19 +381,96 @@ end
 ax=gca;
 set(ax,'FontSize',font_siz_reg);
 set(ax,'Layer','Top');     % graphics axes should be always on top
+% set(ax,'LineWidth',line_wid);
 axis tight;
 box on;
 
 ylim([0,1]);
 % ax.YTick=0:0.2:1;
 
-xlabel('Pulse delay [$\mu$s]');
+xlabel('Pulse delay ($\mu$s)');
 % xlabel('Pulse delay, $\tau$');
-ylabel('$P$');
+ylabel('$P_i$');
 
 lgd=legend(h,'Location','East');
 title(lgd,'$m_J$');
 set(lgd,'FontSize',font_siz_reg);
+
+%% Spin-echo (mJ=1 population fraction)
+hf=figure('Name','spinecho_halo_mJ1','Units','normalized','Position',[0,0,0.3,0.2]);
+hold on;
+
+ii=1;       % 1: mJ=1, 2: mJ=0
+th=ploterr(1e6*Tdelay,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+set(th(1),'color',c0(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
+    'MarkerSize',mark_siz,'MarkerFaceColor',clight(ii,:),...
+    'DisplayName',num2str(configs.mf(ii).mf));
+set(th(2),'color',c0(ii,:),'LineWidth',line_wid);
+
+% annotations
+ax=gca;
+set(ax,'FontSize',font_siz_reg);
+set(ax,'Layer','Top');     % graphics axes should be always on top
+% set(ax,'LineWidth',line_wid);
+axis tight;
+box on;
+
+xlim([0,375]);
+ylim([0.8,1]);
+
+xlabel('pulse delay $\tau$ ($\mu$s)');
+ylabel('$P_{\uparrow}$');
+
+% Spin echo decay model
+spinecho.mdl=@(b,x) 0.5 + b(1)*exp(-(x/b(2)).^4);      % childress 2007 PhD thesis decay model
+spinecho.par0=[0.45,600e-6];
+spinecho.fit=fitnlm(Tdelay,P_mJ_halo_avg(:,ii),spinecho.mdl,spinecho.par0);
+
+spinecho.X=linspace(0,1200e-6,1e3);
+spinecho.Y=feval(spinecho.fit,spinecho.X);
+
+p_fit=plot(1e6*spinecho.X,spinecho.Y,'r--');
+p_fit.LineWidth=line_wid;
+
+
+%% Spin-echo signal: polarisation
+%%% plot
+hf=figure('Name','spinecho_halo_P','Units','normalized','Position',[0,0,0.3,0.2]);
+hold on;
+
+% data
+dP = -diff(P_mJ_halo_avg,1,2)./sum(P_mJ_halo_avg,2);     % population inversion
+% h=NaN(n_mf,1);
+
+th=ploterr(1e6*Tdelay,dP,[],0*dP,'o','hhxy',0);
+set(th(1),'color','k','Marker','o','LineWidth',line_wid,...
+    'MarkerSize',mark_siz,'MarkerFaceColor','w');
+set(th(2),'color','k','LineWidth',line_wid);
+
+h=th(1);
+
+% annotations
+ax=gca;
+set(ax,'FontSize',font_siz_reg);
+set(ax,'Layer','Top');     % graphics axes should be always on top
+% set(ax,'LineWidth',line_wid);
+axis tight;
+box on;
+
+% ylim([0,1]);
+% ax.YTick=0:0.2:1;
+axis_snug(gca);
+ax.XLim(1)=0;
+
+xlabel('Pulse delay ($\mu$s)');
+% xlabel('Pulse delay, $\tau$');
+% ylabel('$P$');
+ylabel('polarisation')
+
+% lgd=legend(h,'Location','best');
+% title(lgd,'$m_J$');
+% set(lgd,'FontSize',font_siz_reg);
+
 
 
 %% Model: spin-echo and decay
