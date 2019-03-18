@@ -7,19 +7,19 @@ tic
 %% CONFIGS
 % data file
 %   contains spin,momentum resolved vectors
-fdata='C:\Users\HE BEC\Dropbox\phd\data\bell_epr_2018\proc\exp4_tevo\exp4_20181029.mat';
+fdata='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\exp4_tevo\exp4_20181029.mat';
 
 % save
-do_save_figs=true;
+do_save_figs=false;
 dir_save='C:\Users\HE BEC\Dropbox\PhD\thesis\projects\maggrad+epr\Gint_unif_20181114\20181129';
 
 % k-modes
-alpha=pi/8;                 % cone half-angle
+alpha=pi/20;                 % cone half-angle
 lim_az=[0,pi];              % limit of azim angle (exc +pi)
-phi_max=pi/4;
+phi_max=pi/2;            %pi/4;
 lim_el=[-phi_max,phi_max];
-n_az=10;                	% equispaced bins
-n_el=5;
+n_az=20;                	% equispaced bins
+n_el=10;
 az_disp=deg2rad(0:45:135);     % azim sections (great circles) to display
 el_disp=deg2rad([-30,0,30]);    % elev/lat zones to display
 
@@ -32,7 +32,7 @@ dk_int_lim=0.1;
 
 % bootstrapping
 bs_frac=0.1;
-bs_nrep=10;
+bs_nrep=20;     %10
 
 % FIT
 do_fit=true;
@@ -41,32 +41,16 @@ do_fit=true;
 Cphys=physConsts;
 C_gymag=Cphys.He_gymag;         % He* gyromagnetic ratio (gamma) [Hz/G]
 
-
-% vis
-f_units='normalized';
-f_pos=[0.2,0.2,0.2,0.3];
-f_pos_wide=[0.2,0.2,0.25,0.3];
-f_ren='painters';
-
-% ctheme=viridis(4);
-% cltheme=colshades(ctheme);
-% cvir2=viridis(4);
-% clvir2=colshades(cvir2);
+% vis -----------------------------------------------------------
+config_fig = loadFigureConfig;      % load template
 
 ctheme=magma(5);
 ctheme=ctheme(1:end-1,:);
 cltheme=colshades(ctheme);
 [c,cl,cd]=palette(4);
 % c_gray=0.6*ones(1,3);
-line_sty={'-','--',':','-.'};
-mark_typ={'o','s','^','d'};
-% str_ss={'$\vert\!\uparrow\rangle$','$\vert\!\downarrow\rangle$'};
-% str_ss={'$m_J = 1$','$m_J = 0$'};
 str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
-mark_siz=7;
-line_wid=1.5;
-fontsize=12;
-ax_lwidth=1.2;
+
 
 %% configure g2
 dk_ed_vec=linspace(lim_dk(1),lim_dk(2),n_dk+1);
@@ -86,6 +70,10 @@ load(fdata);
 %% PROTOTYPE: reduce data
 warning('Reducing data for speed.');
 k_tau{1}=k_tau{1}(1:3000,:);
+
+% % cull tau
+% warning('culling Tau');
+% k_tau=k_tau(1);
 
 % warning('DEBUG ONLY!!!!');
 % k_tau=cellfun(@(k) k(1:100,:),k_tau,'UniformOutput',false);
@@ -252,7 +240,7 @@ end
 %% vis: G2 tevo
 figname=sprintf('Gint_tevo');
 h=figure('Name',figname,...
-    'Units',f_units,'Position',[0.2 0.2 0.55 0.2],'Renderer',f_ren);
+    'Units','normalized','Position',[0.2 0.2 0.55 0.2],'Renderer','painters');
 
 for ii=1:naz_disp
     iaz=iaz_disp(ii);
@@ -270,9 +258,9 @@ for ii=1:naz_disp
     pleg=NaN(3,1);
     for jj=1:3
         tp=ploterr(tau,tG0(:,jj),[],tGerr0(:,jj),'o-','hhxy',0);
-        set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,'Marker',mark_typ{jj},...
+        set(tp(1),'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid,'Marker',config_fig.mark_typ{jj},...
             'MarkerFaceColor',cltheme(jj,:),'Color',ctheme(jj,:),'DisplayName',str_ss{jj});
-        set(tp(2),'LineWidth',line_wid,'Color',ctheme(jj,:));
+        set(tp(2),'LineWidth',config_fig.line_wid,'Color',ctheme(jj,:));
         pleg(jj)=tp(1);
     end
     
@@ -281,7 +269,7 @@ for ii=1:naz_disp
     set(ax,'Layer','Top');
     xlabel('$\tau~[\textrm{ms}]$');
     ylabel('$\mathcal{G}^{(2)}$');
-    ax.FontSize=fontsize;
+    ax.FontSize=config_fig.ax_fontsize;
     
     xlim([0.7,1.8]);
     ylim([-0.3,1.7]);
@@ -305,7 +293,7 @@ for ii=1:n_tau
     % figure
     figname=sprintf('Gint_tau%0.2f',tau(ii));
     h=figure('Name',figname,...
-        'Units',f_units,'Position',[0.2 0.2 0.22 0.7],'Renderer',f_ren);
+        'Units','normalized','Position',[0.2 0.2 0.22 0.7],'Renderer','painters');
     for jj=1:3
         subplot(3,1,jj);
         tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),squeeze(G_int(ii,:,:,jj)),...
@@ -313,7 +301,7 @@ for ii=1:n_tau
         
         % annotation
         cbar=colorbar('EastOutside');
-        cbar.FontSize=fontsize-1;
+        cbar.FontSize=config_fig.ax_fontsize-1;
         cbar.TickLabelInterpreter='latex';
         cbar.Label.Interpreter='latex';
         cbar.Label.String=sprintf('%s [%s]','$\mathcal{G}^{(2)}$',str_ss{jj});
@@ -337,7 +325,7 @@ for ii=1:naz_disp
     
     % figure
     h=figure('Name',figname,...
-        'Units',f_units,'Position',f_pos_wide,'Renderer',f_ren);
+        'Units','normalized','Position',[0.2,0.2,0.25,0.3],'Renderer','painters');
     hold on;
     
     pleg=NaN(nel_disp,1);
@@ -345,15 +333,15 @@ for ii=1:naz_disp
         iel=iel_disp(jj);
         
         tp=ploterr(tau,squeeze(B0(:,iaz,iel)),[],squeeze(B0_se(:,iaz,iel)),'o','hhxy',0);
-        set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,'Marker',mark_typ{jj},...
+        set(tp(1),'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid,'Marker',config_fig.mark_typ{jj},...
             'MarkerFaceColor',cltheme(jj,:),'Color',ctheme(jj,:),'DisplayName',num2str(rad2deg(Vel(iel)),2));
-        set(tp(2),'LineWidth',line_wid,'Color',ctheme(jj,:));
+        set(tp(2),'LineWidth',config_fig.line_wid,'Color',ctheme(jj,:));
         pleg(jj)=tp(1);
         
         if do_fit
             % fitted model
             tpf=plot(tau0_fit+tau(1),B0_fit{iaz,iel},'-',...
-                'LineWidth',line_wid,'Color',ctheme(jj,:));
+                'LineWidth',config_fig.line_wid,'Color',ctheme(jj,:));
             uistack(tpf,'bottom');
         end
     end
@@ -364,7 +352,7 @@ for ii=1:naz_disp
     set(ax,'Layer','Top');
     xlabel('$\tau~[\textrm{ms}]$');
     ylabel('Parity $\bar{\mathcal{B}}_{xx}$');
-    ax.FontSize=fontsize;
+    ax.FontSize=config_fig.ax_fontsize;
     ax.LineWidth=1.2;
     ylim([-1.2,1.2]);
     titlestr=sprintf('%s %0.0f','$\theta=$',rad2deg(taz));
@@ -385,23 +373,23 @@ end
 %% vis: Equatorial distribution
 figname='B0_tevo_eqt';
 h=figure('Name',figname,...
-    'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
 hold on;
 
 pleg=NaN(naz_disp,1);
 for ii=1:naz_disp
     iaz=iaz_disp(ii);
     tp=ploterr(tau,squeeze(B0(:,iaz,iel_0)),[],squeeze(B0_se(:,iaz,iel_0)),'o','hhxy',0);
-    set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
-        'Marker',mark_typ{ii},...   %mark_typ{mod(ii,length(mark_typ))+1},...     % will be shifted by 1
+    set(tp(1),'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid,...
+        'Marker',config_fig.mark_typ{ii},...   %config_fig.mark_typ{mod(ii,length(config_fig.mark_typ))+1},...     % will be shifted by 1
         'MarkerFaceColor',cltheme(ii,:),'Color',ctheme(ii,:),'DisplayName',num2str(rad2deg(Vaz(iaz)),3));
-    set(tp(2),'LineWidth',line_wid,'Color',ctheme(ii,:));
+    set(tp(2),'LineWidth',config_fig.line_wid,'Color',ctheme(ii,:));
     pleg(ii)=tp(1);
 
     if do_fit
         % fitted model
         tpf=plot(tau0_fit+tau(1),B0_fit{iaz,iel_0},'-',...
-            'LineWidth',line_wid,'Color',ctheme(ii,:));
+            'LineWidth',config_fig.line_wid,'Color',ctheme(ii,:));
         uistack(tpf,'bottom');
     end
 end
@@ -413,7 +401,7 @@ ax=gca;
 set(ax,'Layer','Top');
 xlabel('$\tau~[\textrm{ms}]$');
 ylabel('Parity $\bar{\mathcal{B}}_{xx}$');
-ax.FontSize=fontsize;
+ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=1.2;
 % ylim([-1.2,1.2]);
 ylim([-1.5,1.5]);
@@ -434,7 +422,7 @@ end
 %% deltaB distribution
 %% MEAN: deltaB (asymmetry measure) around halo: t-indep model (2D PROJ MAP)
 if do_fit
-    h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    h=figure('Name','deltaB_sphdist_2d','Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
     
     [vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB_filt);
     tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaBf,'eckert4','texturemap');
@@ -450,15 +438,15 @@ if do_fit
     box on;
     ax=gca;
     set(ax,'Layer','Top');
-%     ax.FontSize=fontsize;
-    ax.LineWidth=ax_lwidth;
+%     ax.FontSize=config_fig.ax_fontsize;
+    ax.LineWidth=config_fig.ax_lwid;
     
     cbar=colorbar('SouthOutside');
-    cbar.FontSize=fontsize-1;
+    cbar.FontSize=config_fig.ax_fontsize-1;
     cbar.TickLabelInterpreter='latex';
     cbar.Label.Interpreter='latex';
     cbar.Label.String='$\Delta \mathrm{B}$ [mG]';
-    cbar.Label.FontSize=fontsize;
+    cbar.Label.FontSize=config_fig.ax_fontsize;
     
     % save fig
     if do_save_figs
@@ -472,7 +460,7 @@ end
 
 %% Statistical uncertainty
 if do_fit
-    h=figure('Name','deltaB_unc','Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    h=figure('Name','deltaB_unc','Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
     
     [vazf,velf,deltaB_sef]=autofill_cent_symm(vaz,vel,deltaB_se_filt);
     tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaB_sef,'eckert4','texturemap');
@@ -484,15 +472,15 @@ if do_fit
     box on;
     ax=gca;
     set(ax,'Layer','Top');
-%     ax.FontSize=fontsize;
-    ax.LineWidth=ax_lwidth;
+%     ax.FontSize=config_fig.ax_fontsize;
+    ax.LineWidth=config_fig.ax_lwid;
     
     cbar=colorbar('SouthOutside');
-    cbar.FontSize=fontsize-1;
+    cbar.FontSize=config_fig.ax_fontsize-1;
     cbar.TickLabelInterpreter='latex';
     cbar.Label.Interpreter='latex';
     cbar.Label.String='$\mathrm{SE}(\Delta \mathrm{B})$ [mG]';
-    cbar.Label.FontSize=fontsize;
+    cbar.Label.FontSize=config_fig.ax_fontsize;
     
     titlestr=sprintf('%s%0.1g(%0.1g)',...
         '$\overline{\mathrm{SE}}=$',mu_se_dB,sig_se_dB);  % label expparam
@@ -528,28 +516,28 @@ yy=feval(fit_dB_eq,xx);
 
 %%% PLOT
 figname='dB_equatorial_tomography';
-h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+h=figure('Name',figname,'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
 
 hold on;
 
 % data
 tp=ploterr(rad2deg(Vaz),1e3*dB_eq,[],1e3*dBerr_eq,'o','hhxy',0);
-set(tp(1),'Marker','o','LineWidth',line_wid,...
+set(tp(1),'Marker','o','LineWidth',config_fig.line_wid,...
     'MarkerFaceColor',cltheme(idx_col,:),'MarkerEdgeColor',ctheme(idx_col,:),...
     'DisplayName','');
-set(tp(2),'Color',ctheme(idx_col,:),'LineWidth',line_wid);
+set(tp(2),'Color',ctheme(idx_col,:),'LineWidth',config_fig.line_wid);
 pleg=tp(1);
 
 % fit
-pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',ctheme(idx_col,:),'LineWidth',line_wid);
+pfit=plot(rad2deg(xx),yy,'LineStyle','-','Color',ctheme(idx_col,:),'LineWidth',config_fig.line_wid);
 uistack(pfit,'bottom');
 
 % annotation
 box on;
 ax=gca;
 set(ax,'Layer','Top');
-ax.FontSize=fontsize;
-ax.LineWidth=ax_lwidth;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
 
 title('Equatorial tomography $\phi=0$');
 
@@ -576,7 +564,7 @@ end
 %% vis: G (integrated sum)
 for ii=1:n_tau
     figname=sprintf('Gsum_%0.2fms',tau(ii));
-    h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    h=figure('Name',figname,'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
     
     [vazf,velf,tGf]=autofill_cent_symm(vaz,vel,squeeze(G_sum(ii,:,:)));
     tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),tGf,'eckert4','texturemap');
@@ -584,18 +572,18 @@ for ii=1:n_tau
     % annotation
     ax=gca;
     set(ax,'Layer','Top');
-%     ax.FontSize=fontsize;
-    ax.LineWidth=ax_lwidth;
+%     ax.FontSize=config_fig.ax_fontsize;
+    ax.LineWidth=config_fig.ax_lwid;
         
     titlestr=sprintf('%s%0.2f %s','$\tau=$',tau(ii),'ms');  % label expparam
     title(titlestr);
     
     cbar=colorbar('SouthOutside');
-    cbar.FontSize=fontsize-1;
+    cbar.FontSize=config_fig.ax_fontsize-1;
     cbar.TickLabelInterpreter='latex';
     cbar.Label.Interpreter='latex';
     cbar.Label.String='$\bar{g}^{(2)}$';
-    cbar.Label.FontSize=fontsize;
+    cbar.Label.FontSize=config_fig.ax_fontsize;
     
     % save fig
     if do_save_figs
@@ -610,30 +598,30 @@ end
 %% vis: uncertainty of G 
 for ii=1:n_tau    
     figname=sprintf('Gsum_unc_%0.2fms',tau(ii));
-    h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    h=figure('Name',figname,'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
     
     [vazf,velf,tGerrf]=autofill_cent_symm(vaz,vel,squeeze(G_sum_se(ii,:,:)));
     tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),tGerrf,'eckert4','texturemap');
     
-    mu_seG=meanall(G_sum_se(ii,:,:));
-    sig_seG=stdall(G_sum_se(ii,:,:));
+    mu_seG=meanall(G_sum_se(ii,:,:),'omitnan');
+    sig_seG=stdall(G_sum_se(ii,:,:),'omitnan');
     
     % annotation
     ax=gca;
     set(ax,'Layer','Top');
-%     ax.FontSize=fontsize;
-    ax.LineWidth=ax_lwidth;
+%     ax.FontSize=config_fig.ax_fontsize;
+    ax.LineWidth=config_fig.ax_lwid;
 
     titlestr=sprintf('%s%0.2f %s; %s%0.1g(%0.1g)','$\tau=$',tau(ii),'ms',...
         '$\overline{\mathrm{SE}}=$',mu_seG,sig_seG);  % label expparam
     title(titlestr);
 
     cbar=colorbar('SouthOutside');
-    cbar.FontSize=fontsize-1;
+    cbar.FontSize=config_fig.ax_fontsize-1;
     cbar.TickLabelInterpreter='latex';
     cbar.Label.Interpreter='latex';
     cbar.Label.String='$\mathrm{SE}(\bar{g}^{(2)})$';
-    cbar.Label.FontSize=fontsize;
+    cbar.Label.FontSize=config_fig.ax_fontsize;
     
     % save fig
     if do_save_figs
@@ -652,10 +640,10 @@ end
 
 for ii=1:n_tau
     figname=sprintf('hist_Gsum_%0.2fms',tau(ii));
-    h=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',f_ren);
+    h=figure('Name',figname,'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer','painters');
     
     thist=histogram(G_sum(ii,:,:,:),'Normalization','pdf');
-%     thist.LineWidth=ax_lwidth;
+%     thist.LineWidth=config_fig.ax_lwid;
     
     hold on;
     % Gaussian fit
@@ -665,14 +653,14 @@ for ii=1:n_tau
     x=linspace(ax_xlim(1),ax_xlim(2));
     y=exp(-(x-tmu).^2./(2*tsigma^2))./(tsigma*sqrt(2*pi));
     str_gauss=sprintf('%s(%0.2g,%0.1g)','$(\mu,\sigma)=$',tmu,tsigma);
-    p_gauss=plot(x,y,'LineWidth',line_wid,...
+    p_gauss=plot(x,y,'LineWidth',config_fig.line_wid,...
         'DisplayName',str_gauss);
     
     % annotation
     ax=gca;
     set(ax,'Layer','Top');
-    ax.FontSize=fontsize;
-%     ax.LineWidth=ax_lwidth;
+    ax.FontSize=config_fig.ax_fontsize;
+%     ax.LineWidth=config_fig.ax_lwid;
     
     titlestr=sprintf('%s%0.2f %s','$\tau=$',tau(ii),'ms');  % label expparam
     title(titlestr);
