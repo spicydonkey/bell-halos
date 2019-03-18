@@ -66,17 +66,6 @@ config_fig.line_sty={'-','--',':','-.'};
 config_fig.col_theme=parula(5);       % theme color
 config_fig.coll_theme=colshades(config_fig.col_theme);
 
-% misc
-f_units='normalized';
-f_pos=[0.2,0.2,0.2,0.3];
-f_pos_wide=[0.2,0.2,0.25,0.3];
-config_fig.rend='painters';
-
-mark_siz=7;
-line_wid=1.5;
-fontsize=12;
-ax_lwidth=1.2;
-
 
 %% load preprocessed data
 load(configs.fdata);
@@ -219,16 +208,16 @@ end
 %%% ALL
 [cc,ccl,ccd]=palette(n_zone);
 
-h=figure('Name','triplet_halo_tevo','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
+h=figure('Name','triplet_halo_tevo','Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer',config_fig.rend);
 hold on;
 
 for ii=1:n_zone
     [iaz,iel]=ind2sub([configs.bins.n_az,configs.bins.n_el],ii);
     
     tp=ploterr(tau,Pi(:,iaz,iel),[],Pi_bs_se(:,iaz,iel),'-o','hhxy',0);
-    set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
+    set(tp(1),'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid,...
         'MarkerFaceColor',ccl(ii,:),'Color',cc(ii,:));
-    set(tp(2),'LineWidth',line_wid,'Color',cc(ii,:));
+    set(tp(2),'LineWidth',config_fig.line_wid,'Color',cc(ii,:));
     
 end
 
@@ -238,8 +227,8 @@ ax=gca;
 set(ax,'Layer','Top');
 xlabel('$\tau~(\textrm{ms})$');
 ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
-ax.FontSize=fontsize;
-ax.LineWidth=ax_lwidth;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
 ylim(1.5*[-1,1]);
 
 
@@ -251,26 +240,26 @@ for ii=1:length(iaz_disp)
     
     % figure
     figure('Name',figname,...
-        'Units',f_units,'Position',f_pos_wide,'Renderer',config_fig.rend);
+        'Units','normalized','Position',[0.2,0.2,0.25,0.3],'Renderer',config_fig.rend);
     hold on;
     
     pleg=NaN(configs.bins.n_el,1);
     for jj=1:configs.bins.n_el
         tp=ploterr(tau,squeeze(Pi(:,iaz,jj)),[],squeeze(Pi_bs_se(:,iaz,jj)),'o','hhxy',0);
-        set(tp(1),'MarkerSize',mark_siz,'LineWidth',line_wid,...
+        set(tp(1),'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid,...
             'MarkerFaceColor',ccl(jj,:),'Color',cc(jj,:),'DisplayName',num2str(rad2deg(Vel(jj)),2));
-        set(tp(2),'LineWidth',line_wid,'Color',cc(jj,:));
+        set(tp(2),'LineWidth',config_fig.line_wid,'Color',cc(jj,:));
         pleg(jj)=tp(1);
         
         %%% fitted model
 %         % 1
 %         tpf=plot(tau0_fit+T_so,B0_fit{iaz,jj},'-',...
-%             'LineWidth',line_wid,'Color',cc(jj,:));
+%             'LineWidth',config_fig.line_wid,'Color',cc(jj,:));
 %         uistack(tpf,'bottom');
         
 %         % 2
 %         tpf=plot(t_fit,B0_fit2{iaz,jj},'-',...
-%             'LineWidth',line_wid,'Color',cc(jj,:));
+%             'LineWidth',config_fig.line_wid,'Color',cc(jj,:));
 %         uistack(tpf,'bottom');
         
     end
@@ -281,7 +270,7 @@ for ii=1:length(iaz_disp)
     set(ax,'Layer','Top');
     xlabel('$\tau~(\textrm{ms})$');
     ylabel('Parity $\bar{\mathcal{B}}_{\pi/2}$');
-    ax.FontSize=fontsize;
+    ax.FontSize=config_fig.ax_fontsize;
     ax.LineWidth=1.2;
     ylim([-1.2,1.2]);
     titlestr=sprintf('%s %0.0f','$\theta=$',rad2deg(taz));
@@ -295,7 +284,7 @@ end
 H=[];
 for ii=1:n_tau
     figname=sprintf('B0_sphdist_3d_%0.2f',tau(ii));
-    H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
+    H(ii)=figure('Name',figname,'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer',config_fig.rend);
     tB0=squeeze(Pi(ii,:,:));
 
 %     tp=plot_sph_surf(vaz,vel,tB0);
@@ -309,7 +298,7 @@ for ii=1:n_tau
     title(titlestr);
 
     ax=gca;
-    ax.FontSize=fontsize;
+    ax.FontSize=config_fig.ax_fontsize;
     
     axis on;
     box on;
@@ -326,14 +315,14 @@ for ii=1:n_tau
     cbar.TickLabelInterpreter='latex';
     cbar.Label.Interpreter='latex';
     cbar.Label.String='Parity $\bar{\mathcal{B}}_{\pi/2}$';
-    cbar.Label.FontSize=fontsize;
+    cbar.Label.FontSize=config_fig.ax_fontsize;
 end
 
 %% vis: Parity distribution (2D)
 H=[];
 for ii=1:n_tau
     figname=sprintf('B0_sphdist_2d_%0.2f',tau(ii));
-    H(ii)=figure('Name',figname,'Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
+    H(ii)=figure('Name',figname,'Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer',config_fig.rend);
     tB0=squeeze(Pi(ii,:,:));
     
 %     tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),tB0,'eckert4','texturemap');
@@ -345,7 +334,7 @@ for ii=1:n_tau
     title(titlestr);
 
     ax=gca;
-    ax.FontSize=fontsize;
+    ax.FontSize=config_fig.ax_fontsize;
     
     cbar=colorbar('southoutside');
     ax.CLim=1.5*[-1,1];
@@ -353,7 +342,7 @@ for ii=1:n_tau
     cbar.TickLabelInterpreter='latex';
     cbar.Label.Interpreter='latex';
     cbar.Label.String='Parity $\bar{\mathcal{B}}_{\pi/2}$';
-    cbar.Label.FontSize=fontsize;
+    cbar.Label.FontSize=config_fig.ax_fontsize;
 end
 
 
@@ -760,7 +749,7 @@ ylim(1.5*[-1,1]);
 
 
 %% vis: Model 1: deltaB (asymmetry measure) around halo: t-indep model (3D SPH)
-% h=figure('Name','deltaB_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
+% h=figure('Name','deltaB_sphdist_3d','Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer',config_fig.rend);
 % 
 % % tp=plot_sph_surf(vaz,vel,1e3*deltaB);
 % [vazf,velf,deltaBf]=autofill_cent_symm(vaz,vel,deltaB);
@@ -768,7 +757,7 @@ ylim(1.5*[-1,1]);
 % 
 % % annotation
 % ax=gca;
-% ax.FontSize=fontsize;
+% ax.FontSize=config_fig.ax_fontsize;
 % 
 % axis on;
 % box on;
@@ -783,10 +772,10 @@ ylim(1.5*[-1,1]);
 % cbar.TickLabelInterpreter='latex';
 % cbar.Label.Interpreter='latex';
 % cbar.Label.String='$\Delta \mathrm{B}$ (mG)';
-% cbar.Label.FontSize=fontsize;
+% cbar.Label.FontSize=config_fig.ax_fontsize;
 
 %% vis: dBdr around halo: Model2 (3D SPH)
-% h=figure('Name','dBdr_sphdist_3d','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
+% h=figure('Name','dBdr_sphdist_3d','Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer',config_fig.rend);
 % 
 % % [vazf,velf,dBdrf]=autofill_cent_symm(vaz,vel,dBdr_ff);
 % % tp=plot_sph_surf(vazf,velf,dBdrf);
@@ -795,7 +784,7 @@ ylim(1.5*[-1,1]);
 % 
 % % annotation
 % ax=gca;
-% ax.FontSize=fontsize;
+% ax.FontSize=config_fig.ax_fontsize;
 % 
 % axis on;
 % box on;
@@ -810,10 +799,10 @@ ylim(1.5*[-1,1]);
 % cbar.TickLabelInterpreter='latex';
 % cbar.Label.Interpreter='latex';
 % cbar.Label.String='$d\mathrm{B}/dx$ (G/m)';
-% cbar.Label.FontSize=fontsize;
+% cbar.Label.FontSize=config_fig.ax_fontsize;
 
 %% vis: deltaB (asymmetry measure) around halo: t-indep model (2D PROJ MAP)
-% h=figure('Name','deltaB_sphdist_2d','Units',f_units,'Position',f_pos,'Renderer',config_fig.rend);
+% h=figure('Name','deltaB_sphdist_2d','Units','normalized','Position',[0.2,0.2,0.2,0.3],'Renderer',config_fig.rend);
 % 
 % % tp=plotFlatMap(rad2deg(vel),rad2deg(vaz),1e3*deltaB,'rect','texturemap');
 % tp=plotFlatMap(rad2deg(velf),rad2deg(vazf),1e3*deltaBf,'eckert4','texturemap');
@@ -823,13 +812,13 @@ ylim(1.5*[-1,1]);
 % 
 % % annotation
 % ax=gca;
-% ax.FontSize=fontsize;
+% ax.FontSize=config_fig.ax_fontsize;
 % 
 % cbar=colorbar('SouthOutside');
 % cbar.TickLabelInterpreter='latex';
 % cbar.Label.Interpreter='latex';
 % cbar.Label.String='$\Delta \mathrm{B}$ (mG)';
-% cbar.Label.FontSize=fontsize;
+% cbar.Label.FontSize=config_fig.ax_fontsize;
 
 
 %% vis: dBdr - rectangular (publication) (@ff)
@@ -1066,7 +1055,7 @@ ylabel('spatial pdf');
 % 
 % %%% PLOT
 % figname='dB_equatorial_tomography';
-% % h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',config_fig.rend);
+% % h=figure('Name',figname,'Units','normalized','Position',[0.2,0.2,0.5,0.2],'Renderer',config_fig.rend);
 % h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer',config_fig.rend);
 % 
 % hold on;

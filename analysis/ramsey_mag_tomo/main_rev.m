@@ -31,13 +31,6 @@ config_fig.mark_typ={'^','+','o','d'};
 config_fig.col_theme=viridis(3);
 config_fig.coll_theme=colshades(config_fig.col_theme);
 
-% misc
-f_units='normalized';
-f_pos=[0.2,0.2,0.2,0.3];
-f_pos_wide=[0.2,0.2,0.25,0.3];
-
-fontsize=12;
-ax_lwidth=1.2;
 
 %% Get experimental params
 % load logfile
@@ -1075,7 +1068,7 @@ Berr_Pramsey_halo=1e6*omerr_Pramsey_halo/(2*pi*C_gymag);
 
 %% VIS: Ramsey fringe (pop-inv)
 figname='Pramsey_fringe_halo';
-h=figure('Name',figname,'Units',f_units,'Position',[0.2,0.2,0.5,0.2],'Renderer',config_fig.rend);
+h=figure('Name',figname,'Units','normalized','Position',[0.2,0.2,0.5,0.2],'Renderer',config_fig.rend);
 hold on;
 
 pexp=ploterr(1e6*tau,P_halo_avg,...
@@ -1098,7 +1091,7 @@ ax_xlim=ax.XLim;
 
 set(ax,'Layer','Top');
 ax.FontSize=fontsize;
-ax.LineWidth=ax_lwidth;
+ax.LineWidth=1.2;
 xlabel('pulse delay $\tau~(\mu s)$');
 ylabel('$P$');
 
