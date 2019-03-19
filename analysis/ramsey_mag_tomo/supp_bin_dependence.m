@@ -217,7 +217,45 @@ ax.LineWidth=config_fig.ax_lwid;
 % uistack(line_resol,'bottom');
 
 
-%% VIS: binsize vs error (scaling)
+%% VIS: binsize vs error (scaling by half-cone angle)
+% %   NOTE: Vol \propto alpha^2 relation will break down for large alpha
+% h=figure('Name','binsize_vs_B_err','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
+% ax=gca;
+% hold on;
+% counter=1;
+% for ii=1:n_az
+%     for jj=1:n_el
+%         tI=sub2ind([n_az,n_el],ii,jj);
+% 
+%         y_scaled = (alpha/pi)'.*squeeze(Berr_alpha(ii,jj,:));
+%         y_scaled = y_scaled/y_scaled(1);
+%         
+%         tp=plot(alpha/pi,y_scaled);
+%         tp.LineStyle=config_fig.line_sty{tI};
+%         tp.Marker='none';
+%         tp.Color=col{counter};
+%         
+%         counter=counter+1;
+%     end
+% end
+% set(ax,'Layer','top');
+% set(ax,'XScale','log');
+% set(ax,'YScale','log');
+% xlabel('bin size $\alpha/\pi$');
+% ylabel('$\alpha\cdot\Delta B$ (arb. u.)');
+% box on;
+% ax.FontSize=config_fig.ax_fontsize;
+% ax.LineWidth=config_fig.ax_lwid;
+% 
+% % % annotation ----------------------
+% % line_resol=line([beta_ramsey,beta_ramsey]/pi,ax.YLim,'LineStyle','--','Color','k');
+% % uistack(line_resol,'bottom');
+
+
+%% VIS: binsize vs error (scaling by sqrt(cone solid-angle))
+%   NOTE:   Vol \propto solidangle(cone)
+%           N \propto Vol
+       
 h=figure('Name','binsize_vs_B_err','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 ax=gca;
 hold on;
@@ -226,13 +264,12 @@ for ii=1:n_az
     for jj=1:n_el
         tI=sub2ind([n_az,n_el],ii,jj);
 
-        y_scaled = (alpha/pi)'.*squeeze(Berr_alpha(ii,jj,:));
+        y_scaled = sqrt(cone_solang(alpha))'.*squeeze(Berr_alpha(ii,jj,:));
         y_scaled = y_scaled/y_scaled(1);
         
         tp=plot(alpha/pi,y_scaled);
         tp.LineStyle=config_fig.line_sty{tI};
         tp.Marker='none';
-%         tp.Color='k';
         tp.Color=col{counter};
         
         counter=counter+1;
@@ -242,7 +279,7 @@ set(ax,'Layer','top');
 set(ax,'XScale','log');
 set(ax,'YScale','log');
 xlabel('bin size $\alpha/\pi$');
-ylabel('$\alpha\cdot\Delta B$ (arb. u.)');
+ylabel('$\sqrt{\delta V} \cdot\Delta B$ (arb. u.)');
 box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
