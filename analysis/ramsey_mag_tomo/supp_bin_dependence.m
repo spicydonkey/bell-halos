@@ -134,11 +134,16 @@ for kk=1:n_alpha
 end
 
 %% VIS: binsize vs mean
+% config
+col={'b','k'};      % manual colors
+
+% plot
 h=figure('Name','binsize_vs_B','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 ax=gca;
 hold on;
 
 pleg=[];
+counter=1;
 for ii=1:n_az
     for jj=1:n_el
         tI=sub2ind([n_az,n_el],ii,jj);
@@ -146,9 +151,16 @@ for ii=1:n_az
         tp=shadedErrorBar(alpha/pi,squeeze(B_alpha(ii,jj,:)),squeeze(Berr_alpha(ii,jj,:)));
         tp.mainLine.LineStyle=config_fig.line_sty{tI};
         tp.mainLine.DisplayName=sprintf('%0.3g, %0.3g',az(ii),el(jj));
-        tp.patch.FaceAlpha=0.33;
-
+        tp.patch.FaceAlpha=0.2;
+        
+        % color
+        tp.patch.FaceColor=col{counter};
+        tp.mainLine.Color=col{counter};
+        set(tp.edge,'Color',col{counter});
+        
         pleg(end+1)=tp.mainLine;
+        
+        counter=counter+1;
     end
 end
 
@@ -168,7 +180,7 @@ ax.LineWidth=config_fig.ax_lwid;
 % legend -------------------------------
 lgd=legend(pleg);
 lgd.Title.String='$\theta, \phi$';
-lgd.Location='southeast';
+lgd.Location='best';
 lgd.Box='off';
 
 
@@ -176,6 +188,7 @@ lgd.Box='off';
 h=figure('Name','binsize_vs_B_err','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 ax=gca;
 hold on;
+counter=1;
 for ii=1:n_az
     for jj=1:n_el
         tI=sub2ind([n_az,n_el],ii,jj);
@@ -183,14 +196,18 @@ for ii=1:n_az
         tp=plot(alpha/pi,squeeze(Berr_alpha(ii,jj,:)));
         tp.LineStyle=config_fig.line_sty{tI};
         tp.Marker='none';
-        tp.Color='k';
+%         tp.Color='k';
+        tp.Color=col{counter};
+    
+        counter=counter+1;
     end
+    
 end
 set(ax,'Layer','top');
 set(ax,'XScale','log');
 set(ax,'YScale','log');
 xlabel('bin size $\alpha/\pi$');
-ylabel('Unc $B$ (G)');
+ylabel('$\Delta B$ (G)');
 box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
@@ -204,6 +221,7 @@ ax.LineWidth=config_fig.ax_lwid;
 h=figure('Name','binsize_vs_B_err','Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 ax=gca;
 hold on;
+counter=1;
 for ii=1:n_az
     for jj=1:n_el
         tI=sub2ind([n_az,n_el],ii,jj);
@@ -214,14 +232,17 @@ for ii=1:n_az
         tp=plot(alpha/pi,y_scaled);
         tp.LineStyle=config_fig.line_sty{tI};
         tp.Marker='none';
-        tp.Color='k';
+%         tp.Color='k';
+        tp.Color=col{counter};
+        
+        counter=counter+1;
     end
 end
 set(ax,'Layer','top');
 set(ax,'XScale','log');
 set(ax,'YScale','log');
 xlabel('bin size $\alpha/\pi$');
-ylabel('$\alpha\cdot$unc (arb. unit)');
+ylabel('$\alpha\cdot\Delta B$ (arb. u.)');
 box on;
 ax.FontSize=config_fig.ax_fontsize;
 ax.LineWidth=config_fig.ax_lwid;
