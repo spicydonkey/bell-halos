@@ -58,6 +58,7 @@ for ii=1:n_tau
     t_k = k_tau{ii};    
 
     % g2 spatial distribution
+    progressbar(0)
     for jj=1:n_zone
         [iaz,iel]=ind2sub(size(gaz),jj);
         taz=gaz(jj);
@@ -68,7 +69,9 @@ for ii=1:n_tau
         % g2
         t_g2 = summary_disthalo_g2(tk_mode,dk_ed,0,0,0,0);
 
-        g2_mode{ii}(iaz,iel,:) = t_g2{:};     % store g2
+        g2_mode{ii}(iaz,iel,:) = [t_g2{:}];     % store g2
+    
+        progressbar(jj/n_zone);
     end
 end
 
@@ -80,6 +83,6 @@ figure;
 ax=tight_subplot(3,1);
 for ii=1:3
     I=imagesc(ax(ii),squeeze(g2_mode{idx_tau_vis}(:,:,ii))');
-    cbar=colorbar();
+    cbar=colorbar(ax(ii));
     colormap('inferno');
 end
