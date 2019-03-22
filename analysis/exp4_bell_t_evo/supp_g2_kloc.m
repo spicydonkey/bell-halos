@@ -12,11 +12,11 @@ configs.g2.dk_lim=0.05*[-1,1];
 configs.g2.dk_n=1;                 
 
 % k-modes
-configs.mode.alpha=pi/10;                 % cone half-angle
-configs.mode.lim_az=pi*[0,1];              % limit of azim angle (exc +pi)
+configs.mode.alpha=pi/10;           % cone half-angle
+configs.mode.lim_az=pi*[0,1];       % limit of azim angle (exc +pi)
 configs.mode.lim_el=pi/2*[-1,1];
-configs.mode.n_az=20;                	% equispaced bins
-configs.mode.n_el=21;           % should be ODD
+configs.mode.n_az=30;               % equispaced bins
+configs.mode.n_el=31;               % should be ODD
 
 % post-processing
 configs.post.el_trunc=deg2rad(50);           % elevation angle threshold to truncate (rad)
