@@ -23,8 +23,8 @@ configs.mode.alpha=pi/10;           % cone half-angle
 
 % k-modes around equator
 configs.mode.n_azel=11;
-configs.mode.azel=linspace(-pi,pi,configs.mode.n_azel)';
-configs.mode.azel(:,2)=0*configs.mode.azel(:,1);
+configs.mode.azel=linspace(-pi,pi,configs.mode.n_azel)';        % azim (rad)
+configs.mode.azel(:,2)=0*configs.mode.azel(:,1);                % elev (rad)
 
 % vis 
 config_fig = loadFigureConfig;      % load template
@@ -53,7 +53,7 @@ S_data = load(configs.data.supp);
 % % configure g2 analysis
 dk_ed_vec=linspace(configs.g2.dk_lim(1),configs.g2.dk_lim(2),configs.g2.dk_n+1);
 dk_cent_vec=edge2cent(dk_ed_vec);
-[~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
+% [~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
 dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
 dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
 
@@ -66,6 +66,7 @@ n_mode=size(configs.mode.azel,1);
 n_tau=length(k_tau);
 n_shots=shotSize(k_tau);
 
+% preallocate
 g2_mode_avg = cell(n_tau,1);
 g2_mode_se = cell(n_tau,1);
 
@@ -121,19 +122,8 @@ g2_anti_se=cellfun(@(x) x(:,3),g2_mode_se,'uni',0);
 
 
 %% VIS: Equatorial g2 profile
-for ii=1:n_tau
-    figure;
-%     H_res_ff=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
-    hold on;    
-    ploterr(configs.mode.azel(:,1),g2_corr_avg{ii},[],g2_corr_se{ii},'r');
-    ploterr(configs.mode.azel(:,1),g2_anti_avg{ii},[],g2_anti_se{ii},'b');
-end
-
-%% VIS: Equatorial g2 profile
-% col_corr={'r','b'};
-
 H={};
-for ii=[1,6]
+for ii=1:n_tau
     H{ii}=figure('Name','g2_kloc_equator','Units',S_data.config_fig.units,'Position',[0 0 7 3],'Renderer',S_data.config_fig.rend);
     H{ii}.Name=strcat(H{ii}.Name,'_',num2str(ii));
     
