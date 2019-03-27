@@ -127,9 +127,9 @@ g2_anti_avg=cellfun(@(x) x(:,3),g2_mode_avg,'uni',0);
 g2_anti_se=cellfun(@(x) x(:,3),g2_mode_se,'uni',0);
 
 
-%%% VIS: Equatorial g2 profile
-%H={};
-%for ii=1:n_tau
+% %% VIS: Equatorial g2 profile
+% H={};
+% for ii=1:n_tau
 %    H{ii}=figure('Name','g2_kloc_equator','Units',S_data.config_fig.units,'Position',[0 0 7 3],'Renderer',S_data.config_fig.rend);
 %    H{ii}.Name=strcat(H{ii}.Name,'_',num2str(ii));
 %    
@@ -159,9 +159,17 @@ g2_anti_se=cellfun(@(x) x(:,3),g2_mode_se,'uni',0);
 %    xlim([-180,180]);
 %    set(gca,'XTick',-180:90:180);
 %    
-%%     lgd=legend('Location','best');
-%end
-%
+% %     lgd=legend('Location','best');
+% end
+
 
 %% VIS: rough g2 bootstrapping convergence
-%g2_bs_vs_b = cellfun(@(x) arrayfun(@(b) std(x(1:B,:),[],1),1:configs.bootstrap.B,'uni',0),g2_mode_bs{1},'uni',0);
+g2_bs_vs_b = cellfun(@(x) cell2mat(arrayfun(@(b) std(x(1:b,:),[],1),1:configs.bootstrap.B,'uni',0)'),g2_mode_bs{1},'uni',0);
+
+figure; 
+hold on;
+for ii=1:configs.mode.n_azel
+    plot(g2_bs_vs_b{ii});
+    xlabel('num. bootstrapping samples');
+    ylabel('est. uncertainty');
+end
