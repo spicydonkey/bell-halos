@@ -1449,28 +1449,26 @@ ylabel('$\phi$ (deg)');
 colormap('viridis');
 
 %%% colorbar
-% cbar=colorbar('west');
 cbar=colorbar('eastoutside');
+colorbar_minimal(cbar);
+Btomo_cbar_lim = cbar.Limits;   % get cbar limits
+
+% annotation
 cbar.TickLabelInterpreter='latex';
-% cbar.Label.Interpreter='latex';
-% cbar.Label.String='$\mathrm{B}$ (G)';
-% cbar.Label.FontSize=config_fig.ax_fontsize;
-title(cbar,'$\mathrm{B}$ (G)','Interpreter','latex');       % title on top
+cbar.Label.Interpreter='latex';
 cbar.FontSize=config_fig.ax_fontsize;
-% change colorbar position
-ax_pos = plotboxpos(ax);
-pos_ax=get(gca,'Position');
+cbar.Label.FontSize=config_fig.ax_fontsize;
+cbar.Label.String='$\mathrm{B}$ (G)';
+
+% resize colorbar without moving original axis
+ax_boxpos = plotboxpos(ax);         % box position of axis
+% get wanted colorbar position
 pos_cbar=get(cbar,'Position');
 pos_cbar(3)=0.025;
-pos_cbar(1)=ax_pos(1)+ax_pos(3)+1*pos_cbar(3);
-set(cbar,'Position',pos_cbar);
-set(gca,'Position',pos_ax);     % return axis to original
-% colorbar limits
-Btomo_cbar_lim = cbar.Limits;
-set(cbar,'Ticks',Btomo_cbar_lim);       % ticks ONLY at colorbar lims
+pos_cbar(1)=ax_boxpos(1)+ax_boxpos(3)+1*pos_cbar(3);
+colorbar_resize(cbar,ax,pos_cbar);  % resize
 
-
-% hatch-out truncated region --------------------------
+%%% hatch-out truncated region --------------------------
 % hack: two separate hatched regions
 patch_xdata{1}=[ax.XLim(1), ax.XLim(2), ax.XLim(2), ax.XLim(1)];
 patch_ydata{1}=[ax.YLim(1), ax.YLim(1), -rad2deg(el_trunc), -rad2deg(el_trunc)];
