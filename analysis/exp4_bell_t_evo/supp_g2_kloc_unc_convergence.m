@@ -1,6 +1,6 @@
-%% SOM ANALYSIS: uncertainty in localised g2 by bootstrapping
+%% SOM ANALYSIS: convergence test for bootstrapping localised g2
 % DKS
-% 2019-03-27
+% 2019-03-28
 
 
 %% CONFIGS -------------------------------------------------
@@ -10,7 +10,7 @@ configs.data.main='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\
 configs.data.supp = 'C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\out\supp_kloc_g2_vs_tau_20190326_hr.mat';
 
 % bootstrapping --------------------------------------------------
-configs.bootstrap.B=20;
+configs.bootstrap.B=200;
 
 % g2
 % single-bin at dk=0
@@ -19,10 +19,11 @@ configs.g2.dk_n=1;
 
 % k-modes
 configs.mode.alpha=pi/10;           % cone half-angle
+% configs.mode.azel=[0, 0; pi/2, 0];  % selected k-modes to analyse (N-mode x 2)
 
 % k-modes around equator
-configs.mode.n_azel=11;
-configs.mode.azel=linspace(-pi,pi,configs.mode.n_azel)';        % azim (rad)
+configs.mode.n_azel=5;
+configs.mode.azel=linspace(-pi/2,pi/2,configs.mode.n_azel)';        % azim (rad)
 configs.mode.azel(:,2)=0*configs.mode.azel(:,1);                % elev (rad)
 
 % vis
@@ -44,8 +45,8 @@ S_data = load(configs.data.supp);
 % end
 
 % cull tau
-% warning('culling Tau');
-% k_tau=k_tau(6);
+warning('culling Tau');
+k_tau=k_tau(6);
 
 
 %% MAIN ------------------------------------------------------
@@ -126,37 +127,33 @@ g2_anti_avg=cellfun(@(x) x(:,3),g2_mode_avg,'uni',0);
 g2_anti_se=cellfun(@(x) x(:,3),g2_mode_se,'uni',0);
 
 
-%% VIS: Equatorial g2 profile
-H={};
-for ii=1:n_tau
-   H{ii}=figure('Name','g2_kloc_equator','Units',S_data.config_fig.units,'Position',[0 0 7 3],'Renderer',S_data.config_fig.rend);
-   H{ii}.Name=strcat(H{ii}.Name,'_',num2str(ii));
+%% VIS: rough g2 bootstrapping convergence
+% Data processing
+g2_bs_vs_b = cellfun(@(x) cell2mat(arrayfun(@(b) std(x(1:b,:),[],1),1:configs.bootstrap.B,'uni',0)'),g2_mode_bs{1},'uni',0);
+bs_err_norm=cellfun(@(x) x./x(end,:),g2_bs_vs_b,'uni',0);
 
-   hold on;
-   % supps data - g2 from all data
-   plot(rad2deg(S_data.vaz_filled),S_data.g2_anti{ii}(:,S_data.idx_el0),'r','DisplayName','$\uparrow\uparrow/\downarrow\downarrow$');
-   plot(rad2deg(S_data.vaz_filled),S_data.g2_corr{ii}(:,S_data.idx_el0),'b--','DisplayName','$\uparrow\downarrow$');
+% % BS Uncertainty vs B
+figure('Name','g2_bs_converge','Units',S_data.config_fig.units,'Position',[0 0 8.6 4],'Renderer',S_data.config_fig.rend);
+hold on;
+col_gray=0.75*ones(1,3);
 
-   % bootstrapping - avg and SE
-   tp=ploterr(rad2deg(configs.mode.azel(:,1)),g2_corr_avg{ii},[],g2_corr_se{ii},'or');
-   set(tp(1),'Color','r','MarkerFaceColor','r',...
-       'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
-   set(tp(2),'Color','r','LineWidth',config_fig.line_wid);
-
-   tp=ploterr(rad2deg(configs.mode.azel(:,1)),g2_anti_avg{ii},[],g2_anti_se{ii},'ob');
-   set(tp(1),'Color','b','MarkerFaceColor','w',...
-       'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
-   set(tp(2),'Color','b','LineWidth',config_fig.line_wid);
-
-   % annotate
-   box on;
-   ax=gca;
-   ax.FontSize=S_data.config_fig.ax_fontsize;
-   ax.LineWidth=S_data.config_fig.ax_lwid;
-   xlabel('$\theta$ (deg)');
-   ylabel('$g^{(2)}$');
-   xlim([-180,180]);
-   set(gca,'XTick',-180:90:180);
-
-%     lgd=legend('Location','best');
+for ii=1:configs.mode.n_azel
+    tp=plot(bs_err_norm{ii},'Color',col_gray);
+    uistack(tp,'bottom')
+    if ii==1
+        tp(1).Color='k';
+        uistack(tp(1),'top');
+    end
 end
+% annotate
+box on;
+ax=gca;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+xlabel('\# bootstrapping samples');
+ylabel('uncertainty (arb .u.)');
+
+% % analysis parameter
+% tp=plot(B_vis*[1,1],ax.YLim,'r--');
+% uistack(tp,'bottom');
