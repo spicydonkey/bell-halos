@@ -394,11 +394,15 @@ end
 % parity vs. phase
 %   parity = cos( 2*PHI(t) )
 %  where 
-%   PHI(t) = C_gymag \int DeltaB(t) dt
-%          = C_gymag * dBdr * v * (t-t0)^2
+%   PHI(t) = 1/2 * C_gymag \int DeltaB(t) dt
+%          = 1/2 * C_gymag * dBdr * v * (t-t0)^2	--- v = 1/2 d(rA - rB)/dt
 %          = beta * (t-t0)^2
 %
-% CHECK ABOVE
+%   beta   = 1/2 * C_gymag * v * dBdr
+%          = c * dBdr
+%   c      = 1/2 * C_gymag * v
+%
+% See paper
 
 %-------------------------------------------------------------------
 % t0 is constrained to [0,0.4] ms
@@ -448,9 +452,17 @@ Pi_fit2=cellfun(@(f) feval(f,t_fit),mdl_tevo2.fit,'UniformOutput',false);
 beta=abs(mdl_tevo2.fit_par{1});             % get fit params and ensure sign is positive
 beta_se=abs(mdl_tevo2.fit_par_se{1});
 
+c_beta = 1/2 * C_gymag * (configs.exp.v_sep/2);
+
 % far-field
-dBdr=1e6*beta/(configs.exp.v_sep*C_gymag/2);            % [G/m] (factor to convert time-scaling ms^-2 --> s^-2)
-dBdr_se=1e6*beta_se/(configs.exp.v_sep*C_gymag/2);      
+% [2019-05-21] corrected beta --> dBdr scaling
+dBdr=1e6*beta/c_beta;            % [G/m] (factor to convert time-scaling ms^-2 --> s^-2)
+dBdr_se=1e6*beta_se/c_beta;      
+
+% factor of 2 off!
+% dBdr=1e6*beta/(configs.exp.v_sep*C_gymag/2);            % [G/m] (factor to convert time-scaling ms^-2 --> s^-2)
+% dBdr_se=1e6*beta_se/(configs.exp.v_sep*C_gymag/2);      
+
 
 % fill by inversion symmetry
 [gaz,gel,dBdr]=autofill_cent_symm(vaz,vel,dBdr);
