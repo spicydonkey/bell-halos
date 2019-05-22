@@ -1449,8 +1449,11 @@ ylabel('$\phi$ (deg)');
 colormap('viridis');
 
 %%% colorbar
+cbar_precision=3;               % # decimal places (G/m)
 cbar=colorbar('eastoutside');
 colorbar_minimal(cbar);
+cbar_lim_round=round(cbar.Limits,cbar_precision,'decimals');
+cbar.TickLabels=arrayfun(@num2str,cbar_lim_round,'uni',0);
 Btomo_cbar_lim = cbar.Limits;   % get cbar limits
 
 % annotation
