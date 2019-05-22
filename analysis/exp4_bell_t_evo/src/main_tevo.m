@@ -860,6 +860,16 @@ for ii=1:n_loc_disp
     tp=plot(rad2deg(tazel(1)),rad2deg(tazel(2)),'Marker',config_fig.mark_typ{ii},...
         'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
         'MarkerSize',config_fig.mark_siz);
+    
+    % plot the diametrically opposite pair (Theta ±pi; -phi)
+    % +pi
+    tp=plot(rad2deg(tazel(1)+pi),rad2deg(-tazel(2)),'Marker',config_fig.mark_typ{ii},...
+        'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
+        'MarkerSize',config_fig.mark_siz);
+    % -pi
+    tp=plot(rad2deg(tazel(1)-pi),rad2deg(-tazel(2)),'Marker',config_fig.mark_typ{ii},...
+        'MarkerEdgeColor',c_loc(ii,:),'MarkerFaceColor',cl_loc(ii,:),...
+        'MarkerSize',config_fig.mark_siz);
 end
 
 % annotation
@@ -882,8 +892,11 @@ ylabel('$\phi$ (deg)');
 colormap('parula');
 
 %%% colorbar
+cbar_precision=2;               % # decimal places (G/m)
 cbar=colorbar('eastoutside');
 colorbar_minimal(cbar);
+cbar_lim_round=round(cbar.Limits,cbar_precision,'decimals');
+cbar.TickLabels=arrayfun(@num2str,cbar_lim_round,'uni',0);
 dBdr_cbar_lim=cbar.Limits;
 
 % annotation
@@ -891,7 +904,8 @@ cbar.TickLabelInterpreter='latex';
 cbar.Label.Interpreter='latex';
 cbar.FontSize=config_fig.ax_fontsize;
 cbar.Label.FontSize=config_fig.ax_fontsize;
-cbar.Label.String='$\frac{d\mathrm{B}}{dr}$ (mG/mm)';
+% cbar.Label.String='$\frac{d\mathrm{B}}{dr}$ (G/m)';
+cbar.Label.String='$d\mathrm{B}/dr$ (G/m)';
 
 % resize colorbar without moving original axis
 ax_boxpos = plotboxpos(ax);         % box position of axis
@@ -1271,7 +1285,7 @@ tp.edge(2).Visible='off';
 dBdr_pi2=dBdr_eq(iaz_pi2);
 xlim(90+10*[-1,1]);
 % ylim(dBdr_pi2*(1+1*[-1,1]));
-ylim([0,1]);
+ylim([0,3]);
 % set(ax2,'XTickLabel',[]);
 ax2.FontSize=ax.FontSize-1;
 ax2.TickLength=5*ax2.TickLength;
