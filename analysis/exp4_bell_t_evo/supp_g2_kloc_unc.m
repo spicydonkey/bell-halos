@@ -133,20 +133,20 @@ for ii=1:n_tau
    H{ii}.Name=strcat(H{ii}.Name,'_',num2str(ii));
 
    hold on;
-   % supps data - g2 from all data
-   plot(rad2deg(S_data.vaz_filled),S_data.g2_anti{ii}(:,S_data.idx_el0),'r','DisplayName','$\uparrow\uparrow/\downarrow\downarrow$');
-   plot(rad2deg(S_data.vaz_filled),S_data.g2_corr{ii}(:,S_data.idx_el0),'b--','DisplayName','$\uparrow\downarrow$');
+   % supps data - g2 from all data (labels reversed!)
+   tp_corr = plot(rad2deg(S_data.vaz_filled),S_data.g2_anti{ii}(:,S_data.idx_el0),'r','DisplayName','$\uparrow\uparrow/\downarrow\downarrow$');
+   tp_anti = plot(rad2deg(S_data.vaz_filled),S_data.g2_corr{ii}(:,S_data.idx_el0),'b--','DisplayName','$\uparrow\downarrow$');
 
    % bootstrapping - avg and SE
-   tp=ploterr(rad2deg(configs.mode.azel(:,1)),g2_corr_avg{ii},[],g2_corr_se{ii},'or');
-   set(tp(1),'Color','r','MarkerFaceColor','r',...
+   tp_corr_bs=ploterr(rad2deg(configs.mode.azel(:,1)),g2_corr_avg{ii},[],g2_corr_se{ii},'or');
+   set(tp_corr_bs(1),'Color','r','MarkerFaceColor','r',...
        'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
-   set(tp(2),'Color','r','LineWidth',config_fig.line_wid);
+   set(tp_corr_bs(2),'Color','r','LineWidth',config_fig.line_wid);
 
-   tp=ploterr(rad2deg(configs.mode.azel(:,1)),g2_anti_avg{ii},[],g2_anti_se{ii},'ob');
-   set(tp(1),'Color','b','MarkerFaceColor','w',...
+   tp_anti_bs=ploterr(rad2deg(configs.mode.azel(:,1)),g2_anti_avg{ii},[],g2_anti_se{ii},'ob');
+   set(tp_anti_bs(1),'Color','b','MarkerFaceColor','w',...
        'MarkerSize',config_fig.mark_siz,'LineWidth',config_fig.line_wid);
-   set(tp(2),'Color','b','LineWidth',config_fig.line_wid);
+   set(tp_anti_bs(2),'Color','b','LineWidth',config_fig.line_wid);
 
    % annotate
    box on;
@@ -158,5 +158,8 @@ for ii=1:n_tau
    xlim([-180,180]);
    set(gca,'XTick',-180:90:180);
 
-%     lgd=legend('Location','best');
+%    lgd=legend('Location','best');
+%     lgd=legend([tp_corr,tp_anti],'Location','best');
+    
+%     print_vecrast(H{ii});
 end

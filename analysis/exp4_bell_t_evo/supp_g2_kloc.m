@@ -8,6 +8,7 @@
 fdata='C:\Users\HE BEC\Dropbox\PhD\projects\halo_metrology\analysis\exp4_tevo\exp4_20181029.mat';
 
 % g2 
+% single-bin at dk=0
 configs.g2.dk_lim=0.05*[-1,1];       
 configs.g2.dk_n=1;                 
 
@@ -15,8 +16,8 @@ configs.g2.dk_n=1;
 configs.mode.alpha=pi/10;           % cone half-angle
 configs.mode.lim_az=pi*[0,1];       % limit of azim angle (exc +pi)
 configs.mode.lim_el=pi/2*[-1,1];
-configs.mode.n_az=30;               % equispaced bins
-configs.mode.n_el=31;               % should be ODD
+configs.mode.n_az=10;      %30;               % equispaced bins
+configs.mode.n_el=11;      %31;               % should be ODD
 
 % post-processing
 configs.post.el_trunc=deg2rad(50);           % elevation angle threshold to truncate (rad)
@@ -41,7 +42,7 @@ load(fdata);
 %% MAIN ------------------------------------------------------
 % % configure g2 analysis
 dk_ed_vec=linspace(configs.g2.dk_lim(1),configs.g2.dk_lim(2),configs.g2.dk_n+1);
-dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
+dk_cent_vec=edge2cent(dk_ed_vec);
 [~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
 dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
 dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
@@ -86,7 +87,7 @@ end
 
 
 %% post processing
-% s% truncate elevation angle limits
+% % truncate elevation angle limits
 b_trunc=(abs(gel)>configs.post.el_trunc);    % boolean indicator to truncate
 
 for ii=1:n_tau
@@ -123,7 +124,7 @@ fprintf('-------------------------------------\n');
 
 %% VIS ----------------------------------------------------
 idx_tau_vis_dbg=1;      % for debugging test
-idx_tau_vis=1:6;
+idx_tau_vis=[1,6];
 
 
 %% VIS: localised g2 distribution
@@ -175,7 +176,7 @@ str_corr={'$\uparrow\uparrow/\downarrow\downarrow$','$\uparrow\downarrow/\downar
 
 % vis
 for ii=idx_tau_vis
-    H=figure('Name','g2_kloc','Units',config_fig.units,'Position',[0 0 7 7],'Renderer',config_fig.rend);
+    H=figure('Name','g2_kloc','Units',config_fig.units,'Position',[0 0 7 7.5],'Renderer',config_fig.rend);
     H.Name=strcat(H.Name,'_',num2str(ii));
     
     ax=tight_subplot(2,1,[0,0],[0.15,0.10],[0.15,0.15]);
@@ -185,6 +186,10 @@ for ii=idx_tau_vis
     
     axes(ax(2));
     plotFlatMapWrappedRad(gaz_filled,gel_filled,g2_corr{ii},'rect','texturemap');
+    
+    % consistent colorbar limits for corr/anti g2
+    clim_envelop = minmax(horzcat(ax.CLim));    % colorbar min-max envelops all plots
+    set(ax,'CLim',clim_envelop);
     
     % annotation
     for jj=1:2
@@ -230,6 +235,8 @@ for ii=idx_tau_vis
         % hatchfill
         hatch_axis(gca);
     end
+    
+%     print_pnghr(H);
 end
 
 

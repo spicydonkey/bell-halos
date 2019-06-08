@@ -18,7 +18,7 @@ config_fig = loadFigureConfig;      % load template
 
 %% configure g2
 dk_ed_vec=linspace(configs.g2.dk_lim(1),configs.g2.dk_lim(2),configs.g2.dk_n+1);
-dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
+dk_cent_vec=edge2cent(dk_ed_vec);
 [~,idx_dk0]=min(abs(dk_cent_vec));    % idx bin nearest zero
 dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
 dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
@@ -113,6 +113,8 @@ g2_corrtyp = {g2_corr,g2_anti};
 ax_cmap={'red','blue'};
 idx_tau_vis=1:6;
 
+z_labels = {'$(\bar{g}^{(2)}_{\uparrow\uparrow} + \bar{g}^{(2)}_{\downarrow\downarrow})/2$','$\bar{g}^{(2)}_{\uparrow\downarrow}$'};
+
 % xy-grid
 [dk_2d_x,dk_2d_y]=ndgrid(dk_cent_vec,dk_cent_vec);
 
@@ -130,7 +132,9 @@ for ii=idx_tau_vis
         colormap(gca,ax_cmap{jj});
         xlabel('$\Delta k_z$');
         ylabel('$\Delta k_x$');
-        zlabel('$\bar{g}^{(2)}$');
+%         zlabel('$\bar{g}^{(2)}$');
+        zlabel(z_labels{jj});
+        
         set(gca,'FontSize',config_fig.ax_fontsize);
         set(gca,'LineWidth',config_fig.ax_lwid);
         
@@ -139,4 +143,6 @@ for ii=idx_tau_vis
             title(titlestr);
         end
     end
+    
+%     print_pnghr(H);       % save figs
 end
