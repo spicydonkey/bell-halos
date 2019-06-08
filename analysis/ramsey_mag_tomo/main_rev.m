@@ -941,7 +941,7 @@ set(ax,'LineWidth',config_fig.ax_lwid);
 axis_snug(ax,[0.05,0.1]);
 
 xlabel('pulse delay $\tau~(\mu s)$');
-ylabel('\# detected $N_i$');
+ylabel('num det halo');
 
 % Polarisation ------------------------------------------------
 subplot(1,2,2);
@@ -1001,7 +1001,7 @@ set(ax,'LineWidth',config_fig.ax_lwid);
 axis_snug(ax,[0.05,0.1]);
 
 xlabel('pulse delay $\tau~(\mu s)$');
-ylabel('\# detected $N_i$');
+ylabel('num det BEC');
 
 
 % Polarisation -----------------------------------------
