@@ -144,5 +144,9 @@ for ii=idx_tau_vis
         end
     end
     
+    % consistent Z-axis-limits for corr/anti g2
+    zlim_envelop = minmax(horzcat(ax.ZLim));
+    set(ax,'ZLim',zlim_envelop);
+    
 %     print_pnghr(H);       % save figs
 end
