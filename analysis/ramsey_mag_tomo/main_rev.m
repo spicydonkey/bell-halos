@@ -1109,18 +1109,18 @@ ylabel('$P$');
 %%% Spatial zones
 % construct spatial zones at latlon grid + solid angle
 % half-cone angle of integration bin (rad)
-% alpha=sig_psf_beta;          % limiting spatial resolution 
-alpha=sig_psf_gradiometry;      % bin-size like gradiometry (rad)
+alpha=sig_psf_beta;          % limiting spatial resolution 
+% alpha=sig_psf_gradiometry;      % bin-size like gradiometry (rad)
 lim_az=[-pi,pi];        % no inversion symmetry
 phi_max=pi/2;           
 lim_el=[-phi_max,phi_max];
 
-n_az=200;                	% equispaced bins
-n_el=100;
+% n_az=200;                	% equispaced bins
+% n_el=100;
 
 % % QUICK DEBUG
-% n_az=100;
-% n_el=50;
+n_az=100;
+n_el=50;
 
 
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
@@ -1139,6 +1139,12 @@ n_zone=numel(gaz);
 % idx to ~0 angle (equator for elev)
 [~,iaz_0]=min(abs(az));
 [~,iel_0]=min(abs(el));
+
+
+%%% halo truncation mask
+el_trunc=deg2rad(60);           % elevation angle threshold to truncate (rad)
+% el_trunc=deg2rad(90);        
+b_trunc=(abs(gel)>el_trunc);    % boolean indicator to truncate
 
 
 %% n,P distribution
@@ -1176,6 +1182,106 @@ P_k_std=cellfun(@(x) squeeze(std(x,0,3,'omitnan')),P_k,'UniformOutput',false);
 P_k_avg=cell2mat(cellfun(@(a) reshape(a,[1,size(a)]),P_k_avg,'UniformOutput',false));
 P_k_std=cell2mat(cellfun(@(a) reshape(a,[1,size(a)]),P_k_std,'UniformOutput',false));
 P_k_se=P_k_std./sqrt(n_shot);        
+
+
+%% atom number statistics
+% integration volume
+SA_k_intg = 2*pi*(1-cos(alpha));     % solid angle of k-mode integration region
+
+% truncate halo
+N_k_trunc = N_k;
+for ii=1:length(tau)
+    N_k_trunc{ii}(repmat(b_trunc,[1,1,n_shot(ii)])) = NaN;
+end
+
+% statistics
+N_k_trunc_avg = cellfun(@(x) mean(x(:),'omitnan'), N_k_trunc);
+N_k_trunc_std = cellfun(@(x) std(x(:),0,'omitnan'), N_k_trunc);
+
+mean([N_k_trunc_avg, N_k_trunc_std])                % [avg, std] DETECTED number of scattered atoms into a single integration region
+
+10 * (4*pi/ SA_k_intg) * mean(N_k_trunc_avg)         % avg number of total scattered atoms (QE=0.1)
+
+
+%% VIS
+H = figure;
+
+N_k_trunc_tintg = cat(3,N_k_trunc{:});
+
+N_k_trunc_tintg_avg = mean(N_k_trunc_tintg,3,'omitnan');
+N_k_trunc_tintg_std = std(N_k_trunc_tintg,0,3,'omitnan');
+
+%%% MEAN
+subplot(2,1,1);
+
+tp=plotFlatMapWrappedRad(gaz,gel,N_k_trunc_tintg_avg,'rect','texturemap');
+
+% annotation
+ax=gca;
+set(ax,'Layer','Top');
+box on;
+% grid on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+% axis tight;
+xlim([-180,180]);
+ylim([-90,90]);
+xticks(-180:90:180);
+yticks(-90:45:90);
+
+xlabel('$\theta$ (deg)');
+ylabel('$\phi$ (deg)');
+
+titlestr = sprintf('N detected in: $\\alpha$ = %0.3g rad = %0.3g deg', alpha, rad2deg(alpha));
+title(titlestr);
+
+colormap('magma');
+
+%%% colorbar
+cbar=colorbar('eastoutside');
+
+% annotation
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
+cbar.FontSize=config_fig.ax_fontsize;
+cbar.Label.FontSize=config_fig.ax_fontsize;
+cbar.Label.String='average N detected';
+
+
+%%% SDEV
+subplot(2,1,2);
+tp=plotFlatMapWrappedRad(gaz,gel,N_k_trunc_tintg_std,'rect','texturemap');
+
+% annotation
+ax=gca;
+set(ax,'Layer','Top');
+box on;
+% grid on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+
+% axis tight;
+xlim([-180,180]);
+ylim([-90,90]);
+xticks(-180:90:180);
+yticks(-90:45:90);
+
+xlabel('$\theta$ (deg)');
+ylabel('$\phi$ (deg)');
+
+colormap('magma');
+
+%%% colorbar
+cbar=colorbar('eastoutside');
+
+% annotation
+cbar.TickLabelInterpreter='latex';
+cbar.Label.Interpreter='latex';
+cbar.FontSize=config_fig.ax_fontsize;
+cbar.Label.FontSize=config_fig.ax_fontsize;
+cbar.Label.String='s.d. N detected';
+
 
 
 %% equatorial integrated number
@@ -1266,27 +1372,6 @@ for ii=1:n_fit_param
 end
 
 %% truncate sph-dist to within sensible elev-limits
-% config
-el_trunc=deg2rad(60);           % elevation angle threshold to truncate (rad)
-% el_trunc=deg2rad(90);        
-b_trunc=(abs(gel)>el_trunc);    % boolean indicator to truncate
-
-% % get/store original
-% % TODO - this needs work
-% if ~exist('Bk_Pramsey_original','var')
-%     % store
-%     Bk_Pramsey_original=Bk_Pramsey;
-%     Berrk_Pramsey_original=Berrk_Pramsey;
-%     Br_original=Br;
-%     Brerr_original=Brerr;
-% else
-%     % get
-%     Bk_Pramsey=Bk_Pramsey_original;
-%     Berrk_Pramsey=Berrk_Pramsey_original;
-%     Br=Br_original;
-%     Brerr=Brerr_original;
-% end
-
 % truncate
 Bk_Pramsey(b_trunc)=NaN;
 Berrk_Pramsey(b_trunc)=NaN;
