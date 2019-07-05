@@ -1187,7 +1187,7 @@ h=figure('Name',figname,'Units','centimeters','Position',[0,0,8.6,3.2],'Renderer
 hold on;
 
 % data-------------------------------------------------------------------
-% Ramsey estimate
+%%% Ramsey estimate
 % ramsey_fname='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ramsey_mag_tomo\out\out_20190221_101042';
 ramsey_fname='C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\ramsey_mag_tomo\out\out_20190228_190145';
 
@@ -1205,7 +1205,16 @@ tp.edge(1).Visible='off';
 tp.edge(2).Visible='off';
 
 
-% Ent-based Gradiometry
+%%% Ent-based Gradiometry
+% 1. fitted model 
+% TODO - could generalise for gradB vector and sph polar vector space
+% our model is grad B = 5 e_x mG/mm
+theta_model = linspace(0,pi,1e3);
+dBdr_model = abs( 5*cos(theta_model) );
+
+p_model = plot(rad2deg(theta_model),dBdr_model,'r:','LineWidth',1.5);
+
+% 2. data
 % % skip ROI data
 % not_roi = true(size(az));
 % not_roi(iaz_0+iaz_disp-1)=false;
@@ -1271,6 +1280,10 @@ tp.edge(1).Visible='off';
 tp.edge(2).Visible='off';
 
 % gradiometry
+% 1. fitted model 
+p_model = plot(rad2deg(theta_model),dBdr_model,'r:','LineWidth',1.5);
+
+% 2. data
 tp=shadedErrorBar(rad2deg(az),dBdr_eq,dBdrerr_eq,'r');
 tp.mainLine.Color=config_fig.col_theme(idx_col,:);    % 'none';
 tp.mainLine.LineWidth=1;
