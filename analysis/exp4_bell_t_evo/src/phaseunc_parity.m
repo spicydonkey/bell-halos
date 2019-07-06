@@ -102,8 +102,17 @@ az_intg = 0;
 daz_corr = 1.5*alpha_corr;
 del_corr = 1.5*alpha_corr;
 
-az_corr_scan = (az_intg-alpha_intg):daz_corr:(az_intg+alpha_intg);
-el_corr_scan = (el_intg-alpha_intg):del_corr:(el_intg+alpha_intg);
+% simple azel-rectangular grid search: problems at boundary and rectangular
+%   grid search at corners
+% az_corr_scan = (az_intg-alpha_intg):daz_corr:(az_intg+alpha_intg);
+% el_corr_scan = (el_intg-alpha_intg):del_corr:(el_intg+alpha_intg);
+
+% simple azel-rectangular scan centered with intg vol
+az_corr_scan = 0:daz_corr:alpha_intg;
+az_corr_scan = az_intg + [-az_corr_scan(1:end-1),az_corr_scan];
+el_corr_scan = 0:del_corr:alpha_intg;
+el_corr_scan = el_intg + [-el_corr_scan(1:end-1),el_corr_scan];
+
 naz_corr_scan = length(az_corr_scan);
 nel_corr_scan = length(el_corr_scan);
 
@@ -120,27 +129,28 @@ parity = cell(naz_corr_scan,nel_corr_scan);
 
 for ii=1:naz_corr_scan
     taz_corr = az_corr_scan(ii);
-%         taz_corr = az_intg;
     for jj=1:nel_corr_scan    
         tel_corr = el_corr_scan(jj);
-%         tel_corr = el_intg;    
 
-        % evaluate correlator/parity
-        n_A=cellfun(@(x) size(inCone(x,taz_corr,tel_corr,alpha_corr),1),tk_intg);
-        n_B=cellfun(@(x) size(inCone(x,taz_corr+pi,-tel_corr,alpha_corr),1),tk_intg);
-        
-        S_A = diff(n_A,1,2);
-        S_B = diff(n_B,1,2);
-    
-        tparity = S_A .* S_B;
-        
-        % post-selection for (NA = 1, NB = 1) pair detection events
-        tparity_postsel = tparity;
-        tparity_postsel(~(abs(tparity)==1)) = NaN;
-        
-        N_corr = n_A + n_B;
-
-        dN = N_intg - N_corr;
+        if diffAngleSph(az_intg,el_intg,taz_corr,tel_corr) <= alpha_intg - alpha_corr    
+            % evaluate correlator/parity
+            n_A=cellfun(@(x) size(inCone(x,taz_corr,tel_corr,alpha_corr),1),tk_intg);
+            n_B=cellfun(@(x) size(inCone(x,taz_corr+pi,-tel_corr,alpha_corr),1),tk_intg);
+            
+            S_A = diff(n_A,1,2);
+            S_B = diff(n_B,1,2);
+            
+            tparity = S_A .* S_B;
+            
+            N_corr = n_A + n_B;
+            dN = N_intg - N_corr;
+            
+            % post-selection for (NA = 1, NB = 1) pair detection events
+            tparity_postsel = tparity;
+            tparity_postsel(~(abs(tparity)==1)) = NaN;
+        else
+            tparity=[];
+        end
         
         parity{ii,jj} = tparity;
     end
@@ -157,42 +167,131 @@ parity_sdev = std(parity_collated_ps,'omitnan');
 
 phase_mean = 0.5*acos(parity_mean);
 phase_sdev = parity_sdev/(2*sin(2*phase_mean));
-% vs. single-shot phase estimation
-%   how would you get rid of pi term?
-phase_single = 0.5*acos(parity_collated_ps);
-phase_single_mean = mean(phase_single,'omitnan');
-phase_single_sdev = std(phase_single,'omitnan');
+
+%%% bootstrapping
+% to estimate "statistical uncertainty" in:
+n_data=numel(parity_collated_ps);
+B = 200;        % bootstrap repetition
+% 1. mean parity
+idx_bssamp = randi(n_data,B,n_data);
+parity_bssamp = parity_collated_ps(idx_bssamp);     % bootstrap samples
+parity_mean_bs = mean(parity_bssamp,2,'omitnan');   % mean from bs
+parity_mean_bserr = std(parity_mean_bs);            % evaluate uncertainty
+
+% 2. sdev parity
+idx_bssamp = randi(n_data,B,n_data);
+parity_bssamp = parity_collated_ps(idx_bssamp);     % bootstrap samples
+parity_sdev_bs = std(parity_bssamp,0,2,'omitnan');  
+parity_sdev_bserr = std(parity_sdev_bs);            % evaluate uncertainty
+
+% 3. mean phase
+idx_bssamp = randi(n_data,B,n_data);
+parity_bssamp = parity_collated_ps(idx_bssamp);     % bootstrap samples
+parity_mean_bs = mean(parity_bssamp,2,'omitnan');   % mean from bs
+phase_mean_bs = 0.5*acos(parity_mean_bs);           % phase from parity mean
+phase_mean_bserr = std(phase_mean_bs);           % evaluate uncertainty
+
+% 3. sdev phase
+idx_bssamp = randi(n_data,B,n_data);
+parity_bssamp = parity_collated_ps(idx_bssamp);     % bootstrap samples
+% parity_mean_bs = mean(parity_bssamp,2,'omitnan');   
+parity_sdev_bs = std(parity_bssamp,0,2,'omitnan');  
+% phase_mean_bs = 0.5*acos(parity_mean_bs);           % phase from parity mean
+% phase_sdev_bs = parity_sdev_bs./(2*sin(2*phase_mean_bs));
+phase_sdev_bs = parity_sdev_bs./(2*sin(2*phase_mean));  % parity sensitivity from phi estimation
+phase_sdev_bserr = std(phase_sdev_bs);
+
+
+% summarise bootstrapped unc as fractional unc
+parity_mean_ferr = 1e2* abs(parity_mean_bserr/parity_mean);
+parity_sdev_ferr = 1e2* abs(parity_sdev_bserr/parity_sdev);
+phase_mean_ferr = 1e2* abs(phase_mean_bserr/phase_mean);
+phase_sdev_ferr = 1e2* abs(phase_sdev_bserr/phase_sdev);
+
+
+% % phase estimation by single-shot
+% % NOTE: does not seem legitimate based on the framework of quantum metrology
+% phase_single = 0.5*acos(parity_collated_ps);
+% phase_single_mean = mean(phase_single,'omitnan');
+% phase_single_sdev = std(phase_single,'omitnan');
 
 
 %% plot
-H=figure;
+H=figure('Name','embg_phi_est');
+H.Renderer='painters';
 
-% all coincidence events
+JJ_max = max(abs(parity_collated));
+
+%%% all coincidence events (JJ)
 subplot(2,1,1);
 
-histogram(parity_collated);
+JJ_edge = -JJ_max-0.5:1:JJ_max+0.5;
+JJ_cent = edge2cent(JJ_edge);
+N_JJ = histcounts(parity_collated,JJ_edge);
+Ntot_JJ = sum(N_JJ);
 
-titlestr = sprintf('$\\tau=%0.2f$ ms; $(\\theta,\\phi)=(%0.2g, %0.2g)$ deg; %d obs',tau(idx_tau),rad2deg(az_intg),rad2deg(el_intg),numel(parity_collated));
+P_JJ = N_JJ/Ntot_JJ;        % probability
+P_JJ_sdev_est = sqrt(P_JJ.*(1-P_JJ)/Ntot_JJ);   % err estimate
+
+% barplot
+p_bar_JJ = bar(JJ_cent,P_JJ,'b');            
+p_bar_JJ.FaceAlpha = 0.5;
+
+hold on;
+
+% errorbar
+% TODO: check calculation
+p_er_JJ = errorbar(JJ_cent,P_JJ,P_JJ_sdev_est,P_JJ_sdev_est);    
+p_er_JJ.Color = [0 0 0];                            
+p_er_JJ.LineStyle = 'none';  
+
+titlestr = sprintf('$\\tau=%0.2f$ ms; $(\\theta,\\phi)=(%0.2g, %0.2g)$ deg; $(\\alpha,\\delta k) = (%0.2f,\\,%0.2f)$; $N=%d$',tau(idx_tau),rad2deg(az_intg),rad2deg(el_intg),alpha_intg,alpha_corr,Ntot_JJ);
 title(titlestr);
 xlabel('$J_x^A J_x^B$');
-ylabel('no. events');
+ylabel('probability');
 
 set(gca,'YScale','log');
+set(gca,'YMinorTick','off');
 set(gca,'XTick',-5:5);
 
-% post-selected
+%%% post-selected
 subplot(2,1,2);
 
-histogram(parity_collated_ps);
+% histogram(parity_collated_ps);
+
+ss_edge = -1.5:1:1.5;
+ss_cent = edge2cent(ss_edge);
+N_ss = histcounts(parity_collated_ps,ss_edge);
+Ntot_ss = sum(N_ss);
+
+P_ss = N_ss/Ntot_ss;        % probability
+P_ss_sdev_est = sqrt(P_ss.*(1-P_ss)/Ntot_ss);   % err estimate
+
+% barplot
+p_bar_ss = bar(ss_cent,P_ss,'r');            
+p_bar_ss.FaceAlpha = 0.5;
+
+hold on;
+
+% errbar
+% TODO: estimate err
+p_er_ss = errorbar(ss_cent,P_ss,P_ss_sdev_est,P_ss_sdev_est);    
+p_er_ss.Color = [0 0 0];                            
+p_er_ss.LineStyle = 'none';  
+
+
 set(gca,'XTick',-5:5);
+titlestr = sprintf('post-selected for single pair: $N=%d$',Ntot_ss);
+title(titlestr);
+xlabel('parity $\sigma_x^A \sigma_x^B$')
+ylabel('probability');
 
-title('post-selected for single pair');
-xlabel('$\sigma_x^A \sigma_x^B$')
-ylabel('no. events');
 
-
-fig_text_parity = sprintf('$\\textbf{parity}$\nmean = %0.2f\nsdev = %0.2f',parity_mean,parity_sdev);
-fig_text_phase = sprintf('\n$\\textbf{phase}\\,\\Phi$\nmean = %0.2f\nsdev = %0.2f',phase_mean,phase_sdev);
+fig_text_parity = sprintf('$\\textbf{parity}$\navg = %0.2f $\\pm$ %0.1g\ns.d. = %0.2f $\\pm$ %0.1g',...
+    parity_mean,round(parity_mean_bserr,1,'significant'),parity_sdev,round(parity_sdev_bserr,1,'significant'));
+fig_text_phase = sprintf('\n$\\textbf{phase}\\,\\Phi$\navg = %0.2f $\\pm$ %0.1g\ns.d. = %0.2f $\\pm$ %0.1g',...
+    phase_mean,round(phase_mean_bserr,1,'significant'),phase_sdev,round(phase_sdev_bserr,1,'significant'));
 fig_text=[fig_text_parity,fig_text_phase];
 text(0,mean(get(gca,'YLim')),fig_text ,'HorizontalAlignment','center');
+
 
