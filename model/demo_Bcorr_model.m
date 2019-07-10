@@ -17,7 +17,8 @@ Bcorr_mdl = @(theta,p,alpha) -p * (cos(alpha)^2 + sin(alpha)^2*cos(theta)).^2 ..
 
 
 %% plot
-figure;
+H=figure('Name','demo');
+
 theta = linspace(0,2*pi);
 p = 0.9;
 alpha = 0.85*pi/2;
@@ -55,6 +56,7 @@ grid on;
 box on;
 xlabel('Rotation angle $\theta/\pi$');
 ylabel('Correlator $\mathcal{B}(\theta)$');
+title('purity vs. correlator')
 
 lgd=legend();
 lgd.Title.String = '$\vert\Psi^+\rangle$ purity $p$';
@@ -80,6 +82,8 @@ grid on;
 box on;
 xlabel('Rotation angle $\theta/\pi$');
 ylabel('Correlator $\mathcal{B}(\theta)$');
+title('Rabi amplitude vs. correlator')
+
 
 lgd=legend();
 lgd.Title.String = 'polar angle $\alpha$';
