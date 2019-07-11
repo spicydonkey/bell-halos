@@ -44,12 +44,20 @@ alpha = pi/2;
 B_theory = arrayfun(@(x) Bcorr_mdl(theta,x,alpha),p,'uni',0);
 
 
+%%% plot
+% config
+col = palette_cmap(length(p),@parula);      % without the max valued color
+
+% main
 H=figure('Name','psi+_purity');
 hold on;
 
+tp=[];
 for ii=1:length(p)
-    tp = plot(theta/pi,B_theory{ii});
-    set(tp,'DisplayName',num2str(p(ii)));
+    tp(ii) = plot(theta/pi,B_theory{ii});
+    set(tp(ii),'DisplayName',num2str(p(ii),3));
+    set(tp(ii),'Color',col(ii,:));
+    set(tp(ii),'LineWidth',1);
 end
 
 grid on;
@@ -58,7 +66,7 @@ xlabel('Rotation angle $\theta/\pi$');
 ylabel('Correlator $\mathcal{B}(\theta)$');
 title('purity vs. correlator')
 
-lgd=legend();
+lgd=legend(tp);
 lgd.Title.String = '$\vert\Psi^+\rangle$ purity $p$';
 
 
@@ -69,13 +77,21 @@ alpha = linspace(0,1,10)*pi/2;
 
 B_theory = arrayfun(@(x) Bcorr_mdl(theta,p,x),alpha,'uni',0);
 
+%%% plot
+% config
+col = palette_cmap(length(alpha),@parula);      % without the max valued color
 
+
+% main
 H=figure('Name','rabi_amplitude');
 hold on;
 
+tp=[];
 for ii=1:length(alpha)
-    tp = plot(theta/pi,B_theory{ii});
-    set(tp,'DisplayName',num2str(alpha(ii)/(pi/2)));
+    tp(ii) = plot(theta/pi,B_theory{ii});
+    set(tp(ii),'DisplayName',num2str(alpha(ii)/(pi/2),3));
+    set(tp(ii),'Color',col(ii,:));
+        set(tp(ii),'LineWidth',1);
 end
 
 grid on;
@@ -85,5 +101,5 @@ ylabel('Correlator $\mathcal{B}(\theta)$');
 title('Rabi amplitude vs. correlator')
 
 
-lgd=legend();
-lgd.Title.String = 'polar angle $\alpha$';
+lgd=legend(tp);
+lgd.Title.String = 'polar angle $\alpha/(\pi/2)$';
