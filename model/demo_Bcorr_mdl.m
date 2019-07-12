@@ -5,25 +5,16 @@
 % DKS
 % 2019-07-10
 
-%% Model
-% see David's logbook for derivation
-%
-% theta: rotation angle (e.g. pi-rotation is theta=pi)
-% p: triplet purity (e.g. pure triplet is p=1)
-% alpha: polar angle of rotation axis (e.g. resonance is alpha=pi/2)
-
-Bcorr_mdl = @(theta,p,alpha) -p * (cos(alpha)^2 + sin(alpha)^2*cos(theta)).^2 ...
-    + p * ( (sin(alpha)*cos(alpha)*(1-cos(theta))).^2 + (sin(alpha)*sin(theta)).^2);
-
-
-%% plot
-H=figure('Name','demo');
-
+%% DEMO
+% CONFIG
 theta = linspace(0,2*pi);
 p = 0.9;
-alpha = 0.85*pi/2;
+alpha = 0.8*pi/2;
 
-B_theory = Bcorr_mdl(theta,p,alpha);
+%%% PLOT
+H=figure('Name','demo');
+
+B_theory = Bcorr_mdl([p,alpha],theta);
 
 
 % figure;
@@ -36,12 +27,13 @@ ylabel('Correlator $\mathcal{B}(\theta)$');
 titlestr = sprintf('$p =$ %0.2g; $\\alpha = %0.2g \\cdot (\\pi/2)$',p,alpha/(pi/2));
 title(titlestr);
 
-%% Purity 
+
+%% Purity dependency (perfect Rabi oscillation)
 theta = linspace(0,2*pi);
 p = linspace(0,1,5);
 alpha = pi/2;
 
-B_theory = arrayfun(@(x) Bcorr_mdl(theta,x,alpha),p,'uni',0);
+B_theory = arrayfun(@(x) Bcorr_mdl([x,alpha],theta),p,'uni',0);
 
 
 %%% plot
@@ -70,12 +62,12 @@ lgd=legend(tp);
 lgd.Title.String = '$\vert\Psi^+\rangle$ purity $p$';
 
 
-%% Rabi amplitude
+%% Rabi amplitude (purity=1)
 theta = linspace(0,2*pi);
 p = 1;
 alpha = linspace(0,1,10)*pi/2;
 
-B_theory = arrayfun(@(x) Bcorr_mdl(theta,p,x),alpha,'uni',0);
+B_theory = arrayfun(@(x) Bcorr_mdl([p,x],theta),alpha,'uni',0);
 
 %%% plot
 % config

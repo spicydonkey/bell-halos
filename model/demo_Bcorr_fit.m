@@ -13,23 +13,20 @@ S = load(data_path,vars_to_load{:});
 
 
 %% Model and fit
-%   b = [p (purity), alpha (polar angle of rotation axis)]
-%   x = theta (rotation angle)
-Bcorr_mdl.fun = @(b,x) -b(1) * (cos(b(2))^2 + sin(b(2))^2*cos(x)).^2 ...
-    + b(1) * ( (sin(b(2))*cos(b(2))*(1-cos(x))).^2 + (sin(b(2))*sin(x)).^2);
-Bcorr_mdl.cname = {'p','alpha'};
-Bcorr_mdl.par0 = [0.9,0.9*pi/2];
-Bcorr_mdl.fopts=statset('TolFun',1e-6,'TolX',1e-6,'MaxIter',1e2);
+B_mdl.fun = @Bcorr_mdl;
+B_mdl.cname = {'p','alpha'};
+B_mdl.par0 = [0.9,0.9*pi/2];
+B_mdl.fopts=statset('TolFun',1e-6,'TolX',1e-6,'MaxIter',1e2);
 
 
 % weighted fit: weight is 1/var of y
-Bcorr_fit = fitnlm(S.Th,S.B,Bcorr_mdl.fun,Bcorr_mdl.par0,'Weights',(1./S.B_se).^2,...
-    'CoefficientNames',Bcorr_mdl.cname,'Options',Bcorr_mdl.fopts);
+B_fit = fitnlm(S.Th,S.B,B_mdl.fun,B_mdl.par0,'Weights',(1./S.B_se).^2,...
+    'CoefficientNames',B_mdl.cname,'Options',B_mdl.fopts);
 
 
 % get fitted params
-fit_params_mean = Bcorr_fit.Coefficients.Estimate;
-fit_params_se = Bcorr_fit.Coefficients.SE;
+fit_params_mean = B_fit.Coefficients.Estimate;
+fit_params_se = B_fit.Coefficients.SE;
 
 
 %% Model prediction
@@ -42,7 +39,8 @@ th=linspace(-2*pi,2*pi,1e3)';       % rotation angles for model prediction
 
 
 %%% B correlator
-[B_pred,B_pred_ci]=predict(Bcorr_fit,th,'Alpha',pred_alpha);
+% [B_pred,B_pred_ci]=predict(Bcorr_fit,th,'Alpha',pred_alpha);
+[B_pred,B_pred_ci]=predict(B_fit,th,'Alpha',pred_alpha,'Simultaneous',true);
 
 
 %%% S (EPR-steering) parameter
