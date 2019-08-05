@@ -895,9 +895,16 @@ colormap('parula');
 cbar_precision=2;               % # decimal places (G/m)
 cbar=colorbar('eastoutside');
 colorbar_minimal(cbar);
-cbar_lim_round=round(cbar.Limits,cbar_precision,'decimals');
-cbar.TickLabels=arrayfun(@num2str,cbar_lim_round,'uni',0);
 dBdr_cbar_lim=cbar.Limits;
+
+% ticks
+nticks = 5;     % num ticks (linspaced from lims)
+cbar.Ticks = linspace_lim(cbar.Limits,nticks);
+
+cbar_tick_round=round(cbar.Ticks,cbar_precision,'decimals');
+cbar.TickLabels=arrayfun(@num2str,cbar_tick_round,'uni',0);
+cbar.TickLabels(2:end-1)=cell(nticks-2,1);      % unset ticklabels
+
 
 % annotation
 cbar.TickLabelInterpreter='latex';
@@ -906,6 +913,7 @@ cbar.FontSize=config_fig.ax_fontsize;
 cbar.Label.FontSize=config_fig.ax_fontsize;
 % cbar.Label.String='$\frac{d\mathrm{B}}{dr}$ (G/m)';
 cbar.Label.String='$d\mathrm{B}/dr$ (G/m)';
+
 
 % resize colorbar without moving original axis
 ax_boxpos = plotboxpos(ax);         % box position of axis
@@ -983,6 +991,45 @@ xlabel('$d\mathrm{B}/dr$ (G/m)');
 ylabel('spatial pdf');
 
 
+%% VIS: lat-lon pixel histogram of dBdr
+figname='dBdr_histogram_spatial_pix';
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',config_fig.rend);
+
+hold on;
+
+% naive one without lat-lon grid weights
+X = dBdr(~isnan(dBdr));       % rid of NaNs
+Bhist = histogram(X,50,'Normalization','pdf');
+Bhist.DisplayStyle='stairs';
+Bhist.EdgeColor='k';
+Bhist.FaceColor='none';
+Bhist.DisplayName='data';
+
+% set xlims to colorbar of tomography
+xlim(dBdr_cbar_lim);
+
+% annotate
+ax=gca;
+set(ax,'Layer','Top');
+% box on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+% lgd=legend([Bhist,p_fit]);
+
+% set xlims to colorbar of tomography
+xlim(dBdr_cbar_lim);
+xticks(linspace_lim(dBdr_cbar_lim,nticks));
+
+xlabel('$d\mathrm{B}/dr$ (G/m)');
+ylabel('pixel pdf');
+
+% flip x-dir
+set(gca, 'xdir', 'reverse');
+
+% flip y-axis side
+set(gca,'YAxisLocation','right');
+
+axis tight;
 
 %% vis: Model 1: deltaB - rectangular (publication)
 % figname='deltaB_rectmap';
