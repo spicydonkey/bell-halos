@@ -1534,12 +1534,19 @@ ylabel('$\phi$ (deg)');
 colormap('viridis');
 
 %%% colorbar
-cbar_precision=3;               % # decimal places (G/m)
 cbar=colorbar('eastoutside');
 colorbar_minimal(cbar);
-cbar_lim_round=round(cbar.Limits,cbar_precision,'decimals');
-cbar.TickLabels=arrayfun(@num2str,cbar_lim_round,'uni',0);
 Btomo_cbar_lim = cbar.Limits;   % get cbar limits
+
+% ticks
+nticks = 5;     % num ticks (linspaced from lims)
+cbar.Ticks = linspace_lim(cbar.Limits,nticks);
+
+cbar_precision=3;               % # decimal places (G/m)
+cbar_tick_round=round(cbar.Ticks,cbar_precision,'decimals');
+cbar.TickLabels=arrayfun(@num2str,cbar_tick_round,'uni',0);
+cbar.TickLabels(2:end-1)=cell(nticks-2,1);      % unset ticklabels
+
 
 % annotation
 cbar.TickLabelInterpreter='latex';
@@ -1631,6 +1638,54 @@ lgd.Location='best' ;
 
 xlabel('$\mathrm{B}$ (G)');
 ylabel('spatial pdf');
+
+
+
+%% VIS: lat-lon pixel histogram of B
+figname='B_histogram_spatial_pix';
+h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4],'Renderer',config_fig.rend);
+
+hold on;
+
+% naive one without lat-lon grid weights
+X = Bk_Pramsey(~isnan(Bk_Pramsey));       % rid of NaNs
+Bhist = histogram(X,'Normalization','pdf');
+Bhist.DisplayStyle='stairs';
+Bhist.EdgeColor='k';
+Bhist.FaceColor='none';
+Bhist.DisplayName='data';
+
+% fit Gaussian
+Xmean = mean(X(:));
+Xstd = std(X(:));
+xlim0=xlim;
+xx = linspace(xlim0(1),xlim0(2),1e3);
+yy = gaus_pdf(xx,Xmean,Xstd);
+p_fit = plot(xx,yy,'r-');
+p_fit.DisplayName='$\mathcal{N}(\bar\mu,\bar\sigma^2)$';
+uistack(p_fit,'bottom');
+
+% set xlims to colorbar of tomography
+xlim(Btomo_cbar_lim);
+xticks(linspace_lim(Btomo_cbar_lim,nticks));
+
+% annotate
+ax=gca;
+set(ax,'Layer','Top');
+% box on;
+ax.FontSize=config_fig.ax_fontsize;
+ax.LineWidth=config_fig.ax_lwid;
+lgd=legend([Bhist,p_fit]);
+lgd.Location='best' ;
+
+xlabel('$\mathrm{B}$ (G)');
+ylabel('pixel pdf');
+
+% flip x-dir
+set(gca, 'xdir', 'reverse')
+
+% flip y-axis side
+set(gca,'YAxisLocation','right');
 
 
 %% VIS (publication): Magnetic tomography: equatorial: P 

@@ -13,8 +13,8 @@ path_mat_file='C:\Users\HE BEC\Dropbox\phd\projects\halo_metrology\analysis\rams
 c_alpha=logspace(log10(0.01),log10(1),200);       % factors of alpha
 alpha=pi*c_alpha;
 
-beta_ramsey=pi*0.0619;   % PSF rms width in angle (rad)
-
+beta_ramsey=pi*0.0619;      % Ramsey resolution: PSF rms width in angle (rad)
+beta_grad=pi*0.156;         % gradiometry resol
 
 % sampling locations
 az=pi*[0,1];
@@ -288,6 +288,38 @@ ax.LineWidth=config_fig.ax_lwid;
 % line_resol=line([beta_ramsey,beta_ramsey]/pi,ax.YLim,'LineStyle','--','Color','k');
 % uistack(line_resol,'bottom');
 
+
+%% dBdr across (0,0) and (pi,0) [x and -x points]
+if isequal(az,[0,pi])
+    d_sep = 3e-3 * 120e-3;      % 3ms expansion at 120 mm/s
+    
+    B = squeeze(B_alpha);
+    Berr = squeeze(Berr_alpha);
+    
+    dBdr = diff(B,1)/d_sep;
+    dBdr_err = vnorm(Berr,1)/d_sep;
+    
+    % plot
+    H = figure('Name','ramsey_dBdr_xaxis_vs_alpha');
+    
+    shadedErrorBar(alpha/pi,dBdr,dBdr_err);
+    
+    set(gca,'XScale','log');
+    set(gca,'Layer','top');
+    
+    xlabel('bin size $\alpha/\pi$');
+    ylabel('$\Delta \textrm{B} / d$ (G/m)');
+    title('$(\theta,\phi) = (0,0),\,(\pi,0)$');
+    
+    grid on;
+    
+    % references
+    p_ramsey = vline(beta_ramsey/pi);
+    set(p_ramsey,'Color','b','LineStyle','--');
+    
+    p_grad = vline(beta_grad/pi);
+    set(p_grad,'Color','r','LineStyle','-');
+end
 
 %% save ===============================================
 vars_to_save={'path_mat_file','config_fig',...
