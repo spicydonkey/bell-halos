@@ -29,15 +29,25 @@ configs.exp.sig_beta_grad=configs.exp.r_bec/(configs.exp.d_sep_grad/2);
 
 
 % GRIDS/BINS ------------------------------------------------------
+% bin size (half-cone angle)
+% configs.bins.alpha=configs.exp.sig_beta_grad;      
+configs.bins.alpha=(1/2)*configs.exp.sig_beta_grad;	% sub-resol
+
 % grids around sphere
 configs.bins.az_lim=[0,pi];
 configs.bins.el_lim=pi/4*[-1,1];      
 
-configs.bins.n_az=60;
-configs.bins.n_el=30;
+% manually set bin (overlapping)
+% configs.bins.n_az=60;
+% configs.bins.n_el=30;
 
-% bin size (half-cone angle)
-configs.bins.alpha=configs.exp.sig_beta_grad;      
+% Minimally/non- overlapping bins
+daz = 2*configs.bins.alpha;      % non-overlapping on equator
+del = 2*configs.bins.alpha;
+
+configs.bins.n_az = round(range(configs.bins.az_lim)/daz);
+configs.bins.n_el = round(range(configs.bins.el_lim)/del);
+
 
 % misc
 configs.bins.az_disp=deg2rad([0,45,90,135]);
@@ -47,9 +57,9 @@ configs.g2.n_dk=7;
 configs.g2.lim_dk=[-0.2,0.2];
 
 % bootstrapping --------------------------------------------------
-configs.bootstrap.samp_frac=0.05;
+configs.bootstrap.samp_frac=1;
 configs.bootstrap.B_fast=2;
-configs.bootstrap.B=100;
+configs.bootstrap.B=20;
 
 
 % Physical constants ---------------------------------------------
@@ -1352,33 +1362,36 @@ ax2.TickLength=5*ax2.TickLength;
 
 
 %% save output
-vars_to_save={'configs','config_fig',...
-    'Vaz','Vel','vaz','vel',...
-    'n_zone','az','el','iel_0','gaz','gel',...
-    'tau','n_tau',...
-    'Pi','Pi_bs_se',...
-    'mdl_tevo2','t_fit','Pi_fit2',...
-    'beta','beta_se',...
-    'dBdr','dBdr_se',...
-    'dBdr_eq','dBdrerr_eq',...
-    'ramsey_fname',...
-    'c_loc','cl_loc','loc_disp_2pi','azel_disp','n_loc_disp','loc_disp_orig','azel_disp_orig',...
-    'g2_loc','g0_loc','Pi_loc',...
-    'g2_loc_bs_mu','g2_loc_bs_se','g0_loc_bs_mu','g0_loc_bs_se',...
-    'Pi_loc_bs_mu','Pi_loc_bs_se',...
-    };  
+% vars_to_save={'configs','config_fig',...
+%     'Vaz','Vel','vaz','vel',...
+%     'n_zone','az','el','iel_0','gaz','gel',...
+%     'tau','n_tau',...
+%     'Pi','Pi_bs_se',...
+%     'mdl_tevo2','t_fit','Pi_fit2',...
+%     'beta','beta_se',...
+%     'dBdr','dBdr_se',...
+%     'dBdr_eq','dBdrerr_eq',...
+%     'ramsey_fname',...
+%     'c_loc','cl_loc','loc_disp_2pi','azel_disp','n_loc_disp','loc_disp_orig','azel_disp_orig',...
+%     'g2_loc','g0_loc','Pi_loc',...
+%     'g2_loc_bs_mu','g2_loc_bs_se','g0_loc_bs_mu','g0_loc_bs_se',...
+%     'Pi_loc_bs_mu','Pi_loc_bs_se',...
+%     };  
+% 
+% 
+% % check exists
+% for ii=1:numel(vars_to_save)
+%     tvarname=vars_to_save{ii};
+%     if ~exist(tvarname,'var')
+%         warning('variable %s does not exist.',tvarname);
+%     end
+% end
+% 
+% % save
+% save(['out_',getdatetimestr,'.mat'],vars_to_save{:});
 
-
-% check exists
-for ii=1:numel(vars_to_save)
-    tvarname=vars_to_save{ii};
-    if ~exist(tvarname,'var')
-        warning('variable %s does not exist.',tvarname);
-    end
-end
-
-% save
-save(['out_',getdatetimestr,'.mat'],vars_to_save{:});
+%%% save all
+save(['out_full_',getdatetimestr,'.mat']);
 
 
 %% End of script
