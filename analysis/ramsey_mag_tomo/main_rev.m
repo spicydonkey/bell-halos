@@ -1109,26 +1109,36 @@ ylabel('$P$');
 %%% Spatial zones
 % construct spatial zones at latlon grid + solid angle
 % half-cone angle of integration bin (rad)
-alpha=sig_psf_beta;          % limiting spatial resolution 
+alpha = sig_psf_beta;          % limiting spatial resolution 
+% alpha=pi/6;            % checking for huge integration volume
+
 % alpha=sig_psf_gradiometry;      % bin-size like gradiometry (rad)
 lim_az=[-pi,pi];        % no inversion symmetry
 phi_max=pi/2;           
 lim_el=[-phi_max,phi_max];
 
+%%% BINNING
+% TYPE 1: Lin-spaced bins (overlapping)
 % n_az=200;                	% equispaced bins
 % n_el=100;
+% 
+% az=linspace(lim_az(1),lim_az(2),n_az+1);
+% az=az(1:end-1);
+% el=linspace(lim_el(1),lim_el(2),n_el);
 
-% % QUICK DEBUG
-n_az=100;
-n_el=50;
+% TYPE 2: Minimally overlapping bins
+daz = 2*alpha;
+del = 2*alpha;
 
+az = bistep(0,daz,lim_az);
+el = bistep(0,del,lim_el);
 
+n_az = length(az);
+n_el = length(el);
+
+%%% grid and misc display options
 az_disp=deg2rad(-180:90:90);     % azim sections (great circles) to display
 % el_disp=deg2rad(-30:30:30);    % elev/lat zones to display
-
-az=linspace(lim_az(1),lim_az(2),n_az+1);
-az=az(1:end-1);
-el=linspace(lim_el(1),lim_el(2),n_el);
 
 [~,iaz_disp]=arrayfun(@(x) min(abs(az-x)),az_disp);     % idx to displayable azim
 naz_disp=length(iaz_disp);
@@ -1379,7 +1389,6 @@ Berrk_Pramsey(b_trunc)=NaN;
 % Brerr(b_trunc)=NaN;
 
 
-
 %% Ramsey analysis: EQUATOR: P
 % collate data to fit
 yy=vertcat(P_eq{:});
@@ -1502,11 +1511,16 @@ figname='halo_magnetometry_ff';
 h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,4.5],'Renderer',config_fig.rend);
 
 tp=plotFlatMapWrappedRad(gaz,gel,Bk_Pramsey,'rect','texturemap');
-
+hold on;
 % for rect projection, IMAGESC --> controllable x,y axis?
 
+% equator line
+col_eq = [1,0,0];       % red
+[col_eq2,col_eq3] = colshades(col_eq);      % shades
+
+p_eq = plot(180*[-1,1],[0,0],'Color',col_eq,'LineStyle',':','LineWidth',1.5);
+
 % label ROI
-hold on;
 for ii=1:n_loc_disp
     tazel=rad2deg(azel_disp(ii,:));
     tp=plot(tazel(1),tazel(2),...
@@ -1609,20 +1623,30 @@ hold on;
 
 % naive one without lat-lon grid weights
 X = Bk_Pramsey(~isnan(Bk_Pramsey));       % rid of NaNs
-Bhist = histogram(X,'Normalization','pdf');
+Bhist = histogram(X);
+Bhist.Normalization='pdf';
 Bhist.DisplayStyle='stairs';
 Bhist.EdgeColor='k';
 Bhist.FaceColor='none';
 Bhist.DisplayName='data';
 
-% fit Gaussian
+%%% Gaussian
 Xmean = mean(X(:));
 Xstd = std(X(:));
-xlim0=xlim;
-xx = linspace(xlim0(1),xlim0(2),1e3);
-yy = gaus_pdf(xx,Xmean,Xstd);
-p_fit = plot(xx,yy,'r-','LineWidth',1);
-p_fit.DisplayName='$\mathcal{N}(\bar\mu,\bar\sigma^2)$';
+
+% from data parameters
+% xx = linspace_lim(get(gca,'XLim'),1e3);
+% yy = gaus_pdf(xx,Xmean,Xstd);
+% p_fit = plot(xx,yy,'r-','LineWidth',1);
+% p_fit.DisplayName='$\mathcal{N}(\bar\mu,\bar\sigma^2)$';
+% uistack(p_fit,'bottom');
+
+% fit
+[Gfit.par,Gfit.fitval,Gfit.mdl] = fit_gauss_1d(edge2cent(Bhist.BinEdges),Bhist.Values,...
+    [max(Bhist.BinCounts), Xmean, Xstd, 0]);
+p_fit = plot(Gfit.fitval.x,Gfit.fitval.y,'LineStyle','--','Color',0.5*ones(1,3));
+p_fit.DisplayName='Gaussian fit';
+uistack(p_fit,'bottom');
 
 % set xlims to colorbar of tomography
 xlim(Btomo_cbar_lim);
@@ -1649,25 +1673,35 @@ hold on;
 
 % naive one without lat-lon grid weights
 X = Bk_Pramsey(~isnan(Bk_Pramsey));       % rid of NaNs
-Bhist = histogram(X,'Normalization','pdf');
+Bhist = histogram(X);
+Bhist.Normalization='count';
 Bhist.DisplayStyle='stairs';
 Bhist.EdgeColor='k';
 Bhist.FaceColor='none';
 Bhist.DisplayName='data';
 
-% fit Gaussian
-Xmean = mean(X(:));
-Xstd = std(X(:));
-xlim0=xlim;
-xx = linspace(xlim0(1),xlim0(2),1e3);
-yy = gaus_pdf(xx,Xmean,Xstd);
-p_fit = plot(xx,yy,'r-');
-p_fit.DisplayName='$\mathcal{N}(\bar\mu,\bar\sigma^2)$';
-uistack(p_fit,'bottom');
-
 % set xlims to colorbar of tomography
 xlim(Btomo_cbar_lim);
 xticks(linspace_lim(Btomo_cbar_lim,nticks));
+     
+
+%%% Gaussian
+Xmean = mean(X(:));
+Xstd = std(X(:));
+
+% from data params
+% xx = linspace_lim(get(gca,'XLim'),1e3);
+% yy = gaus_pdf(xx,Xmean,Xstd);
+% p_fit = plot(xx,max2unit(yy),'r-');
+% p_fit.DisplayName='$\mathcal{N}(\bar\mu,\bar\sigma^2)$';
+% uistack(p_fit,'bottom');
+
+% fit
+[Gfit.par,Gfit.fitval,Gfit.mdl] = fit_gauss_1d(edge2cent(Bhist.BinEdges),Bhist.Values,...
+    [max(Bhist.BinCounts), Xmean, Xstd, 0]);
+p_fit = plot(Gfit.fitval.x,Gfit.fitval.y,'LineStyle','--','Color',0.5*ones(1,3));
+p_fit.DisplayName='Gaussian fit';
+uistack(p_fit,'bottom');
 
 % annotate
 ax=gca;
@@ -1679,7 +1713,7 @@ lgd=legend([Bhist,p_fit]);
 lgd.Location='best' ;
 
 xlabel('$\mathrm{B}$ (G)');
-ylabel('pixel pdf');
+ylabel('num pixels');
 
 % flip x-dir
 set(gca, 'xdir', 'reverse')
@@ -1715,11 +1749,11 @@ hold on;
 
 
 %%% halo integrated (no BEC) 
-H_halo_int=shadedErrorBar([-180,180],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'k');
-H_halo_int.mainLine.LineWidth=1;
-H_halo_int.mainLine.LineStyle='--';
+H_halo_int=shadedErrorBar(180*[-1,1],B_Pramsey_halo*[1,1],Berr_Pramsey_halo*[1,1],'k');
+% H_halo_int.mainLine.LineWidth=1;
+H_halo_int.mainLine.LineStyle='-';
 H_halo_int.mainLine.DisplayName='$\mathbf{r}$ int';
-H_halo_int.mainLine.Visible='off';
+% H_halo_int.mainLine.Visible='off';
 H_halo_int.patch.FaceColor=0.8*ones(1,3);
 H_halo_int.patch.FaceAlpha=1;
 H_halo_int.edge(1).Visible='off';
@@ -1728,25 +1762,28 @@ H_halo_int.edge(2).Visible='off';
 
 %%% spatial resolved predictions
 %%%%% Far-Field
-% %PLOTERR
-% tp=ploterr(rad2deg(az),Bk_eq,[],Bkerr_eq,'o','hhxy',0);
-% set(tp(1),'Marker','.','MarkerSize',4.5,...
+%PLOTERR
+tp=ploterr(rad2deg(az),Bk_eq,rad2deg(alpha),Bkerr_eq,'hhxy',0);
+set(tp(1),'Marker','s','MarkerSize',4.5,'LineStyle','none',...
+    'MarkerFaceColor',col_eq2,'MarkerEdgeColor',col_eq,...
+    'DisplayName','');
 %     'MarkerFaceColor',config_fig.coll_theme(2,:),'MarkerEdgeColor',config_fig.col_theme(2,:),...
 %     'DisplayName','');
-% set(tp(2),'Color',config_fig.col_theme(2,:));
+set(tp(2),'Color',tp(1).MarkerEdgeColor);
+set(tp(3),'Color',tp(1).MarkerEdgeColor);
 
-% SHADED ERR BAR
-H_res_ff=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
-H_res_ff.mainLine.Color=config_fig.col_theme(2,:);
-H_res_ff.mainLine.LineStyle='-';
-H_res_ff.mainLine.LineWidth=1;
-H_res_ff.mainLine.DisplayName='$\mathbf{r}$ resolved $\infty$';
-H_res_ff.patch.FaceColor=config_fig.coll_theme(2,:);  
-H_res_ff.patch.FaceAlpha=config_fig.pf_alpha;
-% H_res_ff.edge(1).Visible='off';
-% H_res_ff.edge(2).Visible='off';
-H_res_ff.edge(1).Color=config_fig.coll_theme(2,:);
-H_res_ff.edge(2).Color=config_fig.coll_theme(2,:);
+% % SHADED ERR BAR
+% H_res_ff=shadedErrorBar(rad2deg(az),Bk_eq,Bkerr_eq,'r');
+% H_res_ff.mainLine.Color=config_fig.col_theme(2,:);
+% H_res_ff.mainLine.LineStyle='-';
+% H_res_ff.mainLine.LineWidth=1;
+% H_res_ff.mainLine.DisplayName='$\mathbf{r}$ resolved $\infty$';
+% H_res_ff.patch.FaceColor=config_fig.coll_theme(2,:);  
+% H_res_ff.patch.FaceAlpha=config_fig.pf_alpha;
+% % H_res_ff.edge(1).Visible='off';
+% % H_res_ff.edge(2).Visible='off';
+% H_res_ff.edge(1).Color=config_fig.coll_theme(2,:);
+% H_res_ff.edge(2).Color=config_fig.coll_theme(2,:);
 
 
 % %%% ROI
@@ -1777,8 +1814,11 @@ ax.LineWidth=config_fig.ax_lwid;
 xlabel('$\theta$ (deg)');
 ylabel('$\mathrm{B}$ (G)');
 
+
 ax.XTick=-180:90:180;
 axis_snug(ax,[0,0.1]);
+xlim([-180,180]);
+
 
 % % legend
 % lgd=legend([H_res_r.mainLine,H_res_ff.mainLine,H_r_int.mainLine]);
@@ -1908,7 +1948,9 @@ dBdx_eq_se=abs(dBdx_eq_frerr.*dBdx_eq);
 % plot --------------------------------------------
 figname='dBdx_ramsey_ff';
 h=figure('Name',figname,'Units',config_fig.units,'Position',[0,0,8.6,6],'Renderer',config_fig.rend);
-tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdx_eq_se,'k');
+% tp=shadedErrorBar(rad2deg(az),dBdx_eq,dBdx_eq_se,'k');
+% tp=ploterr(rad2deg(az),abs(dBdx_eq),rad2deg(alpha),dBdx_eq_se,'ok');
+tp=ploterr(rad2deg(az),dBdx_eq,rad2deg(alpha),dBdx_eq_se,'ok');
 
 ax=gca;
 set(ax,'Layer','Top');
@@ -1924,26 +1966,26 @@ ylabel('$d\mathrm{B}/dx$ (G/m)');
 
 
 %% save outputs
-vars_to_save={'az','el','gaz','gel','alpha',...
-    'configs','config_fig',...
-    'iaz_0','iel_0','n_loc_disp','azel_disp',...
-    'tau','P_k_avg','P_k_se',...
-    'Pramseyk_fit','P_k',...
-    'tt_fit',...
-    'B_Pramsey_halo','Berr_Pramsey_halo',...
-    'Bk_Pramsey','Berrk_Pramsey',...
-    'Bk_eq','Bkerr_eq',...
-    'dBdx_eq','dBdx_eq_se'};  
-
-% check exist
-for ii=1:numel(vars_to_save)
-    tvarname=vars_to_save{ii};
-    if ~exist(tvarname,'var')
-        warning('variable %s does not exist.',tvarname);
-    end
-end
-
-save(['out_',getdatetimestr,'.mat'],vars_to_save{:});
+% vars_to_save={'az','el','gaz','gel','alpha',...
+%     'configs','config_fig',...
+%     'iaz_0','iel_0','n_loc_disp','azel_disp',...
+%     'tau','P_k_avg','P_k_se',...
+%     'Pramseyk_fit','P_k',...
+%     'tt_fit',...
+%     'B_Pramsey_halo','Berr_Pramsey_halo',...
+%     'Bk_Pramsey','Berrk_Pramsey',...
+%     'Bk_eq','Bkerr_eq',...
+%     'dBdx_eq','dBdx_eq_se'};  
+% 
+% % check exist
+% for ii=1:numel(vars_to_save)
+%     tvarname=vars_to_save{ii};
+%     if ~exist(tvarname,'var')
+%         warning('variable %s does not exist.',tvarname);
+%     end
+% end
+% 
+% save(['out_',getdatetimestr,'.mat'],vars_to_save{:});
 
 %% end of script
 toc
