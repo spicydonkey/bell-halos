@@ -32,6 +32,7 @@ configs.exp.sig_beta_grad=configs.exp.r_bec/(configs.exp.d_sep_grad/2);
 % bin size (half-cone angle)
 % configs.bins.alpha=configs.exp.sig_beta_grad;      
 configs.bins.alpha=(1/2)*configs.exp.sig_beta_grad;	% sub-resol
+alpha = configs.bins.alpha;
 
 % grids around sphere
 configs.bins.az_lim=[0,pi];
@@ -59,7 +60,7 @@ configs.g2.lim_dk=[-0.2,0.2];
 % bootstrapping --------------------------------------------------
 configs.bootstrap.samp_frac=1;
 configs.bootstrap.B_fast=2;
-configs.bootstrap.B=20;
+configs.bootstrap.B=50;
 
 
 % Physical constants ---------------------------------------------
@@ -111,6 +112,7 @@ n_zone=numel(vaz);
 [~,iaz_disp]=arrayfun(@(x) min(abs(Vaz-x)),configs.bins.az_disp);     % idx to ~displayable azim angles
 [~,iel_0]=min(abs(Vel));        % idx to ~zero elev angle (equator)
 
+
 %% create g2 params
 dk_ed_vec=linspace(configs.g2.lim_dk(1),configs.g2.lim_dk(2),configs.g2.n_dk+1);
 dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
@@ -118,9 +120,88 @@ dk_cent_vec=dk_ed_vec(1:end-1)+0.5*diff(dk_ed_vec);
 dk_ed={dk_ed_vec,dk_ed_vec,dk_ed_vec};
 dk_grid_size=cellfun(@(k) length(k)-1,dk_ed);
 
-%% MAIN
-n_tau=length(k_tau);
+%% preproc
+n_tau=numel(tau);
 
+
+%% Diagnostics
+%%% mJ and k-resolved atom number
+% CONFIG
+alpha_diag = alpha/2;
+az_diag = linspace(-pi,pi,round(2*pi/alpha_diag));      %az;
+el_diag = linspace(-pi/2,pi/2,round(pi/alpha_diag));    %el;
+
+[gaz_diag, gel_diag] = ndgrid(az_diag,el_diag);
+
+
+% halo truncation mask
+el_trunc_diag=deg2rad(45);          % elevation angle threshold to truncate (rad)       
+b_trunc_diag=(abs(gel_diag)>el_trunc_diag);        % boolean indicator to truncate
+
+
+% main
+Nm_k_avg=cell(numel(tau),1);
+Nm_k_std=cell(numel(tau),1);
+
+for ii = 1:n_tau
+    % get num in zone/shot
+    tNm=arrayfun(@(th,ph) cellfun(@(x) size(inCone(x,th,ph,alpha_diag),1),k_tau{ii}),...
+        gaz_diag,gel_diag,'UniformOutput',false);
+    tNm_avg = cellfun(@(n) mean(n,1),tNm,'uni',0);
+    tNm_std = cellfun(@(n) std(n,0,1),tNm,'uni',0);
+    
+    % collate spin
+    tNm_avg = arrayfun(@(ii) cellfun(@(x) x(ii),tNm_avg), [1,2],'uni',0);
+    tNm_std = arrayfun(@(ii) cellfun(@(x) x(ii),tNm_std), [1,2],'uni',0);
+    
+    tNm_avg = cat(3,tNm_avg{:});    % concatenate mJ along 3rd dim
+    tNm_std = cat(3,tNm_std{:});
+    
+    % store
+    Nm_k_avg{ii} = tNm_avg;
+    Nm_k_std{ii} = tNm_std;
+end
+
+%% VIS
+H_Nmk=[];
+for ii = 1:n_tau
+    H_Nmk(ii) = figure('Name',sprintf('atomnum_tau_%d',ii));
+    
+    % counts images
+    subplot(2,4,[1,2]);
+    imagesc(az_diag',el_diag',Nm_k_avg{ii}(:,:,1)');
+    cbar=colorbar();
+    cbar.Label.String = 'avg counts';
+    title('$m_J = 1$')
+    xlabel('$\theta$');
+    ylabel('$\phi$');
+    
+    subplot(2,4,[5,6]);
+    imagesc(az_diag',el_diag',Nm_k_avg{ii}(:,:,2)');
+    cbar=colorbar();
+    cbar.Label.String = 'avg counts';
+    title('$m_J = 0$')
+    xlabel('$\theta$');
+    ylabel('$\phi$');
+    
+    % histogram
+    subplot(2,4,[3:4,7:8]);
+    ph1 = histogram(Nm_k_avg{ii}(:,:,1),'DisplayName','$m_J = 1$');
+    hold on;
+    ph0 = histogram(Nm_k_avg{ii}(:,:,2),'DisplayName','$m_J = 0$');
+    legend([ph1,ph0]);
+    xlabel('counts in bin');
+    ylabel('num pixels');
+    
+    ax=gca;
+    set(ax,'XLim',ax.XLim.*[0,1]);
+    set(ax,'YAxisLocation','right');
+    
+    title(sprintf('bin size $\\alpha = %0.3f\\pi$',alpha_diag/pi));
+end
+
+
+%% MAIN - g2 analysis
 % preallocate
 c4=cell(3,n_tau,configs.bins.n_az,configs.bins.n_el);     % DIM: corr X tau X theta X phi
 c3=cell(n_tau,configs.bins.n_az,configs.bins.n_el);       % DIM: tau X theta X phi
@@ -166,7 +247,7 @@ for ii=1:n_tau
 %         g2(:,ii,iaz,iel)=tg2(:);
 %         g0(:,ii,iaz,iel)=tg0;
         B(ii,iaz,iel)=tB;
-        Pi(ii,iaz,iel)=tB0;
+        Pi(ii,iaz,iel)=tB0;         % parity in sigx-basis
         
         %% BOOTSTRAPPING
         % set up
@@ -213,6 +294,11 @@ for ii=1:n_tau
         progressbar(jj/n_zone);
     end
 end
+
+
+%%
+
+
 
 %% vis: Parity - ALL
 %%% ALL
@@ -971,7 +1057,7 @@ hold on;
 
 % naive one without lat-lon grid weights
 X = dBdr(~isnan(dBdr));       % rid of NaNs
-Bhist = histogram(X,50,'Normalization','pdf');
+Bhist = histogram(X,'Normalization','pdf');
 Bhist.DisplayStyle='stairs';
 Bhist.EdgeColor='k';
 Bhist.FaceColor='none';
@@ -1009,7 +1095,7 @@ hold on;
 
 % naive one without lat-lon grid weights
 X = dBdr(~isnan(dBdr));       % rid of NaNs
-Bhist = histogram(X,50,'Normalization','pdf');
+Bhist = histogram(X,'Normalization','pdf');
 Bhist.DisplayStyle='stairs';
 Bhist.EdgeColor='k';
 Bhist.FaceColor='none';
@@ -1262,7 +1348,7 @@ tp.edge(1).Visible='off';
 tp.edge(2).Visible='off';
 
 
-%%% Ent-based Gradiometry
+%%% EBMG
 % 1. fitted model 
 % TODO - could generalise for gradB vector and sph polar vector space
 % our model is grad B = 5 e_x mG/mm
@@ -1276,14 +1362,25 @@ p_model = plot(rad2deg(theta_model),dBdr_model,'r:','LineWidth',1.5);
 % not_roi = true(size(az));
 % not_roi(iaz_0+iaz_disp-1)=false;
 
-% SHADED ERR BAR
-tp=shadedErrorBar(rad2deg(az),dBdr_eq,dBdrerr_eq,'r');
-tp.mainLine.Color=config_fig.col_theme(idx_col,:);    % 'none';
-tp.mainLine.LineWidth=1;
-tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
-tp.patch.FaceAlpha=0.33;
-tp.edge(1).Visible='off';
-tp.edge(2).Visible='off';
+%PLOTERR
+tp=ploterr(rad2deg(az),dBdr_eq,rad2deg(configs.bins.alpha),dBdrerr_eq,'hhxy',0);
+set(tp(1),'Marker','s','MarkerSize',4.5,'LineStyle','none',...
+    'MarkerFaceColor',config_fig.col_theme(idx_col,:),'MarkerEdgeColor',config_fig.col_theme(idx_col,:),...
+    'DisplayName','');
+%     'MarkerFaceColor',config_fig.coll_theme(2,:),'MarkerEdgeColor',config_fig.col_theme(2,:),...
+%     'DisplayName','');
+set(tp(2),'Color',tp(1).MarkerEdgeColor);
+set(tp(3),'Color',tp(1).MarkerEdgeColor);
+
+
+% % SHADED ERR BAR
+% tp=shadedErrorBar(rad2deg(az),dBdr_eq,dBdrerr_eq,'r');
+% tp.mainLine.Color=config_fig.col_theme(idx_col,:);    % 'none';
+% tp.mainLine.LineWidth=1;
+% tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
+% tp.patch.FaceAlpha=0.33;
+% tp.edge(1).Visible='off';
+% tp.edge(2).Visible='off';
 
 % %%% ROI
 % for ii=1:numel(iaz_disp)
@@ -1322,43 +1419,43 @@ ax.XTick=0:45:180;
 
 % lgd=legend(pleg);
 
-%%% Zoomed - INSET ------------------------------------------------
-ax2=axes('Position',[.7 .5 .2 .4]);      % inset axes 'YAxisLocation','right'
-set(ax2,'Layer','top');
-box on;
-hold on; 
-
-% Ramsey
-tp=shadedErrorBar(rad2deg(S_ramsey.az),S_ramsey.dBdx_eq,S_ramsey.dBdx_eq_se,'k');
-tp.mainLine.Color=0.3*ones(1,3);      %     'k';    % 'none';
-tp.mainLine.LineWidth=1;
-tp.mainLine.LineStyle='--';
-tp.edge(1).Visible='off';
-tp.edge(2).Visible='off';
-
-% gradiometry
-% 1. fitted model 
-p_model = plot(rad2deg(theta_model),dBdr_model,'r:','LineWidth',1.5);
-
-% 2. data
-tp=shadedErrorBar(rad2deg(az),dBdr_eq,dBdrerr_eq,'r');
-tp.mainLine.Color=config_fig.col_theme(idx_col,:);    % 'none';
-tp.mainLine.LineWidth=1;
-tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
-tp.patch.FaceAlpha=0.33;
-tp.edge(1).Visible='off';
-tp.edge(2).Visible='off';
-
-% annotation
-% zoom to theta=pi/2
-[~,iaz_pi2]=min(abs(az-pi/2));
-dBdr_pi2=dBdr_eq(iaz_pi2);
-xlim(90+10*[-1,1]);
-% ylim(dBdr_pi2*(1+1*[-1,1]));
-ylim([0,3]);
-% set(ax2,'XTickLabel',[]);
-ax2.FontSize=ax.FontSize-1;
-ax2.TickLength=5*ax2.TickLength;
+% %%% Zoomed - INSET ------------------------------------------------
+% ax2=axes('Position',[.7 .5 .2 .4]);      % inset axes 'YAxisLocation','right'
+% set(ax2,'Layer','top');
+% box on;
+% hold on; 
+% 
+% % Ramsey
+% tp=shadedErrorBar(rad2deg(S_ramsey.az),S_ramsey.dBdx_eq,S_ramsey.dBdx_eq_se,'k');
+% tp.mainLine.Color=0.3*ones(1,3);      %     'k';    % 'none';
+% tp.mainLine.LineWidth=1;
+% tp.mainLine.LineStyle='--';
+% tp.edge(1).Visible='off';
+% tp.edge(2).Visible='off';
+% 
+% % gradiometry
+% % 1. fitted model 
+% p_model = plot(rad2deg(theta_model),dBdr_model,'r:','LineWidth',1.5);
+% 
+% % 2. data
+% tp=shadedErrorBar(rad2deg(az),dBdr_eq,dBdrerr_eq,'r');
+% tp.mainLine.Color=config_fig.col_theme(idx_col,:);    % 'none';
+% tp.mainLine.LineWidth=1;
+% tp.patch.FaceColor=config_fig.col_theme(idx_col,:);       %config_fig.coll_theme(idx_col,:);
+% tp.patch.FaceAlpha=0.33;
+% tp.edge(1).Visible='off';
+% tp.edge(2).Visible='off';
+% 
+% % annotation
+% % zoom to theta=pi/2
+% [~,iaz_pi2]=min(abs(az-pi/2));
+% dBdr_pi2=dBdr_eq(iaz_pi2);
+% xlim(90+10*[-1,1]);
+% % ylim(dBdr_pi2*(1+1*[-1,1]));
+% ylim([0,3]);
+% % set(ax2,'XTickLabel',[]);
+% ax2.FontSize=ax.FontSize-1;
+% ax2.TickLength=5*ax2.TickLength;
 
 
 %% save output
