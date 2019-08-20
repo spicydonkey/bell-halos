@@ -4,12 +4,12 @@
 %% config
 %%% overlapping bins
 %TODO: need to get data with correction made
-% config.path_dir = 'C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\out\postproc';
-% config.data_name = 'out_20190301_134703.mat';
+config.path_dir = 'C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\out\postproc';
+config.data_name = 'out_20190301_134703.mat';
 
 %%% non-overlapping bins
-config.path_dir = 'C:\Users\HE BEC\Dropbox\phd\projects\halo_metrology\analysis\ebmg';
-config.data_name = 'out_full_gamma0.5_20190806_194726.mat';
+% config.path_dir = 'C:\Users\HE BEC\Dropbox\phd\projects\halo_metrology\analysis\ebmg';
+% config.data_name = 'out_full_gamma0.5_20190806_194726.mat';
 
 % get file
 config.path_fig = fullfile(config.path_dir,config.data_name);
@@ -125,7 +125,7 @@ b_plot = (S.az>=0)&(S.az<=pi);
 p_data = ploterr(S.az(b_plot),S.dBdr_eq(b_plot),S.configs.bins.alpha,S.dBdrerr_eq(b_plot),'hhxy',0);
 set(p_data(1),'Marker','s','LineStyle','none',...
     'MarkerFaceColor','w','MarkerEdgeColor','k',...
-    'DisplayName','data');
+    'DisplayName','EBMG');
 set(p_data(2),'Color','k');
 set(p_data(3),'Color','k');
 
@@ -137,7 +137,7 @@ set(p_data(3),'Color','k');
 %   moving average
 l_smooth = 2*round(S.configs.bins.alpha/mean(diff(mdl_ebmg_cart.az_eq)));   % smoothing full width = bin size
 yy_sm = smooth(mdl_ebmg_cart.dBdr_eq_pred,l_smooth,'moving');
-p_model_sm = plot(mdl_ebmg_cart.az_eq,yy_sm,'r-','DisplayName','smoothed');
+p_model_sm = plot(mdl_ebmg_cart.az_eq,yy_sm,'r-','DisplayName','smoothed fit');
 
 % CI
 for ii=1:2
