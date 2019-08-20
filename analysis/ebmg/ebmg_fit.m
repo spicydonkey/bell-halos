@@ -2,11 +2,16 @@
 % DKS 2019
 
 %% config
+%%% overlapping bins
 %TODO: need to get data with correction made
+% config.path_dir = 'C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\out\postproc';
+% config.data_name = 'out_20190301_134703.mat';
 
-config.path_dir = 'C:\Users\HE BEC\Documents\MATLAB\bell-halos\analysis\exp4_bell_t_evo\out\postproc';
-config.data_name = 'out_20190301_134703.mat';
+%%% non-overlapping bins
+config.path_dir = 'C:\Users\HE BEC\Dropbox\phd\projects\halo_metrology\analysis\ebmg';
+config.data_name = 'out_full_gamma0.5_20190806_194726.mat';
 
+% get file
 config.path_fig = fullfile(config.path_dir,config.data_name);
 
 
@@ -46,7 +51,7 @@ mdl_ebmg_cart.dBdr_pred_sdev = reshape(diff(mdl_ebmg_cart.ypred_ci,[],2)/2,size(
 %%% DATA
 H_data = figure('Name','ebmg_data');
 
-pp=plotFlatMapWrappedRad(S.gaz,S.gel,S.dBdr,'rect');
+pp=plotFlatMapWrappedRad(S.gaz,S.gel,S.dBdr,'rect','texturemap');
 
 
 ax=gca;
@@ -67,7 +72,7 @@ cbar.Label.String = '$d\textrm{B}/dr$ (G/m)';
 % fitted prediction
 H_model = figure('Name','ebmg_model_fit');
 
-pp=plotFlatMapWrappedRad(mdl_ebmg_cart.gaz_pred,mdl_ebmg_cart.gel_pred,mdl_ebmg_cart.dBdr_pred,'rect');
+pp=plotFlatMapWrappedRad(mdl_ebmg_cart.gaz_pred,mdl_ebmg_cart.gel_pred,mdl_ebmg_cart.dBdr_pred,'rect','texturemap');
 
 
 ax=gca;
@@ -87,7 +92,7 @@ cbar.Label.String = '$d\textrm{B}/dr$ (G/m)';
 % prediction uncertainty
 H_model_unc = figure('Name','ebmg_model_unc');
 
-pp=plotFlatMapWrappedRad(mdl_ebmg_cart.gaz_pred,mdl_ebmg_cart.gel_pred,mdl_ebmg_cart.dBdr_pred_sdev,'rect');
+pp=plotFlatMapWrappedRad(mdl_ebmg_cart.gaz_pred,mdl_ebmg_cart.gel_pred,mdl_ebmg_cart.dBdr_pred_sdev,'rect','texturemap');
 
 
 ax=gca;
@@ -128,12 +133,17 @@ set(p_data(3),'Color','k');
 % % PRED
 % p_model_orig = plot(mdl_ebmg_cart.az_eq,mdl_ebmg_cart.dBdr_eq_pred,'r--');
 
-% smoothed prediction
+%%% smoothed prediction
 %   moving average
 l_smooth = 2*round(S.configs.bins.alpha/mean(diff(mdl_ebmg_cart.az_eq)));   % smoothing full width = bin size
 yy_sm = smooth(mdl_ebmg_cart.dBdr_eq_pred,l_smooth,'moving');
 p_model_sm = plot(mdl_ebmg_cart.az_eq,yy_sm,'r-','DisplayName','smoothed');
 
+% CI
+for ii=1:2
+    yyci_sm = smooth(mdl_ebmg_cart.dBdr_eq_pred_ci(:,ii),l_smooth,'moving');
+    p_model_ci_sm = plot(mdl_ebmg_cart.az_eq,yyci_sm,'r--','DisplayName','smoothed');
+end
 
 % annotation
 ax = gca;
@@ -145,4 +155,4 @@ xlim([0,pi]);
 
 set(ax,'Layer','top');
 
-lgd = legend([p_data(1),p_model_sm]);
+lgd = legend([p_data(1),p_model_sm],'Location','southeast');
