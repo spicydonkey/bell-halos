@@ -1032,9 +1032,9 @@ axis_snug(ax,[0.05,0.1]);
 
 %% Ramsey model
 % polarisation/population inversion ---------------------------------------
-Pramsey_mdl='y~amp*cos(om*x+phi)';
-Pramsey_cname={'amp','om','phi'};
-Pramsey_par0=[1,2*pi*1.5,pi];
+Pramsey_mdl='y~amp*cos(om*x+phi)+c';
+Pramsey_cname={'amp','om','phi','c'};
+Pramsey_par0=[1,2*pi*1.5,pi,0];
 
 idx_om_Pramsey=2;     %find(cellfun(@(s) strcmp(s,'om'),Pramsey_cname)==1);
 
@@ -1127,8 +1127,8 @@ lim_el=[-phi_max,phi_max];
 % el=linspace(lim_el(1),lim_el(2),n_el);
 
 % TYPE 2: Minimally overlapping bins
-daz = 2*alpha;
-del = 2*alpha;
+daz = 1*alpha;
+del = 1*alpha;
 
 az = bistep(0,daz,lim_az);
 el = bistep(0,del,lim_el);
@@ -1158,23 +1158,25 @@ b_trunc=(abs(gel)>el_trunc);    % boolean indicator to truncate
 
 
 %% n,P distribution
+n_tau = length(tau);
+
 %%% atom number
-Nm_k=cell(numel(tau),1);     % #atoms in k,mj-zone categorise by exp param
+Nm_k=cell(n_tau,1);     % #atoms in k,mj-zone categorise by exp param
 
 % evaluate
 for ii=1:numel(k_all_ramsey_phi0)
     tk=k_all_ramsey_phi0{ii};        % exp data for this param
     
     % get num in zone/shot
-    tN=arrayfun(@(th,ph) cellfun(@(x) size(inCone(x,th,ph,alpha),1),tk),...
+    tNm=arrayfun(@(th,ph) cellfun(@(x) size(inCone(x,th,ph,alpha),1),tk),...
         gaz,gel,'UniformOutput',false);     
     
     % format into multi-dim array: AZ X EL X SHOT X MJ
-    ttN=NaN(cat(2,size(gaz),size(tN{1})));
+    ttN=NaN(cat(2,size(gaz),size(tNm{1})));
     for jj=1:n_zone
         [iaz,iel]=ind2sub([n_az,n_el],jj);
         
-        ttN(iaz,iel,:,:)=tN{iaz,iel};
+        ttN(iaz,iel,:,:)=tNm{iaz,iel};
     end
     Nm_k{ii}=ttN;
 end
@@ -1197,20 +1199,153 @@ P_k_se=P_k_std./sqrt(n_shot);
 %% atom number statistics
 % integration volume
 SA_k_intg = 2*pi*(1-cos(alpha));     % solid angle of k-mode integration region
+r_k_to_sphere = SA_k_intg/(4*pi);
 
 % truncate halo
 N_k_trunc = N_k;
-for ii=1:length(tau)
+for ii=1:n_tau
     N_k_trunc{ii}(repmat(b_trunc,[1,1,n_shot(ii)])) = NaN;
 end
 
-% statistics
-N_k_trunc_avg = cellfun(@(x) mean(x(:),'omitnan'), N_k_trunc);
-N_k_trunc_std = cellfun(@(x) std(x(:),0,'omitnan'), N_k_trunc);
+%%% evaluate
+% N_k_trunc_avg = cellfun(@(x) mean(x(:),'omitnan'), N_k_trunc);
+% N_k_trunc_std = cellfun(@(x) std(x(:),0,'omitnan'), N_k_trunc);
+% Nk_avg = mean([N_k_trunc_avg, N_k_trunc_std])                % [avg, std] DETECTED number of scattered atoms into a single integration region
+% Ntotavg_est = (4*pi/SA_k_intg) * mean(N_k_trunc_avg)     % avg number of total scattered atoms
 
-mean([N_k_trunc_avg, N_k_trunc_std])                % [avg, std] DETECTED number of scattered atoms into a single integration region
+Nk_trunc_azel_collate = cat(3,N_k_trunc{:});        % all tau collated  
+%TODO does number depend on tau?
+num_k_ok = sumall(~isnan(Nk_trunc_azel_collate));   % num bins not truncated (ie. not NAN)
 
-10 * (4*pi/ SA_k_intg) * mean(N_k_trunc_avg)         % avg number of total scattered atoms (QE=0.1)
+% [avg, std] DETECTED number of scattered atoms into a single integration region
+Nk_avg = mean(Nk_trunc_azel_collate(:),'omitnan');
+Nk_std = std(Nk_trunc_azel_collate(:),'omitnan');
+Nk_se = Nk_avg/sqrt(num_k_ok);
+
+Ntotavg_est = Nk_avg/r_k_to_sphere;    % avg number of total scattered atoms
+
+
+%% Atom number density distribution
+% TODO a thorough analysis would be good here
+%   [ ] (r,az,el) resolved density distribution then decompose into spherical
+%       harmonics
+
+%%% configure params
+% angular
+ndist.alpha = 0.1;                             % intg bin angle
+ndist.dtheta_grid = 0.5*ndist.alpha;             % grid spacing
+
+ndist.az_lim = pi*[-1,1];                       % az-el limits
+ndist.el_lim = [-1,1];
+
+% % radial
+% ndist.r_lim = 1 + 0.3*[-1,1];       % radial lim
+% ndist.dr = 0.01;                    % spacing
+
+
+% evaluate config
+ndist.naz = round(range(ndist.az_lim)/ndist.dtheta_grid);     % num az-el pixels
+ndist.nel = round(range(ndist.el_lim)/ndist.dtheta_grid);
+
+ndist.az = linspace_lim(ndist.az_lim,ndist.naz);
+ndist.el = linspace_lim(ndist.el_lim,ndist.nel);
+
+[ndist.gaz, ndist.gel] = ndgrid(ndist.az,ndist.el);
+
+ndist.bin_solang = cone_solang(ndist.alpha);        % bin solid angle
+
+% ndist.r = ndist.r_lim(1):ndist.dr:ndist.r_lim(2);   % radial 
+
+
+%%% Angular distribution: radius is integrated
+ndist.Nm_azel = cell(n_tau,2);          % counts with mJ-resolved
+ndist.Nm_azel_avg = cell(n_tau,2);
+ndist.Nm_azel_std = cell(n_tau,2);
+ndist.Nm_azel_se = cell(n_tau,2);
+
+ndist.N_azel = cell(n_tau,1);           % total atom counts (mJ summed)
+ndist.N_azel_avg = cell(n_tau,1);
+ndist.N_azel_std = cell(n_tau,1);
+ndist.N_azel_se = cell(n_tau,1);
+
+for ii=1:n_tau
+    % mJ distinguished
+    for jj=1:2      
+        tk_ca = k_all_ramsey_phi0{ii}(:,jj);
+        
+        [~,~,tNm] = cellfun(@(k) inCone_grid(k,ndist.gaz,ndist.gel,ndist.alpha),tk_ca,'uni',0);
+        tNm = cat(3,tNm{:});      % collate shots
+        ndist.Nm_azel{ii,jj} = tNm;
+         
+        % stats
+        ndist.Nm_azel_avg{ii,jj} = mean(tNm,3);
+        ndist.Nm_azel_std{ii,jj} = std(tNm,0,3);
+        ndist.Nm_azel_se{ii,jj} = ndist.Nm_azel_std{ii,jj}/sqrt(n_shot(ii));
+    end
+    
+    % total atom number
+    tN = sum(cat(4,ndist.Nm_azel{ii,:}),4);
+    ndist.N_azel{ii} = tN;
+    ndist.N_azel_avg{ii} = mean(tN,3);
+    ndist.N_azel_std{ii} = std(tN,0,3);
+    ndist.N_azel_se{ii} = ndist.N_azel_std{ii}/sqrt(n_shot(ii));
+end
+
+%% VIS
+% to disp
+ii = 1;     % tau idx to plot
+
+% plot
+H = figure();
+H.Name = sprintf('tau_%d',ii);
+
+subplot(1,3,1);
+imagesc(rad2deg(ndist.az),rad2deg(ndist.el),ndist.N_azel_avg{ii}');
+cbar=colorbar();
+cbar.Label.String = 'avg atom count';
+set(gca,'YDir','normal');
+xlabel('$\theta$');
+ylabel('$\phi$');
+
+subplot(1,3,2);
+imagesc(rad2deg(ndist.az),rad2deg(ndist.el),ndist.N_azel_se{ii}');
+cbar=colorbar();
+cbar.Label.String = 'SE atom count';
+set(gca,'YDir','normal');
+xlabel('$\theta$');
+ylabel('$\phi$');
+
+subplot(1,3,3);
+histogram(ndist.N_azel_avg{ii}(:),'Normalization','pdf');
+xlabel('avg atom count');
+ylabel('probability');
+set(gca,'YAxisLocation','right');
+
+titlestr = sprintf('$\\alpha = %0.3f$',ndist.alpha);
+title(titlestr);
+
+%% radial distribution
+% K-vecs to modulus
+k_norm = cellfun(@(taus) ...
+    cellfun(@(shots) vnorm(shots),taus,'uni',0),...
+    k_all_ramsey_phi0,'uni',0);
+
+
+% VIS
+ii = 1;
+tk = cat(1,k_norm{1}{1,:});
+
+figure;
+histogram(k_norm{1}{1},'Normalization','pdf');
+xlabel('$k$');
+ylabel('probability');
+
+
+%%% MISC
+% num in integration bin
+
+% estimate num in the whole scattering halo
+
 
 
 %% VIS
@@ -1869,9 +2004,13 @@ dI_pi=round(pi/dth);    % # increments to shift for azimuthal BB
 az_bb=circshift(az,dI_pi);      % azim-vectors pi-shifted
 
 % check BB
-dbb_max=max(abs(abs(az_bb-az)-pi));     % max deviation from BB (rad)
-if dbb_max>1e-2
-    warning('Some regions are not back-to-back!');
+dbb = abs(abs(az_bb-az)-pi);
+dbb_max=max(dbb);     % max deviation from BB (rad)
+dbb_thresh = 1e-2;
+n_over_dbb_thresh = sum(dbb>dbb_thresh);
+if dbb_max>dbb_thresh
+    warning('%d/%d regions are not back-to-back (>%0.2f)',n_over_dbb_thresh,numel(az),dbb_thresh);
+    warning('Max. deviation = %0.2f (rad)',dbb_max);
 end
 
 % get B-params at opposite regions
