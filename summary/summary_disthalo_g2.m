@@ -4,7 +4,7 @@ function [g2,dk,g2mdl,h]=summary_disthalo_g2(K,dk_ed,bfastrun,doplot,dofit,verbo
 % Useful diagnostic to check how well halos were processed
 %
 %   Simplest usage:
-%       [g2,dk,h]=summary_disthalo_g2(K)
+%       [g2,dk,g2mdl,h]=summary_disthalo_g2(K)
 %
 % TODO
 % [ ] documentation
@@ -54,10 +54,11 @@ dk_cent=cellfun(@(ed) ed(1:end-1)+0.5*diff(ed),dk_ed,'UniformOutput',false);    
 
 
 %%% G2 smoothing
-filter_toggle=true;       % turn filter on/off
-filter_type='gaussian';
-filter_size=5;
-filter_sd=1.5;
+filter_toggle=false;        % turn filter on/off
+% filter_toggle=true;       
+% filter_type='gaussian';
+% filter_size=5;      %5
+% filter_sd=1.5;      %1.5
 
 
 %% g2 analysis
@@ -67,8 +68,8 @@ n_g2_type=2*n_halo-1;   % in fact all permutations gives n_halo^2 (but symmetry!
 
 % preallocate
 g2=cell(1,n_g2_type);
-G2s=cell(1,n_g2_type);
-G2n=cell(1,n_g2_type);
+G2=cell(1,n_g2_type);
+G2_uncorr=cell(1,n_g2_type);
 
 counter=1;
 
@@ -76,16 +77,16 @@ counter=1;
 %   NOTE: #N indicates the Nth mJ state as identified in K (data)
 for mm=1:n_halo
     if bfastrun
-        [g2{counter},G2s{counter},G2n{counter}]=g2_bb_fast(K(:,mm),dk_ed,0.05);
+        [g2{counter},G2{counter},G2_uncorr{counter}]=g2_bb_fast(K(:,mm),dk_ed,0.05);
     else
-        [g2{counter},G2s{counter},G2n{counter}]=g2_bb(K(:,mm),dk_ed);
+        [g2{counter},G2{counter},G2_uncorr{counter}]=g2_bb(K(:,mm),dk_ed);
     end
-    if filter_toggle
-        % filter g2
-        G2s{counter}=smooth3(G2s{counter},filter_type,filter_size,filter_sd);
-        G2n{counter}=smooth3(G2n{counter},filter_type,filter_size,filter_sd);
-        g2{counter}=G2s{counter}./G2n{counter};
-    end
+%     if filter_toggle
+%         % filter g2
+%         G2{counter}=smooth3(G2{counter},filter_type,filter_size,filter_sd);
+%         G2_uncorr{counter}=smooth3(G2_uncorr{counter},filter_type,filter_size,filter_sd);
+%         g2{counter}=G2{counter}./G2_uncorr{counter};
+%     end
     counter=counter+1;
 end
 
@@ -93,16 +94,16 @@ end
 %%% X-species: (#1,#2)
 if n_halo==2
     if bfastrun
-        [g2{counter},G2s{counter},G2n{counter}]=g2x_bb_fast(K,dk_ed,0.05);
+        [g2{counter},G2{counter},G2_uncorr{counter}]=g2x_bb_fast(K,dk_ed,0.05);
     else
-        [g2{counter},G2s{counter},G2n{counter}]=g2x_bb(K,dk_ed);
+        [g2{counter},G2{counter},G2_uncorr{counter}]=g2x_bb(K,dk_ed);
     end
-    if filter_toggle
-        % filter g2
-        G2s{counter}=smooth3(G2s{counter},filter_type,filter_size,filter_sd);
-        G2n{counter}=smooth3(G2n{counter},filter_type,filter_size,filter_sd);
-        g2{counter}=G2s{counter}./G2n{counter};
-    end
+%     if filter_toggle
+%         % filter g2
+%         G2{counter}=smooth3(G2{counter},filter_type,filter_size,filter_sd);
+%         G2_uncorr{counter}=smooth3(G2_uncorr{counter},filter_type,filter_size,filter_sd);
+%         g2{counter}=G2{counter}./G2_uncorr{counter};
+%     end
 end
 
 
@@ -160,9 +161,9 @@ end
 h=[];       % initialise fig handle
 if doplot
     
-    titlestr={'(#1,#1)',...
-        '(#2,#2)',...
-        '(#1,#2)',...
+    titlestr={'(1,1)',...
+        '(2,2)',...
+        '(1,2)',...
         };
 
     dispname={'$x$','$y$','$z$'};     % axis
