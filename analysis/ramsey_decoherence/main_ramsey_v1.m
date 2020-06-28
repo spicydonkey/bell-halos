@@ -283,7 +283,7 @@ clear h_zxy*;       % clear figs
 
 %% ANALYSIS
 % non-dimensionalised time: Larmor period
-T_larmor=0.65e-6;       % larmor precession period (s)
+T_larmor=0.65e-6/0.9880;       % larmor precession period (s)
 dtau=Tdelay/T_larmor;
 
 
@@ -495,48 +495,59 @@ ylabel('$P$');
 
 
 %% Model: Ramsey signal and decay
-%   TODO
-% pp=P(:,1);
+% polarisation
+P = -diff(P_mJ_halo_avg,1,2);       
+P_err = vnorm(P_mJ_halo_std,2);
+
+% model
+modelfun = @(b,x) b(1)*exp(-(x/b(2)).^2).*cos(2*pi*x + b(3)) + b(4);
+beta0=[0.9,800,1,0.1];
+
+
+opts = statset('TolFun',1e-10,'TolX',1e-10,'RobustWgtFun','bisquare');
+% 'Display','iter',
+
+% beta_fit =
 % 
-% 
-% % v1
-% % modelfun = @(b,x) b(1)*exp(-b(2)*x).*cos(b(3)*(2*pi)*x) + b(4);
-% % beta0 = [1,1e-2,1,0.5];
-% 
-% % v2
-% modelfun = @(b,x) 0.5*exp(-b(1)*x).*cos(b(2)*(2*pi)*x) + 0.5;
-% beta0=[1e-2,1];
-% 
-% mdl = fitnlm(dtau,pp,modelfun,beta0);
-% 
-% %%% eval fit
-% beta_fit=mdl.Coefficients.Estimate;
-% 
-% tfit=linspace(0,1200,1e5);
-% pfit=modelfun(beta_fit,tfit);
-% 
-% 
-% % vis
-% figure('Name','population_fraction');
-% hold on;
-% 
-% p1=ploterr(dtau,P(:,1),[],P_err(:,1),'ro');
-% p1(1).DisplayName='data';
-% 
-% titlestr=sprintf('Rabi oscillation decay');
+%     0.9419
+%   795.0652
+%     0.9750
+%     0.1010
+
+%%% eval fit
+mdl = fitnlm(dtau,P,modelfun,beta0,'Options',opts);
+beta_fit=mdl.Coefficients.Estimate;
+beta_fiterr=mdl.Coefficients.SE;
+
+tfit=linspace(0,1200,1e5);
+pfit=modelfun(beta_fit,tfit);
+
+
+%%% PLOT
+figure('Name','ramsey_decoherence',...
+    'Units','centimeters','Position',[0 0 12.44 6.33]);
+hold on;
+
+p1=ploterr(dtau,P,[],P_err,'ko');
+set(p1(1),'DisplayName','data','MarkerFaceColor','w');
+
+% titlestr=sprintf('Ramsey decoherence');
 % title(titlestr);
-% xlabel('$\tau$');
-% ylabel('$P_1$');
-% box on;
-% ax=gca;
+xlabel('delay (in $T_L$)');
+ylabel('$P_\uparrow - P_\downarrow$');
+box on;
+ax=gca;
+ax.XLim(1) = 0;
 % xlim([0,ax.XLim(2)]);
-% ylim([0,ax.YLim(2)]);
-% 
-% p_mdl=plot(tfit,pfit,'-','Color',0.85*[1,1,1],'DisplayName','fit');
-% uistack(p_mdl,'bottom')
-% 
+ylim([-1,1]);
+
+p_mdl=plot(tfit,pfit,'-','Color',0.85*[1,1,1],'DisplayName','fit');
+uistack(p_mdl,'bottom')
+
 % lgd=legend([p1(1),p_mdl]);
-% % lgd.Title.String='$m_J$';
+% lgd.Title.String='$m_J$';
+ax = gca;
+ax.Layer = 'Top';
 
 
 %% Exploded figure of halo by lat-lon zones
