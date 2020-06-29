@@ -39,7 +39,7 @@ str_ss={'$1$','$0$','$-1$'};
 % str_ss={'$\uparrow\uparrow$','$\downarrow\downarrow$','$\uparrow\downarrow$'};
 mark_siz=6;
 line_wid=1.3;
-fontsize=11.5;
+fontsize=9.5;   %11.5;
 ax_lwidth=1;
 
 %% load config
@@ -528,6 +528,13 @@ for ii=1:n_mf
 end
 
 
+%% statistics combining zones
+P_zonevar_avg = cellfun(@(x) squeeze(mean(x,[1,2])),P_mJ_zone_avg,'uni',0);
+P_zonevar_avg = horzcat(P_zonevar_avg{:});
+
+P_zonevar_std = cellfun(@(x) squeeze(std(x,0,[1,2])),P_mJ_zone_avg,'uni',0);
+P_zonevar_std = horzcat(P_zonevar_std{:});
+
 
 %% Rabi oscillation (momentum-zone resolved fit)
 idx_mJ=2;   % ONLY mJ=0
@@ -600,7 +607,10 @@ end
 %%% data
 h=NaN(n_mf,1);
 for ii=1:n_mf
-    th=ploterr(1e6*par_T,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+    th=ploterr(1e6*par_T,P_mJ_halo_avg(:,ii),[],P_zonevar_std(:,ii),'o','hhxy',0);
+%     th=ploterr(1e6*par_T,P_zonevar_avg(:,ii),[],P_zonevar_std(:,ii),'o','hhxy',0);
+%     th=ploterr(1e6*par_T,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
+    
 %     th=ploterr(tau_rot,P_mJ_halo_avg(:,ii),[],P_mJ_halo_std(:,ii),'o','hhxy',0);
     set(th(1),'color',c(ii,:),'Marker',mark_typ{ii},'LineWidth',line_wid,...
         'MarkerSize',mark_siz,'MarkerFaceColor',cl(ii,:),...
@@ -622,10 +632,10 @@ axis tight;
 ylim([0,1]);
 % ax.YTick=0:0.2:1;
 
-xlabel('Pulse duration [$\mu$s]');
+xlabel('Pulse duration ($\mu$s)');
 % xlabel('Pulse duration, $\tau$');
 % ylabel('$P$');
-ylabel('Population fraction $P$');
+ylabel('Population fraction $P(m_J)$');
 
 % lgd=legend(h,'Location','East');
 % title(lgd,'$m_J$');
